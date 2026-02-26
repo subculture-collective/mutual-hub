@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 export const aidPostingCategories = [
@@ -280,7 +279,7 @@ export function buildAidPostCreatePayload(
 ): AidPostMutationPayload {
     const normalizedDraft = requireNormalizedDraft(draft);
     const now = options?.now ?? new Date().toISOString();
-    const localId = options?.id ?? randomUUID();
+    const localId = options?.id ?? crypto.randomUUID();
 
     const recordCandidate = {
         $type: aidPostRecordNsid,
@@ -319,7 +318,7 @@ export function buildAidPostEditPayload(params: {
 }): AidPostMutationPayload {
     const normalizedDraft = requireNormalizedDraft(params.draft);
     const now = params.now ?? new Date().toISOString();
-    const localId = params.metadata?.localId ?? randomUUID();
+    const localId = params.metadata?.localId ?? crypto.randomUUID();
 
     const recordCandidate = {
         ...params.existingRecord,
