@@ -230,3 +230,15 @@ From stack guidance:
 - Do not apply motion to all components at once.
 
 This system should feel **bold and nostalgic**, but still operationally clear for urgent community use.
+
+---
+
+## 10) Tailwind + Vite implementation notes
+
+For the v1 stack (`Vite + React + TypeScript + Tailwind CSS`):
+
+1. Define the token source of truth in a global stylesheet (for example: `src/styles/tokens.css`) using the CSS variables above.
+2. Expose key tokens in `tailwind.config.ts` so utility classes map to the same design vocabulary.
+3. Keep component-level styles in React primitives (`Button`, `Card`, `Panel`, `Input`) and avoid ad-hoc one-off color values.
+4. Enforce focus-visible and reduced-motion utilities as first-class defaults, not optional enhancements.
+5. Prefer utility composition + small variant helpers over large custom CSS files to keep style behavior predictable.

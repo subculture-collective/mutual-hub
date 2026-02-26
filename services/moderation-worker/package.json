@@ -1,0 +1,17 @@
+{
+  "name": "@mutual-hub/moderation-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "npm run typecheck",
+    "start": "tsx src/index.ts",
+    "lint": "npm run typecheck",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mutual-hub/shared": "0.1.0"
+  }
+}
