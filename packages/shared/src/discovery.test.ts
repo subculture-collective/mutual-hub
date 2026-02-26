@@ -9,7 +9,7 @@ import {
     buildPhase3FixtureFirehoseEvents,
     type NormalizedFirehoseEvent,
 } from './firehose.js';
-import { recordNsid } from './record-schema.js';
+import { recordNsid } from '@mutual-hub/at-lexicons';
 
 const buildStore = (): DiscoveryIndexStore => {
     const consumer = new FirehoseConsumer();

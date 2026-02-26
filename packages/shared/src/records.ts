@@ -6,7 +6,7 @@ import {
     recordNsid,
     type RecordNsid,
     validateRecordPayload,
-} from './record-schema.js';
+} from '@mutual-hub/at-lexicons';
 
 const didSchema = z
     .string()

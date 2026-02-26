@@ -4,7 +4,7 @@ import {
     buildPhase3FixtureFirehoseEvents,
     normalizeFirehoseEvent,
 } from './firehose.js';
-import { recordNsid } from './record-schema.js';
+import { recordNsid } from '@mutual-hub/at-lexicons';
 
 describe('P3.1 firehose consumer + normalization', () => {
     it('ingests fixture streams with deterministic normalized output', () => {

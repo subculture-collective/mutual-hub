@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { recordNsid } from './record-schema.js';
+import { recordNsid } from '@mutual-hub/at-lexicons';
 import { AtRecordRepository, RecordWriteError } from './records.js';
 
 const baseAidPost = {
