@@ -41,6 +41,6 @@ A deleted record is represented as:
 ## Test evidence
 
 - `packages/shared/src/records.test.ts`
-  - tombstone deterministic creation
-  - round-trip mutation serialization/deserialization
-  - regression protection against deleted record resurfacing
+    - tombstone deterministic creation
+    - round-trip mutation serialization/deserialization
+    - regression protection against deleted record resurfacing

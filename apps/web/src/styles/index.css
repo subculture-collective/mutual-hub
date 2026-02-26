@@ -1,13 +1,13 @@
-@import "tailwindcss";
-@import "./tokens.css";
+@import 'tailwindcss';
+@import './tokens.css';
 
 body {
-  margin: 0;
-  background: var(--mh-bg);
-  color: var(--mh-text);
-  font-family: var(--mh-font-body);
+    margin: 0;
+    background: var(--mh-bg);
+    color: var(--mh-text);
+    font-family: var(--mh-font-body);
 }
 
 code {
-  font-family: var(--mh-font-mono);
+    font-family: var(--mh-font-mono);
 }

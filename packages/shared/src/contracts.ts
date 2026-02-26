@@ -1,57 +1,60 @@
 export const CONTRACT_VERSION = '0.2.0-phase2';
 
 export type DomainName =
-  | 'identity'
-  | 'aid-records'
-  | 'geo'
-  | 'ranking'
-  | 'messaging'
-  | 'moderation'
-  | 'directory'
-  | 'volunteer-onboarding';
+    | 'identity'
+    | 'aid-records'
+    | 'geo'
+    | 'ranking'
+    | 'messaging'
+    | 'moderation'
+    | 'directory'
+    | 'volunteer-onboarding';
 
 export interface ServiceHealth {
-  service: 'api' | 'indexer' | 'moderation-worker';
-  status: 'ok';
-  contractVersion: string;
-  did: string;
+    service: 'api' | 'indexer' | 'moderation-worker';
+    status: 'ok';
+    contractVersion: string;
+    did: string;
 }
 
 export interface ApiQueryAidRequest {
-  latitude: number;
-  longitude: number;
-  radiusKm: number;
-  category?: string;
-  urgency?: 'low' | 'medium' | 'high' | 'critical';
+    latitude: number;
+    longitude: number;
+    radiusKm: number;
+    category?: string;
+    urgency?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export interface AidRecordSummary {
-  uri: string;
-  authorDid: string;
-  title: string;
-  status: 'open' | 'closed' | 'resolved';
-  category: string;
-  urgency: 'low' | 'medium' | 'high' | 'critical';
+    uri: string;
+    authorDid: string;
+    title: string;
+    status: 'open' | 'closed' | 'resolved';
+    category: string;
+    urgency: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export interface ApiQueryAidResponse {
-  results: AidRecordSummary[];
+    results: AidRecordSummary[];
 }
 
 export interface IndexerNormalizedAidEvent {
-  eventId: string;
-  atUri: string;
-  authorDid: string;
-  normalizedAt: string;
-  domain: Extract<DomainName, 'aid-records' | 'geo' | 'ranking' | 'directory'>;
+    eventId: string;
+    atUri: string;
+    authorDid: string;
+    normalizedAt: string;
+    domain: Extract<
+        DomainName,
+        'aid-records' | 'geo' | 'ranking' | 'directory'
+    >;
 }
 
 export interface ModerationDecisionEvent {
-  eventId: string;
-  subjectUri: string;
-  action: 'none' | 'label' | 'hide' | 'escalate';
-  reason: string;
-  decidedAt: string;
+    eventId: string;
+    subjectUri: string;
+    action: 'none' | 'label' | 'hide' | 'escalate';
+    reason: string;
+    decidedAt: string;
 }
 export interface AidFeedQueryRequest {
     radiusKm: number;

@@ -8,37 +8,50 @@ import { TextLink } from './components/TextLink';
 export const APP_TITLE = 'Mutual Hub';
 
 export const App = () => {
-  return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-8">
-      <header className="mb-8 flex flex-wrap items-center gap-3">
-        <h1 className="font-heading text-4xl font-black uppercase">{APP_TITLE}</h1>
-        <Badge tone="danger">Phase 1 baseline</Badge>
-      </header>
+    return (
+        <main className='mx-auto min-h-screen max-w-5xl px-4 py-8'>
+            <header className='mb-8 flex flex-wrap items-center gap-3'>
+                <h1 className='font-heading text-4xl font-black uppercase'>
+                    {APP_TITLE}
+                </h1>
+                <Badge tone='danger'>Phase 1 baseline</Badge>
+            </header>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Panel title="Discovery shell">
-          <p className="mb-3 text-sm text-[var(--mh-text-muted)]">
-            Vite + React + TypeScript + Tailwind are wired and ready for Phase 2 feature work.
-          </p>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wide">Search requests</label>
-          <Input placeholder="e.g. food, shelter, transport" />
-          <div className="mt-3 flex gap-2">
-            <Button>Find nearby</Button>
-            <Button variant="secondary">Create post</Button>
-          </div>
-        </Panel>
+            <div className='grid gap-6 md:grid-cols-2'>
+                <Panel title='Discovery shell'>
+                    <p className='mb-3 text-sm text-[var(--mh-text-muted)]'>
+                        Vite + React + TypeScript + Tailwind are wired and ready
+                        for Phase 2 feature work.
+                    </p>
+                    <label className='mb-2 block text-xs font-bold uppercase tracking-wide'>
+                        Search requests
+                    </label>
+                    <Input placeholder='e.g. food, shelter, transport' />
+                    <div className='mt-3 flex gap-2'>
+                        <Button>Find nearby</Button>
+                        <Button variant='secondary'>Create post</Button>
+                    </div>
+                </Panel>
 
-        <Card title="Service boundaries online">
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            <li>API shell at <code>localhost:4000</code></li>
-            <li>Indexer shell at <code>localhost:4100</code></li>
-            <li>Moderation worker shell at <code>localhost:4200</code></li>
-          </ul>
-          <p className="mt-3">
-            See <TextLink href="/">architecture docs</TextLink> for bounded contexts and ADR rationale.
-          </p>
-        </Card>
-      </div>
-    </main>
-  );
+                <Card title='Service boundaries online'>
+                    <ul className='list-disc space-y-1 pl-5 text-sm'>
+                        <li>
+                            API shell at <code>localhost:4000</code>
+                        </li>
+                        <li>
+                            Indexer shell at <code>localhost:4100</code>
+                        </li>
+                        <li>
+                            Moderation worker shell at{' '}
+                            <code>localhost:4200</code>
+                        </li>
+                    </ul>
+                    <p className='mt-3'>
+                        See <TextLink href='/'>architecture docs</TextLink> for
+                        bounded contexts and ADR rationale.
+                    </p>
+                </Card>
+            </div>
+        </main>
+    );
 };

@@ -16,11 +16,11 @@ Phase 1 requires runnable shells, shared env/config validation, quality gates, a
 
 1. Use a single-language TypeScript stack across frontend + backend services for v1.
 2. Structure repository by executable boundaries:
-   - `apps/web`
-   - `services/api`
-   - `services/indexer`
-   - `services/moderation-worker`
-   - `packages/shared`
+    - `apps/web`
+    - `services/api`
+    - `services/indexer`
+    - `services/moderation-worker`
+    - `packages/shared`
 3. Place shared env/config schema + cross-service contract stubs in `packages/shared`.
 4. Enforce baseline quality gates via workspace scripts and GitHub Actions CI.
 

@@ -6,9 +6,9 @@ This repository is scaffolded through **Phase 2** of roadmap issue #41.
 
 - Frontend: `apps/web` → Vite + React + TypeScript + Tailwind
 - Backend services:
-  - `services/api` (TypeScript)
-  - `services/indexer` (TypeScript)
-  - `services/moderation-worker` (TypeScript)
+    - `services/api` (TypeScript)
+    - `services/indexer` (TypeScript)
+    - `services/moderation-worker` (TypeScript)
 - Shared contracts/config: `packages/shared`
 - AT Lexicon schemas + fixtures: `packages/at-lexicons`
 
@@ -38,10 +38,10 @@ Detailed domain and boundary docs:
 ## Local setup
 
 1. Install dependencies:
-   - `npm ci`
+    - `npm ci`
 2. Copy config:
-   - `.env.example` is provided
-   - `.env` is included for local placeholder defaults
+    - `.env.example` is provided
+    - `.env` is included for local placeholder defaults
 
 ## Run services
 

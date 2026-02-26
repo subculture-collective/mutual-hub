@@ -9,15 +9,15 @@ This document describes the baseline identity/session lifecycle implemented in P
 ## Lifecycle
 
 1. **Handle input validation**
-   - Handle must be DNS-like (`alice.example`).
+    - Handle must be DNS-like (`alice.example`).
 2. **Handle resolution**
-   - Resolve handle to DID + PDS URL through an identity provider.
+    - Resolve handle to DID + PDS URL through an identity provider.
 3. **Session creation**
-   - Create an authenticated session using resolved DID.
+    - Create an authenticated session using resolved DID.
 4. **Pre-expiry refresh**
-   - Refresh session when access token is inside refresh-leeway window.
+    - Refresh session when access token is inside refresh-leeway window.
 5. **Expiry handling**
-   - If refresh token expiry has passed, flow fails with explicit `SESSION_EXPIRED`.
+    - If refresh token expiry has passed, flow fails with explicit `SESSION_EXPIRED`.
 
 ## Error model
 
