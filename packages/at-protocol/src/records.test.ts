@@ -88,3 +88,47 @@ test("invalid records fail with validation error", () => {
     (error: unknown) => isRecordValidationError(error),
   );
 });
+
+test("volunteer profile records persist skills and availability through updates", () => {
+  const repository = new AtRecordRepository();
+  const created = repository.createRecord({
+    repoDid: "did:plc:volunteer999",
+    collection: atLexiconCollections.volunteerProfile,
+    rkey: "volunteer-profile",
+    record: {
+      did: "did:plc:volunteer999",
+      displayName: "Morgan",
+      skills: ["first aid", "meal delivery"],
+      availability: ["weekday_evenings"],
+      verified: false,
+      preferredAidCategories: ["medical", "food"],
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    },
+  });
+
+  const updated = repository.updateRecord({
+    uri: created.uri,
+    record: {
+      did: "did:plc:volunteer999",
+      displayName: "Morgan S.",
+      skills: ["first aid", "meal delivery", "translation"],
+      availability: ["weekday_evenings", "weekend_mornings"],
+      verified: true,
+      preferredAidCategories: ["medical", "food"],
+      createdAt: nowIso,
+      updatedAt: new Date(Date.parse(nowIso) + 60_000).toISOString(),
+    },
+  });
+
+  assert.equal(updated.collection, atLexiconCollections.volunteerProfile);
+  assert.equal(updated.version, 2);
+
+  if (!("skills" in updated.value) || !("availability" in updated.value)) {
+    throw new Error("Expected volunteer profile fields to be present");
+  }
+
+  assert.deepEqual(updated.value.skills, ["first aid", "meal delivery", "translation"]);
+  assert.deepEqual(updated.value.availability, ["weekday_evenings", "weekend_mornings"]);
+  assert.equal(updated.value.verified, true);
+});

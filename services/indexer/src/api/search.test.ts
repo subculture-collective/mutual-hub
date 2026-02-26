@@ -5,7 +5,7 @@ import { atLexiconCollections } from "@mutual-hub/at-lexicons";
 
 import { normalizeFirehoseEvent } from "../firehose/consumer.js";
 import { QueryIndexStore } from "../indexing/query-store.js";
-import { searchFeedCards } from "./search.js";
+import { searchDirectoryResources, searchFeedCards } from "./search.js";
 
 const now = "2026-02-25T08:00:00.000Z";
 
@@ -97,4 +97,65 @@ test("feed ranking favors fresher posts when other signals are comparable", () =
   });
 
   assert.equal(feed.cards[0]?.id, "fresh-1");
+});
+
+test("directory search supports overlay-relevant filters and metadata text", () => {
+  const store = new QueryIndexStore(300);
+
+  store.applyFirehoseEvent(
+    normalizeFirehoseEvent({
+      op: "create",
+      uri: `at://did:plc:org1/${atLexiconCollections.resourceDirectory}/clinic-1`,
+      record: {
+        id: "clinic-1",
+        name: "Neighborhood Clinic",
+        type: "clinic",
+        location: {
+          lat: 1.3001,
+          lng: 103.8001,
+          precisionMeters: 200,
+          areaLabel: "Central",
+        },
+        openHours: "Walk-in evenings",
+        eligibilityNotes: "No insurance required",
+        createdAt: now,
+        updatedAt: now,
+      },
+    }),
+  );
+
+  store.applyFirehoseEvent(
+    normalizeFirehoseEvent({
+      op: "create",
+      uri: `at://did:plc:org2/${atLexiconCollections.resourceDirectory}/shelter-1`,
+      record: {
+        id: "shelter-1",
+        name: "Harbor Shelter",
+        type: "shelter",
+        location: {
+          lat: 1.36,
+          lng: 103.86,
+          precisionMeters: 300,
+          areaLabel: "Harbor",
+        },
+        openHours: "24/7",
+        eligibilityNotes: "Families prioritized",
+        createdAt: now,
+        updatedAt: now,
+      },
+    }),
+  );
+
+  const filtered = searchDirectoryResources(store, {
+    center: { lat: 1.3, lng: 103.8 },
+    radiusMeters: 5000,
+    type: "clinic",
+    text: "walk-in",
+  });
+
+  assert.deepEqual(
+    filtered.resources.map((resource) => resource.id),
+    ["clinic-1"],
+  );
+  assert.equal(filtered.resources[0]?.distanceMeters !== undefined, true);
 });
