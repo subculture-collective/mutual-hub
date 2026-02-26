@@ -1,33 +1,33 @@
-import type { ApproximateLocation } from './geo.js';
-import type { Did } from './identity.js';
+import type { ApproximateLocation } from "./geo.js";
+import type { Did } from "./identity.js";
 
 export const aidCategories = [
-    'food',
-    'shelter',
-    'medical',
-    'transport',
-    'childcare',
-    'supplies',
-    'other',
+  "food",
+  "shelter",
+  "medical",
+  "transport",
+  "childcare",
+  "supplies",
+  "other",
 ] as const;
 
 export type AidCategory = (typeof aidCategories)[number];
-export type AidStatus = 'open' | 'in_progress' | 'closed';
+export type AidStatus = "open" | "in_progress" | "closed";
 
 export interface AidPostRecord {
-    id: string;
-    title: string;
-    description: string;
-    category: AidCategory;
-    urgency: 1 | 2 | 3 | 4 | 5;
-    status: AidStatus;
-    createdAt: string;
-    updatedAt: string;
-    location?: ApproximateLocation;
-    accessibilityTags: string[];
+  id: string;
+  title: string;
+  description: string;
+  category: AidCategory;
+  urgency: 1 | 2 | 3 | 4 | 5;
+  status: AidStatus;
+  createdAt: string;
+  updatedAt: string;
+  location?: ApproximateLocation;
+  accessibilityTags: string[];
 }
 
 export interface AidPostSummary extends AidPostRecord {
-    uri: string;
-    authorDid: Did;
+  uri: string;
+  authorDid: Did;
 }

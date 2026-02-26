@@ -28,6 +28,17 @@ const aidCategorySchema = z.enum([
 ]);
 
 const aidStatusSchema = z.enum(['open', 'in_progress', 'closed']);
+const chatInitiationSourceSchema = z.enum([
+    'map_detail',
+    'feed_card',
+    'post_detail',
+]);
+const transportModeSchema = z.enum(['atproto_native', 'fallback_notice']);
+const fallbackReasonSchema = z.enum([
+    'recipient_unsupported',
+    'recipient_opt_out',
+    'recipient_unreachable',
+]);
 
 export const aidPostRecordSchema = z.object({
     id: z.string().min(1).max(128),
@@ -59,6 +70,28 @@ export const conversationMetadataRecordSchema = z.object({
     requesterDid: didSchema,
     recipientDid: didSchema,
     state: z.enum(['open', 'handoff_suggested', 'resolved', 'blocked']),
+    requestContext: z
+        .object({
+            source: chatInitiationSourceSchema,
+            postTitle: z.string().min(1).max(180),
+            category: aidCategorySchema,
+            urgency: z.number().int().min(1).max(5),
+            areaLabel: z.string().max(200).optional(),
+        })
+        .optional(),
+    routingDestinationType: z
+        .enum([
+            'post_author',
+            'volunteer_pool',
+            'resource_directory',
+            'manual_review',
+        ])
+        .optional(),
+    routingDestinationId: z.string().max(256).optional(),
+    routingRationale: z.string().max(2000).optional(),
+    transportMode: transportModeSchema.optional(),
+    fallbackReason: fallbackReasonSchema.optional(),
+    fallbackNotice: z.string().max(500).optional(),
     createdAt: timestampSchema,
     updatedAt: timestampSchema,
 });

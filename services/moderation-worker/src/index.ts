@@ -1,11 +1,15 @@
 import { parseEnv } from '@mutual-hub/config';
 
+import { createChatSafetyEngine } from './chat-safety.js';
 import { evaluateModeration } from './worker.js';
+
+export { ChatSafetyEngine, createChatSafetyEngine } from './chat-safety.js';
 
 export interface ModerationWorkerService {
     service: 'moderation-worker';
     port: number;
     evaluateModeration: typeof evaluateModeration;
+    chatSafety: ReturnType<typeof createChatSafetyEngine>;
 }
 
 export function createModerationWorkerService(
@@ -17,6 +21,7 @@ export function createModerationWorkerService(
         service: 'moderation-worker',
         port: env.MODERATION_WORKER_PORT,
         evaluateModeration,
+        chatSafety: createChatSafetyEngine(),
     };
 }
 

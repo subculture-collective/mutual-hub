@@ -1,4 +1,5 @@
 export * from './domains/aid-records.js';
+export * from './domains/chat-routing.js';
 export * from './domains/directory.js';
 export * from './domains/feed-ranking.js';
 export * from './domains/geo.js';

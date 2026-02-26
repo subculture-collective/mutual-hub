@@ -1,3 +1,5 @@
+import type { Did } from './identity.js';
+
 export type ModerationAction =
     | 'allow'
     | 'review'
@@ -14,6 +16,7 @@ export interface ModerationReportRecord {
     id: string;
     targetUri: string;
     reason: ReportReason;
+    reporterDid: Did;
     details?: string;
     createdAt: string;
 }

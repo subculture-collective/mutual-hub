@@ -31,6 +31,71 @@
                             "blocked"
                         ]
                     },
+                    "requestContext": {
+                        "type": "object",
+                        "required": [
+                            "source",
+                            "postTitle",
+                            "category",
+                            "urgency"
+                        ],
+                        "properties": {
+                            "source": {
+                                "type": "string",
+                                "knownValues": [
+                                    "map_detail",
+                                    "feed_card",
+                                    "post_detail"
+                                ]
+                            },
+                            "postTitle": { "type": "string", "maxLength": 180 },
+                            "category": {
+                                "type": "string",
+                                "knownValues": [
+                                    "food",
+                                    "shelter",
+                                    "medical",
+                                    "transport",
+                                    "childcare",
+                                    "supplies",
+                                    "other"
+                                ]
+                            },
+                            "urgency": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5
+                            },
+                            "areaLabel": { "type": "string", "maxLength": 200 }
+                        }
+                    },
+                    "routingDestinationType": {
+                        "type": "string",
+                        "knownValues": [
+                            "post_author",
+                            "volunteer_pool",
+                            "resource_directory",
+                            "manual_review"
+                        ]
+                    },
+                    "routingDestinationId": {
+                        "type": "string",
+                        "maxLength": 256
+                    },
+                    "routingRationale": { "type": "string", "maxLength": 2000 },
+                    "transportMode": {
+                        "type": "string",
+                        "knownValues": ["atproto_native", "fallback_notice"]
+                    },
+                    "fallbackReason": {
+                        "type": "string",
+                        "knownValues": [
+                            "recipient_unsupported",
+                            "recipient_opt_out",
+                            "recipient_unreachable"
+                        ]
+                    },
+                    "fallbackNotice": { "type": "string", "maxLength": 500 },
                     "createdAt": { "type": "string", "format": "datetime" },
                     "updatedAt": { "type": "string", "format": "datetime" }
                 }

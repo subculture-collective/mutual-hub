@@ -13,6 +13,19 @@ export type {
 export { createAtProtocolRuntimeConfig } from './config.js';
 export type { AtProtocolRuntimeConfig } from './config.js';
 export {
+    ConversationMetadataRepository,
+    fromConversationMetadataLexiconRecord,
+    resolveRecipientTransportCapability,
+    toConversationMetadataLexiconRecord,
+} from './conversations.js';
+export type {
+    ConversationMetadataAuditQuery,
+    ConversationMetadataAuditRecord,
+    RecipientTransportCapabilityInput,
+    RecipientTransportCapabilityResult,
+    UpsertConversationMetadataInput,
+} from './conversations.js';
+export {
     AtRecordRepository,
     createRecordUri,
     isRecordValidationError,
