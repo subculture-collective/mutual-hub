@@ -1,4 +1,5 @@
 export * from './app-shell.js';
+export * from './chat-ux.js';
 export * from './discovery-filters.js';
 export * from './discovery-primitives.js';
 export * from './feed-ux.js';
