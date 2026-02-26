@@ -2,12 +2,10 @@ import {
     toFeedDiscoveryQuery,
     type AidCategory,
     type AidStatus,
-    type DiscoveryCenter,
     type DiscoveryFilterState,
     type SharedAidDiscoveryQuery,
 } from './discovery-filters.js';
-
-const earthRadiusMeters = 6_371_000;
+import { haversineDistanceMeters } from './geo-utils.js';
 
 export interface FeedAidCard {
     id: string;
@@ -53,36 +51,17 @@ export type FeedLifecycleAction =
       }
     | { action: 'close'; id: string; closedAt?: string };
 
-const haversineDistanceMeters = (
-    a: DiscoveryCenter,
-    b: { lat: number; lng: number },
-): number => {
-    const latA = (a.lat * Math.PI) / 180;
-    const latB = (b.lat * Math.PI) / 180;
-    const latDelta = ((b.lat - a.lat) * Math.PI) / 180;
-    const lngDelta = ((b.lng - a.lng) * Math.PI) / 180;
-
-    const h =
-        Math.sin(latDelta / 2) * Math.sin(latDelta / 2) +
-        Math.cos(latA) *
-            Math.cos(latB) *
-            Math.sin(lngDelta / 2) *
-            Math.sin(lngDelta / 2);
-
-    return (
-        2 * earthRadiusMeters * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
-    );
-};
-
 const cardMatchesText = (card: FeedAidCard, text: string): boolean => {
-    const haystack = [
+    const fragments = [
         card.title,
         card.description,
         card.accessibilityTags.join(' '),
-    ]
-        .join(' ')
-        .toLowerCase();
-    return haystack.includes(text.toLowerCase());
+    ].filter((fragment) => !!fragment && fragment.trim().length > 0);
+
+    const haystack = fragments.join(' ').toLowerCase();
+    const needle = text.toLowerCase();
+
+    return haystack.includes(needle);
 };
 
 const toUrgencyBadge = (urgency: FeedAidCard['urgency']): FeedBadge => {
@@ -146,7 +125,7 @@ export function createFeedCard(input: {
     updatedAt?: string;
     location?: { lat: number; lng: number };
 }): FeedAidCard {
-    const now = new Date(0).toISOString();
+    const now = new Date().toISOString();
 
     return {
         id: input.id,
