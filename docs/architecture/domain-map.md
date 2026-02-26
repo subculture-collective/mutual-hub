@@ -2,16 +2,16 @@
 
 This map defines bounded contexts, ownership, and primary interface boundaries for v1.
 
-| Domain | Primary owner service | Key records/interfaces | Notes |
-| --- | --- | --- | --- |
-| Identity | `services/api` | DID auth/session contracts | Web clients only interact through API boundary |
-| Aid records | `services/api`, `services/indexer` | Query contracts + ingestion events | API writes/query surface; indexer normalizes/searches |
-| Geo | `services/indexer` | Approximate-area and geo index contracts | No exact coordinate exposure in public APIs |
-| Ranking | `services/indexer` | Ranked feed/map response contracts | Deterministic ranking pipeline boundary |
-| Messaging | `services/api` | 1:1 chat initiation/request contracts | Moderation hooks via async events |
-| Moderation | `services/moderation-worker` | Moderation decision events | Isolated async worker boundary |
-| Directory | `services/indexer` | Resource directory index/query contracts | Consumed by API responses |
-| Volunteer onboarding | `services/api` | Volunteer profile contracts | Future matching integration |
+| Domain               | Primary owner service              | Key records/interfaces                   | Notes                                                 |
+| -------------------- | ---------------------------------- | ---------------------------------------- | ----------------------------------------------------- |
+| Identity             | `services/api`                     | DID auth/session contracts               | Web clients only interact through API boundary        |
+| Aid records          | `services/api`, `services/indexer` | Query contracts + ingestion events       | API writes/query surface; indexer normalizes/searches |
+| Geo                  | `services/indexer`                 | Approximate-area and geo index contracts | No exact coordinate exposure in public APIs           |
+| Ranking              | `services/indexer`                 | Ranked feed/map response contracts       | Deterministic ranking pipeline boundary               |
+| Messaging            | `services/api`                     | 1:1 chat initiation/request contracts    | Moderation hooks via async events                     |
+| Moderation           | `services/moderation-worker`       | Moderation decision events               | Isolated async worker boundary                        |
+| Directory            | `services/indexer`                 | Resource directory index/query contracts | Consumed by API responses                             |
+| Volunteer onboarding | `services/api`                     | Volunteer profile contracts              | Future matching integration                           |
 
 ## Anti-corruption boundaries
 

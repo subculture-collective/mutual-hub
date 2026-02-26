@@ -1,19 +1,19 @@
 {
-  "name": "@mutual-hub/web",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "lint": "npm run typecheck",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "zod": "3.25.76"
-  }
+    "name": "@mutual-hub/web",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "lint": "npm run typecheck",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "react": "19.2.4",
+        "react-dom": "19.2.4",
+        "zod": "3.25.76"
+    }
 }

@@ -1,57 +1,130 @@
-export const CONTRACT_VERSION = '0.1.0-phase1';
+export const CONTRACT_VERSION = '0.3.0-phase3';
 
 export type DomainName =
-  | 'identity'
-  | 'aid-records'
-  | 'geo'
-  | 'ranking'
-  | 'messaging'
-  | 'moderation'
-  | 'directory'
-  | 'volunteer-onboarding';
+    | 'identity'
+    | 'aid-records'
+    | 'geo'
+    | 'ranking'
+    | 'messaging'
+    | 'moderation'
+    | 'directory'
+    | 'volunteer-onboarding';
 
 export interface ServiceHealth {
-  service: 'api' | 'indexer' | 'moderation-worker';
-  status: 'ok';
-  contractVersion: string;
-  did: string;
+    service: 'api' | 'indexer' | 'moderation-worker';
+    status: 'ok';
+    contractVersion: string;
+    did: string;
 }
 
 export interface ApiQueryAidRequest {
-  latitude: number;
-  longitude: number;
-  radiusKm: number;
-  category?: string;
-  urgency?: 'low' | 'medium' | 'high' | 'critical';
+    latitude: number;
+    longitude: number;
+    radiusKm: number;
+    category?:
+        | 'food'
+        | 'shelter'
+        | 'medical'
+        | 'transport'
+        | 'childcare'
+        | 'other';
+    urgency?: 'low' | 'medium' | 'high' | 'critical';
+    status?: 'open' | 'in-progress' | 'resolved' | 'closed';
+    freshnessHours?: number;
+    searchText?: string;
+    page?: number;
+    pageSize?: number;
 }
 
 export interface AidRecordSummary {
-  uri: string;
-  authorDid: string;
-  title: string;
-  status: 'open' | 'closed' | 'resolved';
-  category: string;
-  urgency: 'low' | 'medium' | 'high' | 'critical';
+    uri: string;
+    authorDid: string;
+    title: string;
+    summary: string;
+    status: 'open' | 'in-progress' | 'resolved' | 'closed';
+    category:
+        | 'food'
+        | 'shelter'
+        | 'medical'
+        | 'transport'
+        | 'childcare'
+        | 'other';
+    urgency: 'low' | 'medium' | 'high' | 'critical';
+    approximateGeo: {
+        latitude: number;
+        longitude: number;
+        precisionKm: number;
+    };
+    distanceKm: number;
+    ranking: {
+        distanceBandScore: number;
+        recencyScore: number;
+        trustScore: number;
+        finalScore: number;
+    };
 }
 
 export interface ApiQueryAidResponse {
-  results: AidRecordSummary[];
+    total: number;
+    page: number;
+    pageSize: number;
+    hasNextPage: boolean;
+    results: AidRecordSummary[];
+}
+
+export interface ApiQueryDirectoryRequest {
+    category?: string;
+    status?: 'unverified' | 'community-verified' | 'partner-verified';
+    freshnessHours?: number;
+    searchText?: string;
+    page?: number;
+    pageSize?: number;
+}
+
+export interface DirectoryRecordSummary {
+    uri: string;
+    authorDid: string;
+    name: string;
+    category: string;
+    serviceArea: string;
+    status: 'unverified' | 'community-verified' | 'partner-verified';
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ApiQueryDirectoryResponse {
+    total: number;
+    page: number;
+    pageSize: number;
+    hasNextPage: boolean;
+    results: DirectoryRecordSummary[];
+}
+
+export interface ApiQueryErrorResponse {
+    error: {
+        code: 'INVALID_QUERY' | 'UNSUPPORTED_ROUTE';
+        message: string;
+        details?: Record<string, unknown>;
+    };
 }
 
 export interface IndexerNormalizedAidEvent {
-  eventId: string;
-  atUri: string;
-  authorDid: string;
-  normalizedAt: string;
-  domain: Extract<DomainName, 'aid-records' | 'geo' | 'ranking' | 'directory'>;
+    eventId: string;
+    atUri: string;
+    authorDid: string;
+    normalizedAt: string;
+    domain: Extract<
+        DomainName,
+        'aid-records' | 'geo' | 'ranking' | 'directory'
+    >;
 }
 
 export interface ModerationDecisionEvent {
-  eventId: string;
-  subjectUri: string;
-  action: 'none' | 'label' | 'hide' | 'escalate';
-  reason: string;
-  decidedAt: string;
+    eventId: string;
+    subjectUri: string;
+    action: 'none' | 'label' | 'hide' | 'escalate';
+    reason: string;
+    decidedAt: string;
 }
 export interface AidFeedQueryRequest {
     radiusKm: number;
@@ -77,6 +150,8 @@ export interface FirehoseNormalizedEvent {
     recordUri: string;
     authorDid: string;
     indexedAt: string;
+    action: 'create' | 'update' | 'delete';
+    seq: number;
 }
 
 export interface ModerationReviewRequestedEvent {
@@ -93,16 +168,21 @@ export type ServiceEvent =
 export const serviceContractStubs = {
     api: {
         request: {
+            latitude: 40.7128,
+            longitude: -74.006,
             radiusKm: 5,
-            categories: ['food'],
+            category: 'food',
             urgency: 'high',
             status: 'open',
-        } satisfies AidFeedQueryRequest,
+            freshnessHours: 24,
+        } satisfies ApiQueryAidRequest,
         response: {
-            requestId: 'stub-request-id',
             total: 0,
-            items: [],
-        } satisfies AidFeedQueryResponse,
+            page: 1,
+            pageSize: 20,
+            hasNextPage: false,
+            results: [],
+        } satisfies ApiQueryAidResponse,
     },
     indexer: {
         event: {
@@ -110,6 +190,8 @@ export const serviceContractStubs = {
             recordUri: 'at://did:example:alice/app.mutualhub.aid.post/abc123',
             authorDid: 'did:example:alice',
             indexedAt: new Date(0).toISOString(),
+            action: 'create',
+            seq: 1,
         } satisfies FirehoseNormalizedEvent,
     },
     moderationWorker: {

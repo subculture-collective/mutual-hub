@@ -1,0 +1,39 @@
+{
+    "lexicon": 1,
+    "id": "app.mutualhub.directory.resource",
+    "revision": "1.0.0",
+    "description": "Resource directory listing record.",
+    "defs": {
+        "main": {
+            "type": "record",
+            "key": "tid",
+            "record": {
+                "type": "object",
+                "required": [
+                    "$type",
+                    "version",
+                    "name",
+                    "category",
+                    "serviceArea",
+                    "contact",
+                    "verificationStatus",
+                    "createdAt"
+                ],
+                "properties": {
+                    "$type": {
+                        "type": "string",
+                        "const": "app.mutualhub.directory.resource"
+                    },
+                    "version": { "type": "string", "const": "1.0.0" },
+                    "name": { "type": "string", "maxLength": 120 },
+                    "category": { "type": "string" },
+                    "serviceArea": { "type": "string", "maxLength": 120 },
+                    "contact": { "type": "object" },
+                    "verificationStatus": { "type": "string" },
+                    "createdAt": { "type": "string", "format": "datetime" },
+                    "updatedAt": { "type": "string", "format": "datetime" }
+                }
+            }
+        }
+    }
+}

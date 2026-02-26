@@ -1,62 +1,66 @@
 :root {
-  --mh-bg: #fffdf5;
-  --mh-surface: #ffffff;
-  --mh-panel: #c0c0c0;
-  --mh-text: #000000;
-  --mh-text-muted: #4b5563;
-  --mh-accent: #ff6b6b;
-  --mh-accent-2: #ffd93d;
-  --mh-accent-3: #c4b5fd;
-  --mh-link: #0000ff;
-  --mh-link-visited: #800080;
-  --mh-success: #00aa00;
-  --mh-danger: #ff0000;
-  --mh-border: #000000;
-  --mh-border-light: #ffffff;
-  --mh-border-dark: #808080;
-  --mh-titlebar-start: #000080;
-  --mh-titlebar-end: #1084d0;
+    --mh-bg: #fffdf5;
+    --mh-surface: #ffffff;
+    --mh-panel: #c0c0c0;
+    --mh-text: #000000;
+    --mh-text-muted: #4b5563;
+    --mh-accent: #ff6b6b;
+    --mh-accent-2: #ffd93d;
+    --mh-accent-3: #c4b5fd;
+    --mh-link: #0000ff;
+    --mh-link-visited: #800080;
+    --mh-success: #00aa00;
+    --mh-danger: #ff0000;
+    --mh-border: #000000;
+    --mh-border-light: #ffffff;
+    --mh-border-dark: #808080;
+    --mh-titlebar-start: #000080;
+    --mh-titlebar-end: #1084d0;
 
-  --mh-font-heading: 'Space Mono', 'Arial Black', Impact, sans-serif;
-  --mh-font-body: 'MS Sans Serif', Tahoma, 'Segoe UI', sans-serif;
-  --mh-font-mono: 'VT323', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --mh-font-heading: 'Space Mono', 'Arial Black', Impact, sans-serif;
+    --mh-font-body: 'MS Sans Serif', Tahoma, 'Segoe UI', sans-serif;
+    --mh-font-mono: 'VT323', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .font-heading {
-  font-family: var(--mh-font-heading);
+    font-family: var(--mh-font-heading);
 }
 
 .mh-button {
-  min-height: 44px;
-  border-color: var(--mh-border-light) var(--mh-border-dark) var(--mh-border-dark) var(--mh-border-light);
-  box-shadow: 8px 8px 0 0 var(--mh-border);
-  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+    min-height: 44px;
+    border-color: var(--mh-border-light) var(--mh-border-dark)
+        var(--mh-border-dark) var(--mh-border-light);
+    box-shadow: 8px 8px 0 0 var(--mh-border);
+    transition:
+        transform 120ms ease-out,
+        box-shadow 120ms ease-out;
 }
 
 .mh-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 12px 12px 0 0 var(--mh-border);
+    transform: translateY(-2px);
+    box-shadow: 12px 12px 0 0 var(--mh-border);
 }
 
 .mh-button:active {
-  border-color: var(--mh-border-dark) var(--mh-border-light) var(--mh-border-light) var(--mh-border-dark);
-  transform: translate(1px, 1px);
-  box-shadow: 6px 6px 0 0 var(--mh-border);
+    border-color: var(--mh-border-dark) var(--mh-border-light)
+        var(--mh-border-light) var(--mh-border-dark);
+    transform: translate(1px, 1px);
+    box-shadow: 6px 6px 0 0 var(--mh-border);
 }
 
 :where(a, button, input, textarea, select, [role='button']):focus-visible {
-  outline: 2px solid #000;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px #ffd93d;
+    outline: 2px solid #000;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ffd93d;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
