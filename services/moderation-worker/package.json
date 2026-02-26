@@ -10,6 +10,7 @@
         "dev": "tsx watch src/index.ts",
         "lint": "biome check src",
         "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test:moderation-privacy": "tsx --test src/chat-safety.test.ts",
         "test": "tsx --test src/**/*.test.ts"
     },
     "dependencies": {

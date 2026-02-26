@@ -1,36 +1,49 @@
-import { parseEnv } from "@mutual-hub/config";
-import { aidCategories } from "@mutual-hub/shared";
+import { parseEnv } from '@mutual-hub/config';
+import { aidCategories, createMinimalLogEntry } from '@mutual-hub/shared';
 
-import { shellSections } from "./app-shell.js";
-export * from "./chat-initiation.js";
-export * from "./discovery-filters.js";
-export * from "./discovery-primitives.js";
-export * from "./feed-ux.js";
-export * from "./map-ux.js";
-export * from "./posting-form.js";
-export * from "./resource-directory-ux.js";
-export * from "./volunteer-onboarding.js";
+import { shellSections } from './app-shell.js';
+export * from './chat-initiation.js';
+export * from './discovery-filters.js';
+export * from './discovery-primitives.js';
+export * from './feed-ux.js';
+export * from './map-ux.js';
+export * from './posting-form.js';
+export * from './resource-directory-ux.js';
+export * from './volunteer-onboarding.js';
 
 export interface WebShellBootstrap {
-  service: "web";
-  port: number;
-  sections: typeof shellSections;
-  supportedCategories: readonly string[];
+    service: 'web';
+    port: number;
+    sections: typeof shellSections;
+    supportedCategories: readonly string[];
 }
 
 export function createWebShellBootstrap(
-  rawEnv: NodeJS.ProcessEnv = process.env,
+    rawEnv: NodeJS.ProcessEnv = process.env,
 ): WebShellBootstrap {
-  const env = parseEnv(rawEnv);
+    const env = parseEnv(rawEnv);
 
-  return {
-    service: "web",
-    port: env.WEB_PORT,
-    sections: shellSections,
-    supportedCategories: aidCategories,
-  };
+    return {
+        service: 'web',
+        port: env.WEB_PORT,
+        sections: shellSections,
+        supportedCategories: aidCategories,
+    };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log(JSON.stringify(createWebShellBootstrap(), null, 2));
+    console.log(
+        JSON.stringify(
+            createMinimalLogEntry('service.ready', createWebShellBootstrap(), {
+                allowedKeys: [
+                    'service',
+                    'port',
+                    'sections',
+                    'supportedCategories',
+                ],
+            }),
+            null,
+            2,
+        ),
+    );
 }

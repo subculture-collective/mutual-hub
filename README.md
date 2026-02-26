@@ -12,8 +12,11 @@ Phase 1 scaffold for an AT Protocol-native mutual aid hub.
     - `packages/shared` (domain modules)
 - Shared lint/typecheck/test scripts across all services.
 - CI workflow (`.github/workflows/ci.yml`) running lint + typecheck + tests.
+- Moderation/privacy release gate (`npm run test:moderation-privacy`) documented in
+  `docs/MODERATION_PRIVACY_GATES.md` and enforced in CI.
 
 ## Local verification
 
 1. Install dependencies
 2. Run `npm run ci`
+3. Run `npm run test:moderation-privacy` for release-gate checks

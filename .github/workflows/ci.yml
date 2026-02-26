@@ -22,5 +22,8 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            - name: Run moderation/privacy release gates
+              run: npm run test:moderation-privacy
+
             - name: Run quality gates
               run: npm run ci

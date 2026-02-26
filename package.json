@@ -13,6 +13,7 @@
         "lint": "npm run lint --workspaces --if-present",
         "typecheck": "npm run typecheck --workspaces --if-present",
         "test": "npm run test --workspaces --if-present",
+        "test:moderation-privacy": "npm run test:moderation-privacy --workspaces --if-present",
         "ci": "npm run lint && npm run typecheck && npm run test"
     },
     "devDependencies": {

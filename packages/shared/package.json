@@ -9,6 +9,7 @@
         "build": "tsc -p tsconfig.json",
         "lint": "biome check src",
         "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test:moderation-privacy": "tsx --test src/domains/moderation.test.ts src/domains/privacy.test.ts src/index.test.ts",
         "test": "tsx --test src/**/*.test.ts"
     }
 }
