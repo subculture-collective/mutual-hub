@@ -12,6 +12,7 @@
         "test": "vitest run"
     },
     "dependencies": {
+        "@mutual-hub/at-lexicons": "0.1.0",
         "zod": "3.25.76"
     }
 }

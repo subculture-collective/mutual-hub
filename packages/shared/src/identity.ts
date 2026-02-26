@@ -241,6 +241,12 @@ export const createInMemoryIdentityProvider = (
             };
         },
 
+        /**
+         * @warning This mock does NOT validate the password parameter.
+         * It is intended for testing/development only and MUST NOT be used in
+         * production. A real IdentityProvider must implement proper password
+         * validation.
+         */
         async createSession(input): Promise<DidSession> {
             const issuedAt = new Date().toISOString();
             return {

@@ -14,7 +14,7 @@ export const App = () => {
                 <h1 className='font-heading text-4xl font-black uppercase'>
                     {APP_TITLE}
                 </h1>
-                <Badge tone='danger'>Phase 1 baseline</Badge>
+                <Badge tone='danger'>Phase 2 baseline</Badge>
             </header>
 
             <div className='grid gap-6 md:grid-cols-2'>
