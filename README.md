@@ -1,6 +1,6 @@
-# Mutual Hub (Phase 3 Baseline)
+# Mutual Hub (Phase 5 Baseline)
 
-This repository is scaffolded through **Phase 3** of roadmap issue #41.
+This repository is scaffolded through **Phase 5** of roadmap issue #41.
 
 ## Stack
 
@@ -26,6 +26,20 @@ This repository is scaffolded through **Phase 3** of roadmap issue #41.
 - Server-side query APIs for map/feed/directory with validation, filters, and pagination.
 - Deterministic ranking pipeline combining distance band, recency, and trust signals.
 
+## Phase 4 additions
+
+- Shared discovery filter model + chip primitives for map/feed surfaces.
+- Map UX logic for clustering, approximate markers, and detail drawer actions.
+- Feed UX logic for latest/nearby tabs and post lifecycle interactions.
+- Shared posting form validation + geoprivacy payload shaping.
+
+## Phase 5 additions
+
+- Post-linked 1:1 chat initiation contract with map/feed/detail source context.
+- Deterministic routing assistant for post author vs volunteer pool vs verified resource.
+- Conversation metadata persistence with recipient-capability fallback notices.
+- Chat safety controls: block/mute/report, abuse keyword flagging, and rate limits.
+
 ## Service boundaries
 
 - **API service**: request/response boundary for web clients and downstream contracts.
@@ -42,6 +56,7 @@ Detailed domain and boundary docs:
 - `docs/at-protocol/identity-session.md`
 - `docs/at-protocol/tombstone-contract.md`
 - `docs/architecture/phase3-ingestion-query.md`
+- `docs/architecture/phase5-chat-routing.md`
 
 ## Local setup
 
@@ -64,12 +79,20 @@ Each backend service exposes a health endpoint:
 - Indexer: `GET http://localhost:4100/health`
 - Moderation worker: `GET http://localhost:4200/health`
 
-Phase 3 service endpoints:
+Phase 5 service endpoints:
 
 - API:
     - `GET /query/map`
     - `GET /query/feed`
     - `GET /query/directory`
+    - `GET /chat/initiate`
+    - `GET /chat/route`
+    - `GET /chat/conversations`
+    - `GET /chat/safety/evaluate`
+    - `GET /chat/safety/block`
+    - `GET /chat/safety/mute`
+    - `GET /chat/safety/report`
+    - `GET /chat/safety/signals/drain`
 - Indexer:
     - `GET /ingestion/metrics`
     - `GET /ingestion/logs`

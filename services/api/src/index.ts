@@ -6,10 +6,12 @@ import {
     loadApiConfig,
     type ServiceHealth,
 } from '@mutual-hub/shared';
+import { createFixtureChatService } from './chat-service.js';
 import { createFixtureQueryService } from './query-service.js';
 
 const config = loadApiConfig();
 const queryService = createFixtureQueryService();
+const chatService = createFixtureChatService();
 
 const healthPayload: ServiceHealth = {
     service: 'api',
@@ -43,6 +45,14 @@ export const createApiServer = () => {
                     '/query/map',
                     '/query/feed',
                     '/query/directory',
+                    '/chat/initiate',
+                    '/chat/route',
+                    '/chat/conversations',
+                    '/chat/safety/evaluate',
+                    '/chat/safety/block',
+                    '/chat/safety/mute',
+                    '/chat/safety/report',
+                    '/chat/safety/signals/drain',
                     '/health',
                 ],
             });
@@ -63,6 +73,60 @@ export const createApiServer = () => {
 
         if (requestUrl.pathname === '/query/directory') {
             const result = queryService.queryDirectory(requestUrl.searchParams);
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/initiate') {
+            const result = chatService.initiateFromParams(requestUrl.searchParams);
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/route') {
+            const result = chatService.routeScenarioFromParams(
+                requestUrl.searchParams,
+            );
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/conversations') {
+            const result = chatService.listConversationsFromParams(
+                requestUrl.searchParams,
+            );
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/safety/evaluate') {
+            const result = chatService.evaluateSafetyFromParams(
+                requestUrl.searchParams,
+            );
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/safety/block') {
+            const result = chatService.blockFromParams(requestUrl.searchParams);
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/safety/mute') {
+            const result = chatService.muteFromParams(requestUrl.searchParams);
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/safety/report') {
+            const result = chatService.reportFromParams(requestUrl.searchParams);
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/safety/signals/drain') {
+            const result = chatService.drainModerationSignals();
             writeJson(response, result.statusCode, result.body);
             return;
         }

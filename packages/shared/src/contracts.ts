@@ -1,4 +1,4 @@
-export const CONTRACT_VERSION = '0.3.0-phase3';
+export const CONTRACT_VERSION = '0.5.0-phase5';
 
 export type DomainName =
     | 'identity'
@@ -108,6 +108,31 @@ export interface ApiQueryErrorResponse {
     };
 }
 
+export interface ApiChatInitiationRequest {
+    aidPostUri: string;
+    initiatedByDid: string;
+    recipientDid: string;
+    initiatedFrom: 'map' | 'feed' | 'detail';
+}
+
+export interface ApiChatInitiationResponse {
+    conversationUri: string;
+    created: boolean;
+    transportPath: 'atproto-direct' | 'resource-fallback' | 'manual-fallback';
+    fallbackNotice?: {
+        code: 'RECIPIENT_CAPABILITY_MISSING';
+        message: string;
+        safeForUser: true;
+    };
+}
+
+export interface ApiChatSafetyEvaluationResponse {
+    allowed: boolean;
+    code: 'OK' | 'BLOCKED' | 'RATE_LIMITED' | 'ABUSE_FLAGGED';
+    userMessage: string;
+    matchedKeywords: string[];
+}
+
 export interface IndexerNormalizedAidEvent {
     eventId: string;
     atUri: string;
@@ -183,6 +208,19 @@ export const serviceContractStubs = {
             hasNextPage: false,
             results: [],
         } satisfies ApiQueryAidResponse,
+        chatInitiation: {
+            aidPostUri:
+                'at://did:example:alice/app.mutualhub.aid.post/post-123',
+            initiatedByDid: 'did:example:helper',
+            recipientDid: 'did:example:alice',
+            initiatedFrom: 'map',
+        } satisfies ApiChatInitiationRequest,
+        chatInitiationResponse: {
+            conversationUri:
+                'at://did:example:alice/app.mutualhub.conversation.meta/conv-123',
+            created: true,
+            transportPath: 'atproto-direct',
+        } satisfies ApiChatInitiationResponse,
     },
     indexer: {
         event: {
