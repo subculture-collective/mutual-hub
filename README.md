@@ -1,6 +1,6 @@
-# Mutual Hub (Phase 2 Baseline)
+# Mutual Hub (Phase 3 Baseline)
 
-This repository is scaffolded through **Phase 2** of roadmap issue #41.
+This repository is scaffolded through **Phase 3** of roadmap issue #41.
 
 ## Stack
 
@@ -19,6 +19,13 @@ This repository is scaffolded through **Phase 2** of roadmap issue #41.
 - Typed create/update/delete record primitives with schema validation and structured errors.
 - Tombstone/delete propagation contract with round-trip serialization tests.
 
+## Phase 3 additions
+
+- Firehose ingestion consumer with deterministic normalization and replay support.
+- In-memory geo/full-text/category/status index strategy for aid + directory records.
+- Server-side query APIs for map/feed/directory with validation, filters, and pagination.
+- Deterministic ranking pipeline combining distance band, recency, and trust signals.
+
 ## Service boundaries
 
 - **API service**: request/response boundary for web clients and downstream contracts.
@@ -34,6 +41,7 @@ Detailed domain and boundary docs:
 - `docs/at-protocol/lexicon-versioning.md`
 - `docs/at-protocol/identity-session.md`
 - `docs/at-protocol/tombstone-contract.md`
+- `docs/architecture/phase3-ingestion-query.md`
 
 ## Local setup
 
@@ -50,11 +58,22 @@ Detailed domain and boundary docs:
 - Indexer: `npm run dev:indexer`
 - Moderation worker: `npm run dev:moderation`
 
-Each backend service exposes a stub health endpoint:
+Each backend service exposes a health endpoint:
 
 - API: `GET http://localhost:4000/health`
 - Indexer: `GET http://localhost:4100/health`
 - Moderation worker: `GET http://localhost:4200/health`
+
+Phase 3 service endpoints:
+
+- API:
+    - `GET /query/map`
+    - `GET /query/feed`
+    - `GET /query/directory`
+- Indexer:
+    - `GET /ingestion/metrics`
+    - `GET /ingestion/logs`
+    - `GET /indexes/stats`
 
 ## Quality gates
 

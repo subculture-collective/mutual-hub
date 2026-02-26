@@ -129,9 +129,9 @@ Do **not** overwhelm content with dense textures.
 - Primary CTA: `--mh-accent` fill + black border + white text
 - Secondary CTA: `--mh-accent-2` fill + black text
 - Interaction:
-  - hover: slight lift + stronger hard shadow
-  - active: inset/pressed state
-  - focus-visible: high contrast ring (see a11y section)
+    - hover: slight lift + stronger hard shadow
+    - active: inset/pressed state
+    - focus-visible: high contrast ring (see a11y section)
 
 ### Links
 
@@ -183,9 +183,9 @@ Recommended baseline:
 
 ```css
 focus-visible {
-  outline: 2px solid #000;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px #FFD93D;
+    outline: 2px solid #000;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ffd93d;
 }
 ```
 

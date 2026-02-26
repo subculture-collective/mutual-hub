@@ -1,0 +1,117 @@
+import { describe, expect, it } from 'vitest';
+import {
+    FirehoseConsumer,
+    buildPhase3FixtureFirehoseEvents,
+    normalizeFirehoseEvent,
+} from './firehose.js';
+import { recordNsid } from './record-schema.js';
+
+describe('P3.1 firehose consumer + normalization', () => {
+    it('ingests fixture streams with deterministic normalized output', () => {
+        const consumer = new FirehoseConsumer();
+        const fixtures = buildPhase3FixtureFirehoseEvents();
+
+        const result = consumer.ingest(fixtures);
+
+        expect(result.metrics).toMatchObject({
+            processed: fixtures.length,
+            normalized: fixtures.length,
+            failed: 0,
+            malformed: 0,
+            partial: 0,
+        });
+        expect(result.failures).toEqual([]);
+        expect(result.normalizedEvents).toHaveLength(fixtures.length);
+        expect(result.checkpointSeq).toBe(5);
+
+        expect(result.normalizedEvents[0]).toMatchObject({
+            seq: 1,
+            action: 'create',
+            collection: recordNsid.aidPost,
+        });
+    });
+
+    it('replays deterministically across reprocessing runs', () => {
+        const consumer = new FirehoseConsumer();
+        const fixtures = buildPhase3FixtureFirehoseEvents();
+
+        const first = consumer.ingest(fixtures);
+        const replayed = consumer.replay(fixtures);
+
+        expect(replayed.normalizedEvents).toEqual(first.normalizedEvents);
+        expect(replayed.failures).toEqual(first.failures);
+        expect(replayed.metrics).toEqual(first.metrics);
+    });
+
+    it('classifies malformed, partial, and validation-failed events', () => {
+        const consumer = new FirehoseConsumer();
+        const invalidBatch = [
+            {
+                seq: 'bad',
+                action: 'create',
+                uri: 'at://did:example:alice/app.mutualhub.aid.post/oops',
+                collection: recordNsid.aidPost,
+            },
+            {
+                seq: 9,
+                action: 'create',
+                uri: 'at://did:example:alice/app.mutualhub.aid.post/partial',
+                collection: recordNsid.aidPost,
+                authorDid: 'did:example:alice',
+            },
+            {
+                seq: 10,
+                action: 'create',
+                uri: 'at://did:example:alice/app.mutualhub.aid.post/invalid',
+                collection: recordNsid.aidPost,
+                authorDid: 'did:example:alice',
+                record: {
+                    $type: recordNsid.aidPost,
+                    version: '1.0.0',
+                    title: 'Needs supplies',
+                    description: 'Invalid urgency payload for test',
+                    category: 'food',
+                    urgency: 'urgent',
+                    status: 'open',
+                    location: {
+                        latitude: 40.7,
+                        longitude: -74,
+                        precisionKm: 3,
+                    },
+                    createdAt: '2026-02-26T12:00:00.000Z',
+                },
+            },
+        ];
+
+        const result = consumer.ingest(invalidBatch);
+
+        expect(result.metrics).toMatchObject({
+            processed: 3,
+            normalized: 0,
+            failed: 3,
+            malformed: 1,
+            partial: 1,
+        });
+
+        const codes = result.failures.map(entry => entry.code).sort();
+        expect(codes).toEqual([
+            'MALFORMED_EVENT',
+            'PARTIAL_EVENT',
+            'VALIDATION_FAILED',
+        ]);
+    });
+
+    it('normalizes AT URI author DID when authorDid field is omitted', () => {
+        const normalized = normalizeFirehoseEvent({
+            seq: 44,
+            action: 'delete',
+            uri: 'at://did:example:alice/app.mutualhub.aid.post/post-z',
+            collection: recordNsid.aidPost,
+        });
+
+        expect(normalized.success).toBe(true);
+        if (normalized.success) {
+            expect(normalized.event.authorDid).toBe('did:example:alice');
+        }
+    });
+});
