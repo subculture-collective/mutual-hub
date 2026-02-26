@@ -3,6 +3,9 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/at-lexicons"
+    },
+    {
       "path": "./packages/shared"
     },
     {

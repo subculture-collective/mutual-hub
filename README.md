@@ -1,6 +1,6 @@
-# Mutual Hub (Phase 1 Baseline)
+# Mutual Hub (Phase 2 Baseline)
 
-This repository is scaffolded for **Phase 1** of roadmap issue #41.
+This repository is scaffolded through **Phase 2** of roadmap issue #41.
 
 ## Stack
 
@@ -10,6 +10,14 @@ This repository is scaffolded for **Phase 1** of roadmap issue #41.
   - `services/indexer` (TypeScript)
   - `services/moderation-worker` (TypeScript)
 - Shared contracts/config: `packages/shared`
+- AT Lexicon schemas + fixtures: `packages/at-lexicons`
+
+## Phase 2 additions
+
+- Versioned AT Lexicon schema set for all v1 record types.
+- DID identity/session primitives with handle resolution and refresh semantics.
+- Typed create/update/delete record primitives with schema validation and structured errors.
+- Tombstone/delete propagation contract with round-trip serialization tests.
 
 ## Service boundaries
 
@@ -23,6 +31,9 @@ Detailed domain and boundary docs:
 - `docs/architecture/domain-map.md`
 - `docs/architecture/service-boundaries.md`
 - `docs/architecture/adr/0001-v1-stack-and-domain-boundaries.md`
+- `docs/at-protocol/lexicon-versioning.md`
+- `docs/at-protocol/identity-session.md`
+- `docs/at-protocol/tombstone-contract.md`
 
 ## Local setup
 
