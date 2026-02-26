@@ -1,35 +1,40 @@
 {
-  "lexicon": 1,
-  "id": "com.mutualaid.hub.conversationMetadata",
-  "description": "Mutual Hub conversation metadata schema v1",
-  "defs": {
-    "main": {
-      "type": "record",
-      "key": "tid",
-      "record": {
-        "type": "object",
-        "required": [
-          "id",
-          "postUri",
-          "requesterDid",
-          "recipientDid",
-          "state",
-          "createdAt",
-          "updatedAt"
-        ],
-        "properties": {
-          "id": { "type": "string", "maxLength": 128 },
-          "postUri": { "type": "string", "format": "at-uri" },
-          "requesterDid": { "type": "string", "format": "did" },
-          "recipientDid": { "type": "string", "format": "did" },
-          "state": {
-            "type": "string",
-            "knownValues": ["open", "handoff_suggested", "resolved", "blocked"]
-          },
-          "createdAt": { "type": "string", "format": "datetime" },
-          "updatedAt": { "type": "string", "format": "datetime" }
+    "lexicon": 1,
+    "id": "com.mutualaid.hub.conversationMetadata",
+    "description": "Mutual Hub conversation metadata schema v1",
+    "defs": {
+        "main": {
+            "type": "record",
+            "key": "tid",
+            "record": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "postUri",
+                    "requesterDid",
+                    "recipientDid",
+                    "state",
+                    "createdAt",
+                    "updatedAt"
+                ],
+                "properties": {
+                    "id": { "type": "string", "maxLength": 128 },
+                    "postUri": { "type": "string", "format": "at-uri" },
+                    "requesterDid": { "type": "string", "format": "did" },
+                    "recipientDid": { "type": "string", "format": "did" },
+                    "state": {
+                        "type": "string",
+                        "knownValues": [
+                            "open",
+                            "handoff_suggested",
+                            "resolved",
+                            "blocked"
+                        ]
+                    },
+                    "createdAt": { "type": "string", "format": "datetime" },
+                    "updatedAt": { "type": "string", "format": "datetime" }
+                }
+            }
         }
-      }
     }
-  }
 }

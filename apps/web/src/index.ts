@@ -1,28 +1,28 @@
-import { parseEnv } from "@mutual-hub/config";
-import { aidCategories } from "@mutual-hub/shared";
+import { parseEnv } from '@mutual-hub/config';
+import { aidCategories } from '@mutual-hub/shared';
 
-import { shellSections } from "./app-shell.js";
+import { shellSections } from './app-shell.js';
 
 export interface WebShellBootstrap {
-  service: "web";
-  port: number;
-  sections: typeof shellSections;
-  supportedCategories: readonly string[];
+    service: 'web';
+    port: number;
+    sections: typeof shellSections;
+    supportedCategories: readonly string[];
 }
 
 export function createWebShellBootstrap(
-  rawEnv: NodeJS.ProcessEnv = process.env,
+    rawEnv: NodeJS.ProcessEnv = process.env,
 ): WebShellBootstrap {
-  const env = parseEnv(rawEnv);
+    const env = parseEnv(rawEnv);
 
-  return {
-    service: "web",
-    port: env.WEB_PORT,
-    sections: shellSections,
-    supportedCategories: aidCategories,
-  };
+    return {
+        service: 'web',
+        port: env.WEB_PORT,
+        sections: shellSections,
+        supportedCategories: aidCategories,
+    };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log(JSON.stringify(createWebShellBootstrap(), null, 2));
+    console.log(JSON.stringify(createWebShellBootstrap(), null, 2));
 }

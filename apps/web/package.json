@@ -1,19 +1,19 @@
 {
-  "name": "@mutual-hub/web",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsx watch src/index.ts",
-    "lint": "biome check src",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test src/**/*.test.ts"
-  },
-  "dependencies": {
-    "@mutual-hub/config": "file:../../packages/config",
-    "@mutual-hub/shared": "file:../../packages/shared"
-  }
+    "name": "@mutual-hub/web",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "dev": "tsx watch src/index.ts",
+        "lint": "biome check src",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test": "tsx --test src/**/*.test.ts"
+    },
+    "dependencies": {
+        "@mutual-hub/config": "file:../../packages/config",
+        "@mutual-hub/shared": "file:../../packages/shared"
+    }
 }
