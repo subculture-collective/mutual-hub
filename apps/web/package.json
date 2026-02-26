@@ -13,6 +13,7 @@
         "test": "tsx --test src/**/*.test.ts"
     },
     "dependencies": {
+        "@mutual-hub/at-lexicons": "file:../../packages/at-lexicons",
         "@mutual-hub/config": "file:../../packages/config",
         "@mutual-hub/shared": "file:../../packages/shared"
     }
