@@ -1,3 +1,5 @@
+export * from './category-policy.js';
+export * from './clone.js';
 export * from './config.js';
 export * from './contracts.js';
 export * from './discovery.js';
@@ -11,6 +13,7 @@ export * from './pilot-fixtures.js';
 export * from './ranking.js';
 export * from '@mutual-hub/at-lexicons';
 export * from './records.js';
+export * from './schemas.js';
 export * from './volunteer-onboarding.js';
 export * from './moderation.js';
 export * from './privacy.js';

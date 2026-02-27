@@ -10,6 +10,7 @@ import {
     type RankingBreakdown,
     rankCardsDeterministically,
 } from './ranking.js';
+import { isoDateTimeSchema } from './schemas.js';
 
 export interface IndexedAidRecord extends NormalizedAidPost {
     uri: string;
@@ -443,9 +444,7 @@ export class DiscoveryIndexStore {
 
             uriSet = rest.reduce(
                 (accumulator, current) =>
-                    new Set(
-                        [...accumulator].filter(uri => current.has(uri)),
-                    ),
+                    new Set([...accumulator].filter(uri => current.has(uri))),
                 new Set(first),
             );
         }
@@ -652,7 +651,7 @@ const aidQuerySchema = z.object({
     searchText: z.string().min(1).max(120).optional(),
     page: z.number().int().positive().optional(),
     pageSize: z.number().int().positive().max(MAX_PAGE_SIZE).optional(),
-    nowIso: z.string().datetime({ offset: true }).optional(),
+    nowIso: isoDateTimeSchema.optional(),
 });
 
 const directoryQuerySchema = z
@@ -674,7 +673,7 @@ const directoryQuerySchema = z
         searchText: z.string().min(1).max(120).optional(),
         page: z.number().int().positive().optional(),
         pageSize: z.number().int().positive().max(MAX_PAGE_SIZE).optional(),
-        nowIso: z.string().datetime({ offset: true }).optional(),
+        nowIso: isoDateTimeSchema.optional(),
     })
     .superRefine((value, ctx) => {
         const geoProvided =

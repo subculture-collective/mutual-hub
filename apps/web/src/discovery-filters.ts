@@ -1,3 +1,8 @@
+import {
+    MAXIMUM_DISCOVERY_RADIUS_METERS,
+    MINIMUM_DISCOVERY_RADIUS_METERS,
+} from './geo-constants.js';
+
 export const aidCategories = [
     'food',
     'shelter',
@@ -7,7 +12,12 @@ export const aidCategories = [
     'other',
 ] as const;
 
-export const aidStatuses = ['open', 'in-progress', 'resolved', 'closed'] as const;
+export const aidStatuses = [
+    'open',
+    'in-progress',
+    'resolved',
+    'closed',
+] as const;
 
 export type AidCategory = (typeof aidCategories)[number];
 export type AidStatus = (typeof aidStatuses)[number];
@@ -41,9 +51,6 @@ export interface SharedAidDiscoveryQuery {
     radiusMeters?: number;
 }
 
-const minimumRadiusMeters = 300;
-const maximumRadiusMeters = 100_000;
-
 export const defaultDiscoveryFilterState: Readonly<DiscoveryFilterState> =
     Object.freeze({
         feedTab: 'latest' as const,
@@ -68,6 +75,10 @@ const parseFloatNumber = (value: string | undefined): number | undefined => {
     return Number.isNaN(parsed) ? undefined : parsed;
 };
 
+const clamp = (value: number, min: number, max: number): number => {
+    return Math.min(max, Math.max(min, value));
+};
+
 const normalizeText = (text: string | undefined): string | undefined => {
     if (!text) {
         return undefined;
@@ -77,7 +88,9 @@ const normalizeText = (text: string | undefined): string | undefined => {
     return normalized.length > 0 ? normalized : undefined;
 };
 
-const normalizeCategory = (category: string | undefined): AidCategory | undefined => {
+const normalizeCategory = (
+    category: string | undefined,
+): AidCategory | undefined => {
     if (!category) {
         return undefined;
     }
@@ -101,29 +114,31 @@ const normalizeUrgency = (
         return undefined;
     }
 
-    if (value <= 1) {
-        return 1;
-    }
-    if (value >= 5) {
-        return 5;
-    }
-
-    return Math.round(value) as DiscoveryFilterState['minUrgency'];
+    return clamp(Math.round(value), 1, 5) as DiscoveryFilterState['minUrgency'];
 };
 
-const normalizeRadius = (radiusMeters: number | undefined): number | undefined => {
+const normalizeRadius = (
+    radiusMeters: number | undefined,
+): number | undefined => {
     if (radiusMeters === undefined || Number.isNaN(radiusMeters)) {
         return undefined;
     }
 
-    if (radiusMeters < minimumRadiusMeters) {
-        return minimumRadiusMeters;
-    }
-    if (radiusMeters > maximumRadiusMeters) {
-        return maximumRadiusMeters;
+    return clamp(
+        Math.round(radiusMeters),
+        MINIMUM_DISCOVERY_RADIUS_METERS,
+        MAXIMUM_DISCOVERY_RADIUS_METERS,
+    );
+};
+
+const normalizeFeedTab = (
+    value: string | null | undefined,
+): FeedTab | undefined => {
+    if (value === 'nearby' || value === 'latest') {
+        return value;
     }
 
-    return Math.round(radiusMeters);
+    return undefined;
 };
 
 const normalizeCenter = (
@@ -137,7 +152,12 @@ const normalizeCenter = (
         return undefined;
     }
 
-    if (center.lat < -90 || center.lat > 90 || center.lng < -180 || center.lng > 180) {
+    if (
+        center.lat < -90 ||
+        center.lat > 90 ||
+        center.lng < -180 ||
+        center.lng > 180
+    ) {
         return undefined;
     }
 
@@ -241,7 +261,9 @@ export function toFeedDiscoveryQuery(
     };
 }
 
-export function serializeDiscoveryFilterState(state: DiscoveryFilterState): string {
+export function serializeDiscoveryFilterState(
+    state: DiscoveryFilterState,
+): string {
     const params = new URLSearchParams();
 
     if (state.feedTab === 'nearby') {
@@ -282,7 +304,7 @@ export function parseDiscoveryFilterState(
     const normalizedSearch = search.startsWith('?') ? search.slice(1) : search;
     const params = new URLSearchParams(normalizedSearch);
 
-    const parsedTab = params.get('tab');
+    const parsedTab = normalizeFeedTab(params.get('tab'));
     const parsedCategory = normalizeCategory(params.get('cat') ?? undefined);
     const parsedStatus = normalizeStatus(params.get('st') ?? undefined);
     const parsedCenter = {
@@ -293,9 +315,9 @@ export function parseDiscoveryFilterState(
     return normalizeDiscoveryFilterState({
         ...fallback,
         feedTab:
-            parsedTab === 'nearby' || parsedTab === 'latest' ?
-                parsedTab
-            :   fallback.feedTab ?? defaultDiscoveryFilterState.feedTab,
+            parsedTab ??
+            fallback.feedTab ??
+            defaultDiscoveryFilterState.feedTab,
         text: params.get('q') ?? fallback.text,
         category: parsedCategory ?? fallback.category,
         status: parsedStatus ?? fallback.status,

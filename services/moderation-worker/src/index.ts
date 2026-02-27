@@ -1,4 +1,4 @@
-import { createServer } from 'node:http';
+import { createServer, type ServerResponse } from 'node:http';
 import {
     CONTRACT_VERSION,
     loadModerationWorkerConfig,
@@ -25,78 +25,54 @@ const sampleDecision: ModerationDecisionEvent = {
     decidedAt: new Date().toISOString(),
 };
 
+interface ModerationRouteResult {
+    statusCode: number;
+    body: unknown;
+}
+
+type ModerationRouteHandler = (requestUrl: URL) => ModerationRouteResult;
+
+const routeHandlers: Readonly<Record<string, ModerationRouteHandler>> = {
+    '/health': () => ({
+        statusCode: 200,
+        body: healthPayload,
+    }),
+    '/decisions/sample': () => ({
+        statusCode: 200,
+        body: sampleDecision,
+    }),
+    '/moderation/queue/enqueue': requestUrl =>
+        moderationService.enqueueFromParams(requestUrl.searchParams),
+    '/moderation/queue': requestUrl =>
+        moderationService.listQueueFromParams(requestUrl.searchParams),
+    '/moderation/policy/apply': requestUrl =>
+        moderationService.applyPolicyFromParams(requestUrl.searchParams),
+    '/moderation/state': requestUrl =>
+        moderationService.getStateFromParams(requestUrl.searchParams),
+    '/moderation/audit': requestUrl =>
+        moderationService.listAuditFromParams(requestUrl.searchParams),
+};
+
+const writeJson = (
+    response: ServerResponse,
+    statusCode: number,
+    body: unknown,
+): void => {
+    response.writeHead(statusCode, { 'content-type': 'application/json' });
+    response.end(JSON.stringify(body));
+};
+
 const server = createServer((request, response) => {
     const requestUrl = new URL(request.url ?? '/', 'http://localhost');
 
-    if (request.url === '/health') {
-        response.writeHead(200, { 'content-type': 'application/json' });
-        response.end(JSON.stringify(healthPayload));
+    const handler = routeHandlers[requestUrl.pathname];
+    if (handler) {
+        const result = handler(requestUrl);
+        writeJson(response, result.statusCode, result.body);
         return;
     }
 
-    if (request.url === '/decisions/sample') {
-        response.writeHead(200, { 'content-type': 'application/json' });
-        response.end(JSON.stringify(sampleDecision));
-        return;
-    }
-
-    if (requestUrl.pathname === '/moderation/queue/enqueue') {
-        const result = moderationService.enqueueFromParams(
-            requestUrl.searchParams,
-        );
-        response.writeHead(result.statusCode, {
-            'content-type': 'application/json',
-        });
-        response.end(JSON.stringify(result.body));
-        return;
-    }
-
-    if (requestUrl.pathname === '/moderation/queue') {
-        const result = moderationService.listQueueFromParams(
-            requestUrl.searchParams,
-        );
-        response.writeHead(result.statusCode, {
-            'content-type': 'application/json',
-        });
-        response.end(JSON.stringify(result.body));
-        return;
-    }
-
-    if (requestUrl.pathname === '/moderation/policy/apply') {
-        const result = moderationService.applyPolicyFromParams(
-            requestUrl.searchParams,
-        );
-        response.writeHead(result.statusCode, {
-            'content-type': 'application/json',
-        });
-        response.end(JSON.stringify(result.body));
-        return;
-    }
-
-    if (requestUrl.pathname === '/moderation/state') {
-        const result = moderationService.getStateFromParams(
-            requestUrl.searchParams,
-        );
-        response.writeHead(result.statusCode, {
-            'content-type': 'application/json',
-        });
-        response.end(JSON.stringify(result.body));
-        return;
-    }
-
-    if (requestUrl.pathname === '/moderation/audit') {
-        const result = moderationService.listAuditFromParams(
-            requestUrl.searchParams,
-        );
-        response.writeHead(result.statusCode, {
-            'content-type': 'application/json',
-        });
-        response.end(JSON.stringify(result.body));
-        return;
-    }
-
-    response.writeHead(404, { 'content-type': 'application/json' });
-    response.end(JSON.stringify({ error: 'Not Found' }));
+    writeJson(response, 404, { error: 'Not Found' });
 });
 
 server.listen(config.MODERATION_PORT, '0.0.0.0', () => {

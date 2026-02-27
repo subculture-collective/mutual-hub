@@ -7,11 +7,8 @@ import {
     type RecordNsid,
     validateRecordPayload,
 } from '@mutual-hub/at-lexicons';
-
-const didSchema = z
-    .string()
-    .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
-const isoDateTimeSchema = z.string().datetime({ offset: true });
+import { deepClone } from './clone.js';
+import { didSchema, isoDateTimeSchema } from './schemas.js';
 
 export type RecordWriteErrorCode =
     | 'VALIDATION_FAILED'
@@ -366,9 +363,7 @@ export class AtRecordRepository {
     }
 
     listMutationEvents(): RecordMutationEvent[] {
-        return this.mutationEvents.map(
-            event => JSON.parse(JSON.stringify(event)) as RecordMutationEvent,
-        );
+        return this.mutationEvents.map(event => deepClone(event));
     }
 
     serializeMutationEvent(event: RecordMutationEvent): string {
@@ -384,6 +379,6 @@ export class AtRecordRepository {
     private cloneRecord<N extends RecordNsid>(
         record: StoredRecord<N>,
     ): StoredRecord<N> {
-        return JSON.parse(JSON.stringify(record)) as StoredRecord<N>;
+        return deepClone(record);
     }
 }

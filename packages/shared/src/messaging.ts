@@ -1,21 +1,12 @@
 import { createHash } from 'node:crypto';
-import { z } from 'zod';
 import {
     recordNsid,
     type AidPostRecord,
     type ConversationMetaRecord,
     validateRecordPayload,
 } from '@mutual-hub/at-lexicons';
-
-const didSchema = z
-    .string()
-    .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
-const atUriSchema = z
-    .string()
-    .regex(/^at:\/\/[^\s]+$/i, 'Expected a valid at:// URI');
-const isoDateTimeSchema = z.string().datetime({ offset: true });
-
-const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+import { deepClone } from './clone.js';
+import { atUriSchema, didSchema, isoDateTimeSchema } from './schemas.js';
 
 export type ChatInitiationSurface = 'map' | 'feed' | 'detail';
 
@@ -550,8 +541,8 @@ export class ConversationMetadataStore {
             conversationUri,
             aidPostUri: record.aidPostUri,
             record,
-            requestContext: clone(input.chat.requestContext),
-            routingDecision: clone(input.routingDecision),
+            requestContext: deepClone(input.chat.requestContext),
+            routingDecision: deepClone(input.routingDecision),
             recipientCapability: capability,
             transportPath,
             fallbackNotice,
@@ -562,7 +553,7 @@ export class ConversationMetadataStore {
         };
 
         this.conversations.set(conversationUri, persisted);
-        return clone(persisted);
+        return deepClone(persisted);
     }
 
     getConversation(
@@ -570,7 +561,7 @@ export class ConversationMetadataStore {
     ): PersistedConversationMetadata | null {
         const normalizedUri = atUriSchema.parse(conversationUri);
         const found = this.conversations.get(normalizedUri);
-        return found ? clone(found) : null;
+        return found ? deepClone(found) : null;
     }
 
     listForAidPost(aidPostUri: string): PersistedConversationMetadata[] {
@@ -584,7 +575,7 @@ export class ConversationMetadataStore {
             .sort((left, right) =>
                 left.conversationUri.localeCompare(right.conversationUri),
             )
-            .map(value => clone(value));
+            .map(value => deepClone(value));
     }
 
     listFallbackRequired(): PersistedConversationMetadata[] {
@@ -597,7 +588,7 @@ export class ConversationMetadataStore {
             .sort((left, right) =>
                 left.conversationUri.localeCompare(right.conversationUri),
             )
-            .map(value => clone(value));
+            .map(value => deepClone(value));
     }
 }
 

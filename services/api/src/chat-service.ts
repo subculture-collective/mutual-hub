@@ -104,12 +104,17 @@ const toErrorResult = (
     }
 
     if (error instanceof ZodError) {
-        return toErrorHttpResult(400, 'INVALID_QUERY', 'Input validation failed.', {
-            issues: error.issues.map(issue => ({
-                path: issue.path.join('.'),
-                message: issue.message,
-            })),
-        });
+        return toErrorHttpResult(
+            400,
+            'INVALID_QUERY',
+            'Input validation failed.',
+            {
+                issues: error.issues.map(issue => ({
+                    path: issue.path.join('.'),
+                    message: issue.message,
+                })),
+            },
+        );
     }
 
     return toErrorHttpResult(400, 'INVALID_QUERY', fallbackMessage);

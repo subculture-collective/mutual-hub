@@ -1,16 +1,8 @@
 import { createHash } from 'node:crypto';
-import { z } from 'zod';
+import { recordNsid } from '@mutual-hub/at-lexicons';
 import type { ModerationReviewRequestedEvent } from './contracts.js';
-
-const didSchema = z
-    .string()
-    .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
-const atUriSchema = z
-    .string()
-    .regex(/^at:\/\/[^\s]+$/i, 'Expected a valid at:// URI');
-const isoDateTimeSchema = z.string().datetime({ offset: true });
-
-const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+import { deepClone } from './clone.js';
+import { atUriSchema, didSchema, isoDateTimeSchema } from './schemas.js';
 
 export type ModerationSubjectType =
     | 'aid-post'
@@ -107,14 +99,21 @@ export class ModerationPolicyError extends Error {
     }
 }
 
+const parseAtUriCollection = (subjectUri: string): string | null => {
+    const parsed = /^at:\/\/[^/]+\/([^/]+)\/[^/]+$/i.exec(subjectUri);
+    return parsed?.[1] ?? null;
+};
+
 const subjectTypeFromUri = (subjectUri: string): ModerationSubjectType => {
-    if (subjectUri.includes('/app.mutualhub.aid.post/')) {
+    const collection = parseAtUriCollection(subjectUri);
+
+    if (collection === recordNsid.aidPost) {
         return 'aid-post';
     }
-    if (subjectUri.includes('/app.mutualhub.conversation.meta/')) {
+    if (collection === recordNsid.conversationMeta) {
         return 'conversation';
     }
-    if (subjectUri.includes('/app.mutualhub.directory.resource/')) {
+    if (collection === recordNsid.directoryResource) {
         return 'directory-resource';
     }
 
@@ -279,7 +278,7 @@ export class ModerationReviewQueue {
                 context: mergeContext(existing.context, input.context ?? {}),
             };
             this.queueBySubject.set(subjectUri, next);
-            return clone(next);
+            return deepClone(next);
         }
 
         const created: ModerationQueueItem = {
@@ -299,7 +298,7 @@ export class ModerationReviewQueue {
         };
 
         this.queueBySubject.set(subjectUri, created);
-        return clone(created);
+        return deepClone(created);
     }
 
     enqueueSignal(
@@ -374,13 +373,13 @@ export class ModerationReviewQueue {
             nextState,
         });
 
-        return clone(updated);
+        return deepClone(updated);
     }
 
     getState(subjectUri: string): ModerationQueueItem | null {
         const normalizedSubjectUri = atUriSchema.parse(subjectUri);
         const found = this.queueBySubject.get(normalizedSubjectUri);
-        return found ? clone(found) : null;
+        return found ? deepClone(found) : null;
     }
 
     listQueue(filters?: {
@@ -418,7 +417,7 @@ export class ModerationReviewQueue {
                 }
                 return left.queueId.localeCompare(right.queueId);
             })
-            .map(entry => clone(entry));
+            .map(entry => deepClone(entry));
     }
 
     listAuditTrail(subjectUri?: string): ModerationPolicyAuditEntry[] {
@@ -440,6 +439,6 @@ export class ModerationReviewQueue {
                 }
                 return left.actionId.localeCompare(right.actionId);
             })
-            .map(entry => clone(entry));
+            .map(entry => deepClone(entry));
     }
 }

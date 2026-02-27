@@ -1,18 +1,11 @@
-import { z } from 'zod';
 import {
     recordNsid,
     type ModerationReportRecord,
     validateRecordPayload,
 } from '@mutual-hub/at-lexicons';
 import type { ModerationReviewRequestedEvent } from './contracts.js';
-
-const didSchema = z
-    .string()
-    .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
-const atUriSchema = z
-    .string()
-    .regex(/^at:\/\/\S+$/, 'Expected a valid AT URI');
-const isoDateTimeSchema = z.string().datetime({ offset: true });
+import { deepClone } from './clone.js';
+import { atUriRecordSchema, didSchema, isoDateTimeSchema } from './schemas.js';
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
@@ -113,13 +106,13 @@ export class ChatSafetyControls {
 
     muteConversation(actorDid: string, conversationUri: string): void {
         const actor = didSchema.parse(actorDid);
-        const uri = atUriSchema.parse(conversationUri);
+        const uri = atUriRecordSchema.parse(conversationUri);
         getOrCreateSet(this.mutedConversations, actor).add(uri);
     }
 
     isMuted(actorDid: string, conversationUri: string): boolean {
         const actor = didSchema.parse(actorDid);
-        const uri = atUriSchema.parse(conversationUri);
+        const uri = atUriRecordSchema.parse(conversationUri);
         return this.mutedConversations.get(actor)?.has(uri) ?? false;
     }
 
@@ -128,7 +121,7 @@ export class ChatSafetyControls {
     ): ChatSafetyEvaluation {
         const senderDid = didSchema.parse(input.senderDid);
         const recipientDid = didSchema.parse(input.recipientDid);
-        const conversationUri = atUriSchema.parse(input.conversationUri);
+        const conversationUri = atUriRecordSchema.parse(input.conversationUri);
         const sentAt = isoDateTimeSchema.parse(
             input.sentAt ?? new Date().toISOString(),
         );
@@ -253,7 +246,7 @@ export class ChatSafetyControls {
         reportRecord: ModerationReportRecord;
         moderationSignal: ModerationReviewRequestedEvent;
     } {
-        const subjectUri = atUriSchema.parse(input.subjectUri);
+        const subjectUri = atUriRecordSchema.parse(input.subjectUri);
         const reporterDid = didSchema.parse(input.reporterDid);
         const createdAt = isoDateTimeSchema.parse(
             input.createdAt ?? new Date().toISOString(),
@@ -287,14 +280,14 @@ export class ChatSafetyControls {
 
     drainModerationSignals(): ModerationReviewRequestedEvent[] {
         const signals = [...this.moderationSignals].map(signal =>
-            clone(signal),
+            deepClone(signal),
         );
         this.moderationSignals.length = 0;
         return signals;
     }
 
     getMetrics(): ChatSafetyMetrics {
-        return clone(this.metrics);
+        return deepClone(this.metrics);
     }
 
     private trackSuspiciousIncident(
