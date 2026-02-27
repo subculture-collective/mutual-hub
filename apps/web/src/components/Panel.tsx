@@ -6,11 +6,11 @@ interface PanelProps {
 
 export const Panel = ({ title, children }: PropsWithChildren<PanelProps>) => {
     return (
-        <section className='mh-panel-shell p-2'>
-            <header className='mh-panel-titlebar mb-3 px-2 py-1 text-sm font-bold text-white'>
+        <section className='mh-panel-shell p-2 sm:p-3'>
+            <header className='mh-panel-titlebar mb-3 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-mh-text'>
                 {title}
             </header>
-            <div className='mh-texture-dots rounded-none border-2 border-[var(--mh-border)] bg-[var(--mh-surface)] p-3'>
+            <div className='mh-texture-dots mh-grid-pattern rounded-none border-2 border-mh-border bg-mh-surface p-4'>
                 {children}
             </div>
         </section>

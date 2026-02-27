@@ -1,25 +1,31 @@
 :root {
-    --mh-bg: #fffdf5;
-    --mh-surface: #ffffff;
-    --mh-panel: #c0c0c0;
-    --mh-text: #000000;
-    --mh-text-muted: #4b5563;
-    --mh-accent: #ff6b6b;
-    --mh-accent-2: #ffd93d;
-    --mh-accent-3: #c4b5fd;
-    --mh-link: #0000ff;
-    --mh-link-visited: #800080;
-    --mh-success: #00aa00;
-    --mh-danger: #ff0000;
+    --mh-bg: #0a0a0a;
+    --mh-surface: #121212;
+    --mh-surface-elev: #1a1a1a;
+    --mh-panel: #161616;
+    --mh-text: #fafafa;
+    --mh-text-muted: #a3a3a3;
+    --mh-text-soft: #737373;
+    --mh-accent: #ff3d00;
+    --mh-accent-2: #7c3aed;
+    --mh-accent-3: #a78bfa;
+    --mh-cta: #f97316;
+    --mh-organic-moss: #5d7052;
+    --mh-link: #c4b5fd;
+    --mh-link-visited: #a78bfa;
+    --mh-success: #22c55e;
+    --mh-danger: #ef4444;
     --mh-border: #000000;
-    --mh-border-light: #ffffff;
-    --mh-border-dark: #808080;
-    --mh-titlebar-start: #000080;
-    --mh-titlebar-end: #1084d0;
+    --mh-border-subtle: #262626;
+    --mh-border-soft: #3a3a3a;
+    --mh-focus: #ff3d00;
+    --mh-focus-offset: #0a0a0a;
 
-    --mh-font-heading: 'Space Mono', 'Arial Black', Impact, sans-serif;
-    --mh-font-body: 'MS Sans Serif', Tahoma, 'Segoe UI', sans-serif;
-    --mh-font-mono: 'VT323', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --mh-font-heading: 'Inter Tight', 'Space Grotesk', 'Arial Black',
+        sans-serif;
+    --mh-font-body: Inter, 'Public Sans', 'Segoe UI', sans-serif;
+    --mh-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo,
+        monospace;
 
     --mh-community-primary: #7c3aed;
     --mh-community-secondary: #a78bfa;
@@ -32,8 +38,8 @@
     --mh-space-6: 24px;
     --mh-space-8: 32px;
 
-    --mh-shadow-hard: 8px 8px 0 0 var(--mh-border);
-    --mh-shadow-hard-hover: 12px 12px 0 0 var(--mh-border);
+    --mh-shadow-hard: 6px 6px 0 0 var(--mh-border);
+    --mh-shadow-hard-hover: 10px 10px 0 0 var(--mh-border);
     --mh-transition-standard: 180ms ease-out;
 }
 
@@ -45,6 +51,7 @@
     border: 2px solid var(--mh-border);
     background: var(--mh-surface);
     box-shadow: var(--mh-shadow-hard);
+    color: var(--mh-text);
 }
 
 .mh-panel-shell {
@@ -53,31 +60,59 @@
 }
 
 .mh-panel-titlebar {
-    background: linear-gradient(
-        to right,
-        var(--mh-titlebar-start),
-        var(--mh-titlebar-end)
-    );
+    border-bottom: 2px solid var(--mh-border);
+    background: var(--mh-surface-elev);
+    color: var(--mh-text);
 }
 
 .mh-texture-dots {
     background-image: radial-gradient(
         circle at 1px 1px,
-        rgb(0 0 0 / 10%) 1px,
+        rgb(250 250 250 / 8%) 1px,
         transparent 0
     );
     background-size: 8px 8px;
 }
 
+.mh-grid-pattern {
+    background-image:
+        linear-gradient(
+            to right,
+            rgb(250 250 250 / 4%) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            to bottom,
+            rgb(250 250 250 / 4%) 1px,
+            transparent 1px
+        );
+    background-size: 24px 24px;
+}
+
+.mh-grain {
+    background-image: radial-gradient(
+            circle at 20% 20%,
+            rgb(250 250 250 / 4%) 0.5px,
+            transparent 0.5px
+        ),
+        radial-gradient(
+            circle at 80% 35%,
+            rgb(250 250 250 / 3%) 0.5px,
+            transparent 0.5px
+        );
+    background-size: 5px 5px, 7px 7px;
+}
+
 .mh-button {
     min-height: 44px;
     cursor: pointer;
-    border-color: var(--mh-border-light) var(--mh-border-dark)
-        var(--mh-border-dark) var(--mh-border-light);
+    border: 2px solid var(--mh-border);
     box-shadow: var(--mh-shadow-hard);
     transition:
         transform var(--mh-transition-standard),
         box-shadow var(--mh-transition-standard),
+        background-color var(--mh-transition-standard),
+        color var(--mh-transition-standard),
         opacity var(--mh-transition-standard);
 }
 
@@ -87,10 +122,8 @@
 }
 
 .mh-button:active {
-    border-color: var(--mh-border-dark) var(--mh-border-light)
-        var(--mh-border-light) var(--mh-border-dark);
     transform: translate(1px, 1px);
-    box-shadow: 6px 6px 0 0 var(--mh-border);
+    box-shadow: 4px 4px 0 0 var(--mh-border);
 }
 
 .mh-button:disabled {
@@ -107,25 +140,33 @@
 
 .mh-input {
     min-height: 44px;
-    border: 2px solid;
-    border-color: var(--mh-border-dark) var(--mh-border-light)
-        var(--mh-border-light) var(--mh-border-dark);
-    background: var(--mh-surface);
+    border: 2px solid var(--mh-border-soft);
+    border-radius: 0;
+    background: var(--mh-surface-elev);
     color: var(--mh-text);
     transition:
         border-color var(--mh-transition-standard),
         box-shadow var(--mh-transition-standard);
 }
 
+.mh-input:focus-visible {
+    border-color: var(--mh-focus);
+    box-shadow: 0 0 0 1px var(--mh-focus);
+}
+
 .mh-input::placeholder {
-    color: var(--mh-text-muted);
+    color: var(--mh-text-soft);
 }
 
 .mh-link {
     color: var(--mh-link);
     text-decoration: underline;
+    text-decoration-thickness: 1px;
     text-underline-offset: 2px;
-    transition: color var(--mh-transition-standard);
+    transition:
+        color var(--mh-transition-standard),
+        text-decoration-thickness var(--mh-transition-standard),
+        text-underline-offset var(--mh-transition-standard);
 }
 
 .mh-link:visited {
@@ -133,19 +174,22 @@
 }
 
 .mh-link:hover {
-    color: var(--mh-danger);
+    color: var(--mh-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
 }
 
 .mh-alert {
     border-left: 4px solid var(--mh-danger);
     color: var(--mh-danger);
+    background: rgb(239 68 68 / 8%);
     padding-left: var(--mh-space-2);
 }
 
 :where(a, button, input, textarea, select, [role='button']):focus-visible {
-    outline: 2px solid #000;
+    outline: 2px solid var(--mh-focus);
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px #ffd93d;
+    box-shadow: 0 0 0 2px var(--mh-focus-offset);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,13 +1,15 @@
 import type { PropsWithChildren } from 'react';
 
 interface BadgeProps {
-    tone?: 'default' | 'danger' | 'success';
+    tone?: 'default' | 'neutral' | 'info' | 'danger' | 'success';
 }
 
 const toneMap: Record<NonNullable<BadgeProps['tone']>, string> = {
-    default: 'bg-[var(--mh-accent-3)] text-black',
-    danger: 'bg-[var(--mh-danger)] text-white',
-    success: 'bg-[var(--mh-success)] text-white',
+    default: 'bg-mh-accent3 text-black',
+    neutral: 'bg-mh-surfaceElev text-mh-text',
+    info: 'bg-mh-accent2 text-white',
+    danger: 'bg-mh-danger text-black',
+    success: 'bg-mh-success text-black',
 };
 
 export const Badge = ({
@@ -17,7 +19,7 @@ export const Badge = ({
     return (
         <span
             className={[
-                'inline-flex rounded-sm border-2 border-[var(--mh-border)] px-2 py-1 text-xs font-bold uppercase tracking-wide',
+                'inline-flex rounded-none border-2 border-mh-border px-2 py-1 text-xs font-bold uppercase tracking-[0.12em]',
                 toneMap[tone],
             ].join(' ')}
         >

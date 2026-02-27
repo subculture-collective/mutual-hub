@@ -7,7 +7,7 @@ export const TextLink = ({
 }: PropsWithChildren<AnchorHTMLAttributes<HTMLAnchorElement>>) => {
     return (
         <a
-            className={['mh-link', className].join(' ')}
+            className={['mh-link font-medium', className].join(' ')}
             {...props}
         >
             {children}

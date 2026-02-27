@@ -24,7 +24,7 @@ export const Input = ({
                     describedBy.length > 0 ? describedBy : undefined
                 }
                 className={[
-                    'mh-input w-full px-3 py-2 text-sm',
+                    'mh-input w-full px-3 py-2 text-base',
                     className,
                 ].join(' ')}
                 {...props}

@@ -1,273 +1,228 @@
 # Patchwork Design System
 
-## Hybrid convergence pass (Option 3)
+## Style Selection: Dark Convergence (13 + 14 + 28 + 8)
 
-Selected strategy: **Hybrid** — keep the established neo-retro brutal direction while converging token usage and component behavior where inconsistencies appear.
+Selected strategy: **Preset merge (Option 2)** with a custom dark blend of:
 
-This pass prioritizes:
+- **13 Neo-brutalism** → hard structure, tactile controls, bold contrast
+- **14 Bold Typography** → editorial hierarchy, dark palette, precise rhythm
+- **28 Organic** → subtle natural warmth, softer curves in selected surfaces
+- **8 Swiss Minimalist** → grid discipline, asymmetry, objective information layout
 
-- stable, reusable primitive class contracts (`mh-button`, `mh-card`, `mh-input`, `mh-link`)
-- accessibility behavior consistency (focus, error announcements, contrast)
-- controlled motion (reduced-motion support + no decorative infinite animation)
-- responsive spacing/container guardrails for production surfaces
-
-## Style: Neo-Retro Brutal (Hybrid of 13 + 30)
-
-This project uses a **hybrid visual style** combining:
-
-- **13 – Neo-brutalism** (bold borders, hard shadows, playful rebellion)
-- **30 – Retro 90s** (window chrome, bevels, nostalgic interaction language)
-
-The result should feel: **funky, warm, community-first, and unmistakably non-corporate** while remaining readable and accessible.
+Design intent: **high-trust mutual-aid UX** that feels urgent and readable at night, while remaining human and non-corporate.
 
 ---
 
-## 1) Design Intent
+## 1) Core Principles
 
-### Product tone
-
-- Community mutual-aid platform
-- Trustworthy + human, but not sterile
-- High visibility for urgent actions and statuses
-
-### Core visual principles
-
-1. **Visible structure**: every key UI block has explicit borders.
-2. **Physicality**: use hard shadows and beveled states to make controls feel tactile.
-3. **Controlled chaos**: playful accents and stickers, but clean information hierarchy.
-4. **Accessibility first**: color contrast, keyboard focus, reduced-motion support are non-negotiable.
+1. **Structure is visible**: layout must read clearly from borders, spacing, and hierarchy.
+2. **Typography leads**: headlines and labels establish scanning order before decoration.
+3. **Dark-first clarity**: contrast and focus visibility are mandatory, not optional.
+4. **Controlled personality**: organic accents exist, but never reduce legibility.
+5. **Mechanical interactions**: motion should feel intentional and tactile, not floaty.
 
 ---
 
-## 2) Design Tokens
+## 2) Token System (source of truth)
 
 ### Color tokens
 
 ```txt
---mh-bg:            #FFFDF5;   // warm paper background
---mh-surface:       #FFFFFF;   // cards/content panels
---mh-panel:         #C0C0C0;   // retro panel gray
---mh-text:          #000000;   // primary text
---mh-text-muted:    #4B5563;   // secondary text
+--mh-bg:               #0A0A0A;
+--mh-surface:          #121212;
+--mh-surface-elev:     #1A1A1A;
+--mh-panel:            #161616;
 
---mh-accent:        #FF6B6B;   // neo brutal primary
---mh-accent-2:      #FFD93D;   // energetic yellow
---mh-accent-3:      #C4B5FD;   // playful violet
+--mh-text:             #FAFAFA;
+--mh-text-muted:       #A3A3A3;
+--mh-text-soft:        #737373;
 
---mh-link:          #0000FF;   // retro link blue
---mh-link-visited:  #800080;   // retro visited purple
---mh-success:       #00AA00;
---mh-danger:        #FF0000;
+--mh-accent:           #FF3D00;   // bold editorial accent
+--mh-accent-2:         #7C3AED;   // community primary
+--mh-accent-3:         #A78BFA;   // community secondary
+--mh-cta:              #F97316;   // urgent CTA
+--mh-organic-moss:     #5D7052;   // organic warmth for limited use
 
---mh-border:        #000000;
---mh-border-light:  #FFFFFF;   // bevel light edge
---mh-border-dark:   #808080;   // bevel dark edge
+--mh-success:          #22C55E;
+--mh-danger:           #EF4444;
 
---mh-titlebar-start:#000080;   // retro window title bar
---mh-titlebar-end:  #1084D0;
+--mh-border:           #000000;
+--mh-border-subtle:    #262626;
+--mh-border-soft:      #3A3A3A;
 
-// community palette helpers (from design intelligence enrichment)
---mh-community-primary:   #7C3AED;
---mh-community-secondary: #A78BFA;
---mh-community-cta:       #F97316;
+--mh-link:             #C4B5FD;
+--mh-link-visited:     #A78BFA;
+
+--mh-focus:            #FF3D00;
+--mh-focus-offset:     #0A0A0A;
 ```
 
 ### Typography tokens
 
-Based on the typography search enrichment:
-
-- **Heading**: `Space Mono`, `Arial Black`, `Impact`, sans-serif
-- **Body**: `MS Sans Serif`, `Tahoma`, `Segoe UI`, sans-serif
-- **Decorative/terminal** (optional small areas): `VT323`, monospace
-- **Optional editorial pair** (hero/story modules only): `Abril Fatface` + `Merriweather`
+- **Heading**: `Inter Tight`, `Space Grotesk`, system sans-serif
+- **Body**: `Inter`, `Public Sans`, system sans-serif
+- **Accent serif (optional for quotes only)**: `Fraunces`
+- **Mono**: `JetBrains Mono`
 
 Rules:
 
-- Headings: bold/black weight, tight tracking
-- Body: high readability, regular/medium weight
-- Labels/buttons: uppercase with wider tracking
+- Headings: heavy (`700-900`), tight tracking (`-0.02em` to `-0.06em`)
+- Labels/actions: uppercase + wide tracking (`0.08em` to `0.14em`)
+- Body text: `16px+`, line-height `1.5+`
 
-### Spacing and radius
+### Spacing/radius/shadow
 
 - Base spacing scale: `4px`
-- Touch targets: minimum `44px`
-- Corners: mostly square (`0px`), optional slight rounding only for badges/pills
+- Touch targets: `min-height: 44px`
+- Radius: default `0px`, optional organic corners only in non-critical decorative containers
+- Hard shadows (neo-brutal):
+    - default: `6px 6px 0 0 #000`
+    - hover: `10px 10px 0 0 #000`
 
 ---
 
-## 3) Signature Effects
+## 3) Texture + Layout System
 
-### A) Hard neo-brutal shadows
+### Swiss grid discipline
 
-```css
-box-shadow: 8px 8px 0 0 #000;
-```
+- Prefer asymmetric layouts (e.g. `8:4`, `7:5`, `5:7`) over centered symmetry.
+- Keep flush-left typography for primary content blocks.
+- Use clear section separators (`border-t`, `border-b`) to reinforce structure.
 
-Hover state:
+### Pattern layers (low intensity)
 
-```css
-transform: translateY(-2px);
-box-shadow: 12px 12px 0 0 #000;
-```
+Use only subtle overlays (`1.5%` to `6%` opacity):
 
-### B) Retro bevels (3D button/window feel)
+- `mh-grid-pattern`: 24px line grid on muted sections
+- `mh-dots`: dot matrix for side rails or metadata blocks
+- `mh-grain`: global noise/paper texture on root background
 
-Outset (default):
+### Organic accents
 
-```css
-border: 2px solid;
-border-color: #fff #808080 #808080 #fff;
-```
-
-Inset (pressed):
-
-```css
-border: 2px solid;
-border-color: #808080 #fff #fff #808080;
-transform: translate(1px, 1px);
-```
-
-### C) Pattern textures
-
-Use subtle pattern overlays (`opacity 0.05 - 0.12`) such as:
-
-- dot matrix backgrounds
-- soft checker/stripe overlays
-
-Do **not** overwhelm content with dense textures.
+- Organic forms are allowed only for decorative surfaces (hero backdrops, quote blobs).
+- Avoid organic radii on forms, data tables, and critical action controls.
 
 ---
 
-## 4) Component Rules
+## 4) Component Contracts
+
+Keep these stable primitive class contracts:
+
+- `mh-button`
+- `mh-card`
+- `mh-panel`
+- `mh-input`
+- `mh-link`
+- `mh-badge`
 
 ### Buttons
 
-- Default: retro bevel + hard shadow
-- Primary CTA: `--mh-accent` fill + black border + white text
-- Secondary CTA: `--mh-accent-2` fill + black text
+- Shape: rectangular (`0px` radius)
+- Primary: `--mh-accent` bg + black border + dark text
+- Secondary: `--mh-accent-2` bg + white text
+- Neutral: `--mh-surface-elev` bg + white text + subtle border
 - Interaction:
-    - hover: slight lift + stronger hard shadow
-    - active: inset/pressed state
-    - disabled: visibly muted + no hover lift
-    - focus-visible: high contrast ring (see a11y section)
+    - hover: slight lift + hard shadow increase
+    - active: press-in translate + reduced shadow
+    - disabled: no lift, reduced opacity
 
-### Links
+### Cards / Panels
 
-- Unvisited: `--mh-link`
-- Visited: `--mh-link-visited`
-- Hover: `--mh-danger`
-- Keep links underlined by default
-
-### Cards and panels
-
-- Outer shell: bold black border
-- Optional window mode: retro title bar gradient (`--mh-titlebar-start -> --mh-titlebar-end`)
-- Content surfaces: `--mh-surface` or `--mh-panel`
+- `mh-card`: high-contrast panel with hard border and optional hard shadow
+- `mh-panel`: darker container for grouped actions, may include subtle grid texture
+- Optional “organic variant” for storytelling cards only (`mh-card--organic`)
 
 ### Inputs
 
-- Use inset look for fields
-- Clear focus state with ring + border color shift
-- Avoid low-contrast placeholder text
-- Validation errors must include semantic announcement (`role="alert"` or `aria-live="polite"`)
+- Dark inset feel with clear border (`--mh-border-soft`)
+- Focus switches border/ring to `--mh-focus`
+- Placeholder must stay readable against dark surfaces
+- Error state must be announced via `role="alert"` or `aria-live`
+
+### Links
+
+- Default underlined links are required
+- Hover/focus state must alter both color and underline thickness/offset
+- Preserve visited distinction
 
 ---
 
-## 5) Motion and Interaction
+## 5) Motion Rules
 
-From UX guardrail enrichment:
-
-1. Respect `prefers-reduced-motion`.
-2. Animate only **1-2 key elements per view**.
-3. Use `ease-out` for entry interactions (avoid excessive linear motion for UI transitions).
-4. Infinite animation is loader-only (never decorative chrome).
-
-Allowed playful motion:
-
-- one marquee/announcement strip (optional)
-- one badge pulse for urgent states
-- subtle hover lift on interactive cards/buttons
-
-Avoid animating everything simultaneously.
+1. Respect `prefers-reduced-motion: reduce` globally.
+2. Animate at most **1-2 key elements per viewport**.
+3. Use `150ms-250ms` durations for controls.
+4. Prefer `ease-out` for enter/hover transitions.
+5. Decorative infinite animations are disallowed.
 
 ---
 
-## 6) Accessibility Requirements (Mandatory)
+## 6) Accessibility Baseline (must pass)
 
-### Focus states
+- Normal text contrast must meet at least $4.5:1$.
+- Keyboard focus must be visible on all interactive elements.
+- Do not remove default outline without an equivalent replacement.
+- Color cannot be the sole status indicator.
+- Form errors must be machine-readable.
 
-- Never remove outlines without replacement.
-- Use visible focus rings on all interactive controls.
-
-Recommended baseline:
+Recommended focus style:
 
 ```css
-focus-visible {
-    outline: 2px solid #000;
+:where(a, button, input, textarea, select, [role='button']):focus-visible {
+    outline: 2px solid var(--mh-focus);
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px #ffd93d;
+    box-shadow: 0 0 0 2px var(--mh-focus-offset);
 }
 ```
 
-### Keyboard navigation
+---
 
-- Tab order must follow visual order.
-- No keyboard traps.
+## 7) Tailwind + Vite Implementation Notes
 
-### Contrast
+For `apps/web` (`Vite + React + TypeScript + Tailwind`):
 
-- Meet minimum $4.5:1$ for normal text.
-- Prefer black text on light surfaces for core content blocks.
-
-### Error announcements
-
-- Form/status errors must be machine-readable via `role="alert"` or `aria-live`.
-- Do not rely on red borders or color-only communication.
+1. Keep all variables in `src/styles/tokens.css`.
+2. Map tokens in `tailwind.config.ts` (`mh.*` namespace).
+3. Build variants in primitives, avoid page-level one-off hex values.
+4. Keep responsive container rhythm consistent (`px-4 sm:px-6 lg:px-8`).
+5. Maintain a single interaction language across all surfaces.
 
 ---
 
-## 7) React/UI Architecture Guardrails
+## 8) UI/UX Transformation Plan (next execution phase)
 
-From stack guidance:
+### Phase A — Token and primitive convergence
 
-1. Keep components small and single-purpose.
-2. Destructure props in component signatures.
-3. Use error boundaries around major page sections.
-4. Use consistent container widths and responsive horizontal padding (`px-4` → `sm:px-6` → `lg:px-8`).
-5. Avoid one-off inline style values when a token/utility primitive exists.
+- Update token set to dark convergence values.
+- Align `Button`, `Card`, `Panel`, `Input`, `TextLink`, `Badge` variants.
+- Ensure focus/hover/active states are consistent.
 
----
+### Phase B — First-impression shell
 
-## 8) Implementation Checklist
+- Apply new style to `App` landing/discovery shell.
+- Introduce swiss-grid + subtle grain layer.
+- Maintain clean asymmetric layout and strong typography hierarchy.
 
-- [ ] Add global tokens and base typography in one shared style entry point
-- [ ] Build base primitives: `Button`, `Card`, `Panel`, `Input`, `Badge`, `Link`
-- [ ] Implement focus-visible and keyboard states first
-- [ ] Apply style to first-impression page (landing/feed shell)
-- [ ] Apply style to core flow surfaces (aid post, resource card, volunteer card)
-- [ ] Add reduced-motion fallback
-- [ ] Ensure links include visited state and clear hover/focus affordance
-- [ ] Ensure error messages are announced with `role=alert`/`aria-live`
+### Phase C — Core flow screens
+
+- Roll out to request feed, posting form, directory cards, volunteer cards.
+- Reserve organic accents for non-critical decorative zones.
+
+### Acceptance criteria
+
+- [ ] No scattered raw hex values in feature UI components
+- [ ] Focus-visible works on keyboard navigation end-to-end
+- [ ] Reduced-motion mode disables decorative motion
+- [ ] Mobile (320px) to desktop (1440px) has no horizontal scroll
+- [ ] Urgent states remain visually prominent in dark mode
 
 ---
 
 ## 9) Anti-Patterns
 
-- Do not use soft, blurry SaaS shadows everywhere.
-- Do not mix more than one unrelated visual style system.
-- Do not rely on color alone for status/affordance.
-- Do not apply motion to all components at once.
+- Mixing unrelated style vocabularies per page.
+- Adding soft/glassy effects that weaken structure.
+- Overusing organic blobs on operational forms.
+- Animating more than the user needs to complete tasks.
 
-This system should feel **bold and nostalgic**, but still operationally clear for urgent community use.
-
----
-
-## 10) Tailwind + Vite implementation notes
-
-For the v1 stack (`Vite + React + TypeScript + Tailwind CSS`):
-
-1. Define the token source of truth in a global stylesheet (for example: `src/styles/tokens.css`) using the CSS variables above.
-2. Expose key tokens in `tailwind.config.ts` so utility classes map to the same design vocabulary.
-3. Keep component-level styles in React primitives (`Button`, `Card`, `Panel`, `Input`) and avoid ad-hoc one-off color values.
-4. Enforce focus-visible and reduced-motion utilities as first-class defaults, not optional enhancements.
-5. Prefer utility composition + small variant helpers over large custom CSS files to keep style behavior predictable.
+This system should feel **bold, editorial, and trustworthy in dark mode** with a clear community identity.
