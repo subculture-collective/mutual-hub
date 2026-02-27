@@ -7,9 +7,9 @@ export const CoreFlowSurfaces = () => {
     return (
         <section className='mt-10 border-t-2 border-mh-border pt-8'>
             <div className='mb-6 flex flex-wrap items-end justify-between gap-3'>
-                <h2 className='font-heading text-3xl font-black uppercase tracking-tight sm:text-4xl'>
+                <h1 className='font-heading text-3xl font-black uppercase tracking-tight sm:text-4xl'>
                     Core flow surfaces
-                </h2>
+                </h1>
                 <p className='text-xs uppercase tracking-[0.12em] text-mh-textMuted'>
                     Feed · Posting · Resources · Volunteer
                 </p>

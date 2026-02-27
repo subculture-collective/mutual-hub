@@ -26,7 +26,7 @@ const config: Config = {
                 },
             },
             fontFamily: {
-                heading: ['Inter Tight', 'Space Grotesk', 'sans-serif'],
+                mhHeading: ['Inter Tight', 'Space Grotesk', 'sans-serif'],
                 body: ['Inter', 'Public Sans', 'sans-serif'],
                 mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
                 serifAccent: ['Fraunces', 'serif'],
