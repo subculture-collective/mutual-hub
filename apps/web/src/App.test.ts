@@ -3,6 +3,6 @@ import { APP_TITLE } from './App';
 
 describe('web shell', () => {
     it('exposes app title constant', () => {
-        expect(APP_TITLE).toBe('Mutual Hub');
+        expect(APP_TITLE).toBe('Patchwork');
     });
 });

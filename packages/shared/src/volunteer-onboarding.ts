@@ -4,7 +4,7 @@ import {
     type AidPostRecord,
     type VolunteerProfileRecord,
     validateRecordPayload,
-} from '@mutual-hub/at-lexicons';
+} from '@patchwork/at-lexicons';
 import type { VolunteerRoutingCandidate } from './messaging.js';
 import { capabilitySupportsAidCategory } from './category-policy.js';
 import { deepClone } from './clone.js';

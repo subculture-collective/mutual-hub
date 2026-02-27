@@ -15,7 +15,7 @@ describe('phase 7 geoprivacy + log redaction utilities', () => {
 
     it('redacts sensitive identifiers in free text', () => {
         const redacted = redactSensitiveText(
-            'sender did:example:alice reported at://did:example:alice/app.mutualhub.aid.post/post-1',
+            'sender did:example:alice reported at://did:example:alice/app.patchwork.aid.post/post-1',
         );
 
         expect(redacted).not.toContain('did:example:alice');
@@ -26,7 +26,7 @@ describe('phase 7 geoprivacy + log redaction utilities', () => {
 
     it('redacts structured log payload fields recursively', () => {
         const payload = {
-            uri: 'at://did:example:alice/app.mutualhub.aid.post/post-1',
+            uri: 'at://did:example:alice/app.patchwork.aid.post/post-1',
             authorDid: 'did:example:alice',
             location: {
                 latitude: 40.712345,
@@ -46,7 +46,7 @@ describe('phase 7 geoprivacy + log redaction utilities', () => {
             };
         };
 
-        expect(redacted.uri).toBe('at://[did]/app.mutualhub.aid.post/[record]');
+        expect(redacted.uri).toBe('at://[did]/app.patchwork.aid.post/[record]');
         expect(redacted.authorDid).toBe('did:[redacted]');
         expect(redacted.location).toBe('[redacted-object]');
         expect(redacted.nested.reporterDid).toBe('did:[redacted]');
@@ -55,9 +55,9 @@ describe('phase 7 geoprivacy + log redaction utilities', () => {
     it('provides redacted URI references and retention defaults', () => {
         expect(
             toRedactedUriReference(
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-1',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-1',
             ),
-        ).toBe('at://[did]/app.mutualhub.conversation.meta/[record]');
+        ).toBe('at://[did]/app.patchwork.conversation.meta/[record]');
         expect(MODERATION_LOG_RETENTION_DAYS).toBe(7);
     });
 });

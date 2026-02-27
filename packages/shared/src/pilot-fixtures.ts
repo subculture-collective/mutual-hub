@@ -9,7 +9,7 @@
  *   P8.2 – E2E flows → buildPilotScenarioFirehoseEvents, PILOT_*
  */
 
-import { recordNsid } from '@mutual-hub/at-lexicons';
+import { recordNsid } from '@patchwork/at-lexicons';
 import type { ApiChatInitiationRequest } from './contracts.js';
 
 // ---------------------------------------------------------------------------
@@ -29,7 +29,7 @@ export const PILOT_CENTER = { latitude: 40.7128, longitude: -74.006 } as const;
 export const PILOT_FOOD_AUTHOR_DID = 'did:example:pilot-alice' as const;
 export const PILOT_FOOD_HELPER_DID = 'did:example:pilot-helper' as const;
 export const PILOT_FOOD_AID_POST_URI =
-    'at://did:example:pilot-alice/app.mutualhub.aid.post/pilot-food-1' as const;
+    'at://did:example:pilot-alice/app.patchwork.aid.post/pilot-food-1' as const;
 
 export const PILOT_FOOD_AID_POST = {
     $type: recordNsid.aidPost,
@@ -65,7 +65,7 @@ export const PILOT_FOOD_FIREHOSE_EVENT = {
 
 export const PILOT_MEDICAL_AUTHOR_DID = 'did:example:pilot-bob' as const;
 export const PILOT_MEDICAL_AID_POST_URI =
-    'at://did:example:pilot-bob/app.mutualhub.aid.post/pilot-medical-1' as const;
+    'at://did:example:pilot-bob/app.patchwork.aid.post/pilot-medical-1' as const;
 
 export const PILOT_MEDICAL_AID_POST = {
     $type: recordNsid.aidPost,
@@ -101,7 +101,7 @@ export const PILOT_MEDICAL_FIREHOSE_EVENT = {
 
 export const PILOT_SHELTER_AUTHOR_DID = 'did:example:pilot-carol' as const;
 export const PILOT_SHELTER_AID_POST_URI =
-    'at://did:example:pilot-carol/app.mutualhub.aid.post/pilot-shelter-1' as const;
+    'at://did:example:pilot-carol/app.patchwork.aid.post/pilot-shelter-1' as const;
 
 export const PILOT_SHELTER_AID_POST = {
     $type: recordNsid.aidPost,

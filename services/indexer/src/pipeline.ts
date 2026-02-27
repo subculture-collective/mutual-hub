@@ -4,7 +4,7 @@ import {
     buildPhase3FixtureFirehoseEvents,
     type AidQueryInput,
     type DirectoryQueryInput,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 
 export interface IndexerPipelineIngestResult {
     normalizedCount: number;

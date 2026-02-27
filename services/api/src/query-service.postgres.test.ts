@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import type { Pool } from 'pg';
-import { FirehoseConsumer, buildPhase3FixtureFirehoseEvents } from '@mutual-hub/shared';
+import { FirehoseConsumer, buildPhase3FixtureFirehoseEvents } from '@patchwork/shared';
 
 vi.mock('./db/discovery-events.js', () => ({
     createPostgresPool: vi.fn(),

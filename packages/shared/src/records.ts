@@ -6,7 +6,7 @@ import {
     recordNsid,
     type RecordNsid,
     validateRecordPayload,
-} from '@mutual-hub/at-lexicons';
+} from '@patchwork/at-lexicons';
 import { deepClone } from './clone.js';
 import { didSchema, isoDateTimeSchema } from './schemas.js';
 
@@ -29,7 +29,7 @@ export class RecordWriteError extends Error {
 }
 
 export interface TombstoneRecord {
-    $type: 'app.mutualhub.system.tombstone';
+    $type: 'app.patchwork.system.tombstone';
     uri: string;
     collection: RecordNsid;
     deletedByDid: string;
@@ -127,7 +127,7 @@ const mutationEventSchema = z.discriminatedUnion('type', [
         collection: z.enum(recordNsidEnumValues),
         version: z.number().int().positive(),
         tombstone: z.object({
-            $type: z.literal('app.mutualhub.system.tombstone'),
+            $type: z.literal('app.patchwork.system.tombstone'),
             uri: z.string().regex(/^at:\/\//),
             collection: z.enum(recordNsidEnumValues),
             deletedByDid: didSchema,
@@ -317,7 +317,7 @@ export class AtRecordRepository {
         const deletedAt = new Date().toISOString();
 
         const tombstone: TombstoneRecord = {
-            $type: 'app.mutualhub.system.tombstone',
+            $type: 'app.patchwork.system.tombstone',
             uri: input.uri,
             collection: existing.collection,
             deletedByDid,

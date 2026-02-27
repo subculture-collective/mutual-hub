@@ -1,4 +1,4 @@
-## Plan: AT-Native Mutual Aid Hub v1 (Vite + React + TypeScript + Tailwind)
+## Plan: Patchwork v1 (AT-Native Mutual Aid Hub) (Vite + React + TypeScript + Tailwind)
 
 Build a web-first, fully AT Protocol-native mutual aid hub with map + feed + 1:1 chat, plus resource directory and volunteer onboarding.
 

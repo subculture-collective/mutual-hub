@@ -2,7 +2,7 @@ import type {
     AidPostRecord,
     DirectoryResourceRecord,
     VolunteerProfileRecord,
-} from '@mutual-hub/at-lexicons';
+} from '@patchwork/at-lexicons';
 
 export const AID_CATEGORY_TO_DIRECTORY_CATEGORIES: Readonly<
     Record<

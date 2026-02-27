@@ -11,7 +11,7 @@ import {
 describe('P5.1 post-linked 1:1 chat initiation', () => {
     it('creates deterministic conversation context from map/feed surfaces', () => {
         const fromMap = createPostLinkedChatContext({
-            aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-1',
+            aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/post-1',
             initiatedByDid: 'did:example:helper',
             recipientDid: 'did:example:alice',
             initiatedFrom: 'map',
@@ -19,7 +19,7 @@ describe('P5.1 post-linked 1:1 chat initiation', () => {
         });
 
         const fromFeed = createPostLinkedChatContext({
-            aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-1',
+            aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/post-1',
             initiatedByDid: 'did:example:helper',
             recipientDid: 'did:example:alice',
             initiatedFrom: 'feed',
@@ -38,7 +38,7 @@ describe('P5.1 post-linked 1:1 chat initiation', () => {
         expect(() =>
             createPostLinkedChatContext({
                 aidPostUri:
-                    'at://did:example:alice/app.mutualhub.aid.post/post-2',
+                    'at://did:example:alice/app.patchwork.aid.post/post-2',
                 initiatedByDid: 'did:example:helper',
                 recipientDid: 'did:example:alice',
                 initiatedFrom: 'detail',
@@ -68,7 +68,7 @@ describe('P5.2 deterministic routing assistant', () => {
         const assistant = new DeterministicRoutingAssistant();
 
         const result = assistant.decide({
-            aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-3',
+            aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/post-3',
             requesterDid: 'did:example:requester',
             aidCategory: 'food',
             urgency: 'medium',
@@ -100,7 +100,7 @@ describe('P5.2 deterministic routing assistant', () => {
         const assistant = new DeterministicRoutingAssistant();
 
         const result = assistant.decide({
-            aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-3b',
+            aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/post-3b',
             requesterDid: 'did:example:requester',
             aidCategory: 'medical',
             urgency: 'critical',
@@ -150,7 +150,7 @@ describe('P5.3 conversation metadata + capability fallback', () => {
         const store = new ConversationMetadataStore();
 
         const chat = createPostLinkedChatContext({
-            aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-4',
+            aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/post-4',
             initiatedByDid: 'did:example:helper',
             recipientDid: 'did:example:alice',
             initiatedFrom: 'feed',
@@ -202,13 +202,13 @@ describe('P5.4 safety controls + abuse protections', () => {
         safety.blockParticipant('did:example:alice', 'did:example:bad-actor');
         safety.muteConversation(
             'did:example:alice',
-            'at://did:example:alice/app.mutualhub.conversation.meta/conv-1',
+            'at://did:example:alice/app.patchwork.conversation.meta/conv-1',
         );
 
         expect(
             safety.isMuted(
                 'did:example:alice',
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-1',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-1',
             ),
         ).toBe(true);
 
@@ -216,7 +216,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:bad-actor',
             recipientDid: 'did:example:alice',
             conversationUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-1',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-1',
             message: 'hello',
             sentAt: '2026-02-26T15:30:00.000Z',
         });
@@ -227,7 +227,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:helper',
             recipientDid: 'did:example:alice',
             conversationUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-2',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-2',
             message: 'message one',
             sentAt: '2026-02-26T15:40:00.000Z',
         });
@@ -235,7 +235,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:helper',
             recipientDid: 'did:example:alice',
             conversationUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-2',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-2',
             message: 'message two',
             sentAt: '2026-02-26T15:40:02.000Z',
         });
@@ -243,7 +243,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:helper',
             recipientDid: 'did:example:alice',
             conversationUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-2',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-2',
             message: 'message three',
             sentAt: '2026-02-26T15:40:03.000Z',
         });
@@ -256,7 +256,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:helper-2',
             recipientDid: 'did:example:alice',
             conversationUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-3',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-3',
             message: 'This sounds like a scam alert',
             sentAt: '2026-02-26T15:41:00.000Z',
         });
@@ -267,7 +267,7 @@ describe('P5.4 safety controls + abuse protections', () => {
 
         const report = safety.reportAbuse({
             subjectUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-3',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-3',
             reporterDid: 'did:example:alice',
             reason: 'abuse',
             details: 'Repeated abuse terms in DMs',
@@ -297,7 +297,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:spammer',
             recipientDid: 'did:example:target',
             conversationUri:
-                'at://did:example:target/app.mutualhub.conversation.meta/conv-spam-1',
+                'at://did:example:target/app.patchwork.conversation.meta/conv-spam-1',
             message: 'same copy',
             sentAt: '2026-02-27T03:00:00.000Z',
         });
@@ -306,7 +306,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:spammer',
             recipientDid: 'did:example:target',
             conversationUri:
-                'at://did:example:target/app.mutualhub.conversation.meta/conv-spam-1',
+                'at://did:example:target/app.patchwork.conversation.meta/conv-spam-1',
             message: 'same copy',
             sentAt: '2026-02-27T03:00:10.000Z',
         });
@@ -315,7 +315,7 @@ describe('P5.4 safety controls + abuse protections', () => {
             senderDid: 'did:example:spammer',
             recipientDid: 'did:example:target',
             conversationUri:
-                'at://did:example:target/app.mutualhub.conversation.meta/conv-spam-1',
+                'at://did:example:target/app.patchwork.conversation.meta/conv-spam-1',
             message: 'same copy',
             sentAt: '2026-02-27T03:00:20.000Z',
         });

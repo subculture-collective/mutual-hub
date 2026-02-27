@@ -41,17 +41,17 @@ const readLexicon = (fileName: string): AtLexiconDoc => {
 };
 
 export const lexiconDocs: Record<RecordNsid, AtLexiconDoc> = {
-    [recordNsid.aidPost]: readLexicon('app.mutualhub.aid.post.v1.json'),
+    [recordNsid.aidPost]: readLexicon('app.patchwork.aid.post.v1.json'),
     [recordNsid.volunteerProfile]: readLexicon(
-        'app.mutualhub.volunteer.profile.v1.json',
+        'app.patchwork.volunteer.profile.v1.json',
     ),
     [recordNsid.conversationMeta]: readLexicon(
-        'app.mutualhub.conversation.meta.v1.json',
+        'app.patchwork.conversation.meta.v1.json',
     ),
     [recordNsid.moderationReport]: readLexicon(
-        'app.mutualhub.moderation.report.v1.json',
+        'app.patchwork.moderation.report.v1.json',
     ),
     [recordNsid.directoryResource]: readLexicon(
-        'app.mutualhub.directory.resource.v1.json',
+        'app.patchwork.directory.resource.v1.json',
     ),
 };

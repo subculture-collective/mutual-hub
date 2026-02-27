@@ -44,7 +44,7 @@ jobs:
               working-directory: apps/web
 
             - name: Browser E2E tests (Phase 8.2)
-              run: npm run test:e2e -w @mutual-hub/web
+              run: npm run test:e2e -w @patchwork/web
 
             - name: Build
               run: npm run build

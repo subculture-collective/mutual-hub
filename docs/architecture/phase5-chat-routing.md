@@ -43,7 +43,7 @@ Tie-breakers are deterministic (`priority desc`, then `destinationId asc`).
 
 ## P5.3 metadata persistence + recipient capability fallback
 
-`ConversationMetadataStore` persists conversation metadata records (`app.mutualhub.conversation.meta`) and keeps them queryable by:
+`ConversationMetadataStore` persists conversation metadata records (`app.patchwork.conversation.meta`) and keeps them queryable by:
 
 - Conversation URI
 - Aid post URI
@@ -62,7 +62,7 @@ Capability handling:
 - Conversation mute controls
 - Keyword abuse flagging with moderation signal hooks
 - Sliding-window rate limiting with explicit user feedback
-- Moderation report creation (`app.mutualhub.moderation.report`) with emitted review signals
+- Moderation report creation (`app.patchwork.moderation.report`) with emitted review signals
 
 ## API routes added
 

@@ -1,6 +1,6 @@
 import { vi, describe, it, expect } from 'vitest';
 import type { Pool, PoolClient } from 'pg';
-import type { NormalizedFirehoseEvent } from '@mutual-hub/shared';
+import type { NormalizedFirehoseEvent } from '@patchwork/shared';
 import {
     toNormalizedFirehoseEvent,
     loadDiscoveryEvents,
@@ -17,8 +17,8 @@ const sampleRow = {
     event_id: 'event-1',
     seq: '42',
     action: 'create' as const,
-    uri: 'at://did:plc:abc/app.mutualhub.aid.post/rec1',
-    collection: 'app.mutualhub.aid.post' as const,
+    uri: 'at://did:plc:abc/app.patchwork.aid.post/rec1',
+    collection: 'app.patchwork.aid.post' as const,
     author_did: 'did:plc:abc',
     received_at: '2026-01-01T00:00:00.000Z',
     payload: null,
@@ -29,8 +29,8 @@ const sampleEvent: NormalizedFirehoseEvent = {
     eventId: 'event-1',
     seq: 42,
     action: 'create',
-    uri: 'at://did:plc:abc/app.mutualhub.aid.post/rec1',
-    collection: 'app.mutualhub.aid.post',
+    uri: 'at://did:plc:abc/app.patchwork.aid.post/rec1',
+    collection: 'app.patchwork.aid.post',
     authorDid: 'did:plc:abc',
     receivedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -60,8 +60,8 @@ describe('toNormalizedFirehoseEvent', () => {
             eventId: 'event-1',
             seq: 42,
             action: 'create',
-            uri: 'at://did:plc:abc/app.mutualhub.aid.post/rec1',
-            collection: 'app.mutualhub.aid.post',
+            uri: 'at://did:plc:abc/app.patchwork.aid.post/rec1',
+            collection: 'app.patchwork.aid.post',
             authorDid: 'did:plc:abc',
             receivedAt: '2026-01-01T00:00:00.000Z',
             payload: undefined,

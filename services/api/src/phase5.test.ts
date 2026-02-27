@@ -8,7 +8,7 @@ describe('api phase 5 chat service', () => {
         const mapResult = service.initiateFromParams(
             new URLSearchParams({
                 aidPostUri:
-                    'at://did:example:alice/app.mutualhub.aid.post/post-5',
+                    'at://did:example:alice/app.patchwork.aid.post/post-5',
                 initiatedByDid: 'did:example:helper',
                 recipientDid: 'did:example:alice',
                 initiatedFrom: 'map',
@@ -19,7 +19,7 @@ describe('api phase 5 chat service', () => {
         const feedResult = service.initiateFromParams(
             new URLSearchParams({
                 aidPostUri:
-                    'at://did:example:alice/app.mutualhub.aid.post/post-5',
+                    'at://did:example:alice/app.patchwork.aid.post/post-5',
                 initiatedByDid: 'did:example:helper',
                 recipientDid: 'did:example:alice',
                 initiatedFrom: 'feed',
@@ -49,7 +49,7 @@ describe('api phase 5 chat service', () => {
         const result = service.initiateFromParams(
             new URLSearchParams({
                 aidPostUri:
-                    'at://did:example:alice/app.mutualhub.aid.post/post-6',
+                    'at://did:example:alice/app.patchwork.aid.post/post-6',
                 initiatedByDid: 'did:example:helper',
                 recipientDid: 'did:example:alice',
                 initiatedFrom: 'detail',
@@ -86,7 +86,7 @@ describe('api phase 5 chat service', () => {
         const result = service.initiateFromParams(
             new URLSearchParams({
                 aidPostUri:
-                    'at://did:example:resource-fallback/app.mutualhub.aid.post/post-7',
+                    'at://did:example:resource-fallback/app.patchwork.aid.post/post-7',
                 initiatedByDid: 'did:example:helper',
                 recipientDid: 'did:example:resource-fallback',
                 initiatedFrom: 'feed',
@@ -120,7 +120,7 @@ describe('api phase 5 chat service', () => {
                 senderDid: 'did:example:blocked',
                 recipientDid: 'did:example:alice',
                 conversationUri:
-                    'at://did:example:alice/app.mutualhub.conversation.meta/conv-9',
+                    'at://did:example:alice/app.patchwork.conversation.meta/conv-9',
                 message: 'Hello',
                 sentAt: '2026-02-26T16:30:00.000Z',
             }),
@@ -134,7 +134,7 @@ describe('api phase 5 chat service', () => {
         const report = service.reportFromParams(
             new URLSearchParams({
                 subjectUri:
-                    'at://did:example:alice/app.mutualhub.conversation.meta/conv-9',
+                    'at://did:example:alice/app.patchwork.conversation.meta/conv-9',
                 reporterDid: 'did:example:alice',
                 reason: 'abuse',
                 details: 'Escalate for review',

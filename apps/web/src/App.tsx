@@ -5,7 +5,7 @@ import { Input } from './components/Input';
 import { Panel } from './components/Panel';
 import { TextLink } from './components/TextLink';
 
-export const APP_TITLE = 'Mutual Hub';
+export const APP_TITLE = 'Patchwork';
 
 const discoveryShellPanel = (
     <Panel title='Discovery shell'>

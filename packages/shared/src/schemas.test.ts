@@ -11,14 +11,14 @@ describe('shared schemas', () => {
         expect(didSchema.parse('did:example:alice')).toBe('did:example:alice');
         expect(
             atUriSchema.parse(
-                'at://did:example:alice/app.mutualhub.aid.post/post-1',
+                'at://did:example:alice/app.patchwork.aid.post/post-1',
             ),
-        ).toBe('at://did:example:alice/app.mutualhub.aid.post/post-1');
+        ).toBe('at://did:example:alice/app.patchwork.aid.post/post-1');
         expect(
             atUriRecordSchema.parse(
-                'at://did:example:alice/app.mutualhub.aid.post/post-1',
+                'at://did:example:alice/app.patchwork.aid.post/post-1',
             ),
-        ).toBe('at://did:example:alice/app.mutualhub.aid.post/post-1');
+        ).toBe('at://did:example:alice/app.patchwork.aid.post/post-1');
     });
 
     it('rejects invalid values', () => {

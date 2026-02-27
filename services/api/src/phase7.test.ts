@@ -11,7 +11,7 @@ describe('api phase 7 anti-spam + moderation signal hardening', () => {
                     senderDid: 'did:example:spammer',
                     recipientDid: 'did:example:target',
                     conversationUri:
-                        'at://did:example:target/app.mutualhub.conversation.meta/conv-spam',
+                        'at://did:example:target/app.patchwork.conversation.meta/conv-spam',
                     message: 'buy now buy now',
                     sentAt: `2026-02-27T04:00:0${index}.000Z`,
                 }),
@@ -43,7 +43,7 @@ describe('api phase 7 anti-spam + moderation signal hardening', () => {
                 senderDid: 'did:example:sender',
                 recipientDid: 'did:example:target',
                 conversationUri:
-                    'at://did:example:target/app.mutualhub.conversation.meta/conv-dupe',
+                    'at://did:example:target/app.patchwork.conversation.meta/conv-dupe',
                 message: 'same payload',
                 sentAt: '2026-02-27T04:05:00.000Z',
             }),
@@ -53,7 +53,7 @@ describe('api phase 7 anti-spam + moderation signal hardening', () => {
                 senderDid: 'did:example:sender',
                 recipientDid: 'did:example:target',
                 conversationUri:
-                    'at://did:example:target/app.mutualhub.conversation.meta/conv-dupe',
+                    'at://did:example:target/app.patchwork.conversation.meta/conv-dupe',
                 message: 'same payload',
                 sentAt: '2026-02-27T04:05:01.000Z',
             }),
@@ -64,7 +64,7 @@ describe('api phase 7 anti-spam + moderation signal hardening', () => {
                 senderDid: 'did:example:sender',
                 recipientDid: 'did:example:target',
                 conversationUri:
-                    'at://did:example:target/app.mutualhub.conversation.meta/conv-dupe',
+                    'at://did:example:target/app.patchwork.conversation.meta/conv-dupe',
                 message: 'same payload',
                 sentAt: '2026-02-27T04:05:02.000Z',
             }),

@@ -1,5 +1,5 @@
 {
-    "name": "mutual-hub",
+    "name": "patchwork",
     "version": "0.1.0",
     "private": true,
     "workspaces": [
@@ -11,14 +11,14 @@
         "node": ">=20.19.0"
     },
     "scripts": {
-        "dev:web": "npm run dev -w @mutual-hub/web",
-        "dev:api": "npm run dev -w @mutual-hub/api",
-        "dev:api:postgres": "API_DATA_SOURCE=postgres npm run dev -w @mutual-hub/api",
-        "dev:indexer": "npm run dev -w @mutual-hub/indexer",
-        "dev:moderation": "npm run dev -w @mutual-hub/moderation-worker",
+        "dev:web": "npm run dev -w @patchwork/web",
+        "dev:api": "npm run dev -w @patchwork/api",
+        "dev:api:postgres": "API_DATA_SOURCE=postgres npm run dev -w @patchwork/api",
+        "dev:indexer": "npm run dev -w @patchwork/indexer",
+        "dev:moderation": "npm run dev -w @patchwork/moderation-worker",
         "db:up": "docker compose -f docker-compose.postgres.yml up -d postgres",
         "db:down": "docker compose -f docker-compose.postgres.yml down",
-        "db:seed": "npm run db:seed -w @mutual-hub/api",
+        "db:seed": "npm run db:seed -w @patchwork/api",
         "build": "npm run build --workspaces --if-present",
         "lint": "npm run lint --workspaces --if-present",
         "typecheck": "npm run typecheck --workspaces --if-present",

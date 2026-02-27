@@ -12,7 +12,7 @@ import {
     recordNsid,
     redactLogData,
     safeValidateRecordPayload,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import { createFixtureChatService } from './chat-service.js';
 import { createFixtureQueryService } from './query-service.js';
 
@@ -111,7 +111,7 @@ describe('P8.1 API contract test matrix', () => {
             const result = service.initiateFromParams(
                 new URLSearchParams({
                     aidPostUri:
-                        'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-map',
+                        'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-map',
                     initiatedByDid: 'did:example:p8-helper',
                     recipientDid: 'did:example:p8-alice',
                     initiatedFrom: 'map',
@@ -132,7 +132,7 @@ describe('P8.1 API contract test matrix', () => {
             const service = createFixtureChatService();
             const params = new URLSearchParams({
                 aidPostUri:
-                    'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-dedup',
+                    'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-dedup',
                 initiatedByDid: 'did:example:p8-helper',
                 recipientDid: 'did:example:p8-alice',
                 initiatedFrom: 'map',

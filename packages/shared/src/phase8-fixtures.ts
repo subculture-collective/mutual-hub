@@ -15,7 +15,7 @@
  *   P7.1 – moderation         → PHASE8_MODERATION_EVENT
  */
 
-import { recordNsid } from '@mutual-hub/at-lexicons';
+import { recordNsid } from '@patchwork/at-lexicons';
 import type {
     ApiChatInitiationRequest,
     ApiQueryAidRequest,
@@ -79,7 +79,7 @@ export const PHASE8_VALID_VOLUNTEER_PROFILE = {
 export const PHASE8_VALID_CONVERSATION_META = {
     $type: recordNsid.conversationMeta,
     version: '1.0.0',
-    aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/p8-post-1',
+    aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/p8-post-1',
     participantDids: ['did:example:alice', 'did:example:helper'],
     status: 'open',
     createdAt: '2026-02-27T00:00:00.000Z',
@@ -88,7 +88,7 @@ export const PHASE8_VALID_CONVERSATION_META = {
 export const PHASE8_VALID_MODERATION_REPORT = {
     $type: recordNsid.moderationReport,
     version: '1.0.0',
-    subjectUri: 'at://did:example:alice/app.mutualhub.aid.post/p8-post-1',
+    subjectUri: 'at://did:example:alice/app.patchwork.aid.post/p8-post-1',
     reporterDid: 'did:example:reporter',
     reason: 'spam',
     createdAt: '2026-02-27T00:00:00.000Z',
@@ -129,7 +129,7 @@ export const buildPhase8FixtureFirehoseEvents = (): unknown[] => [
         seq: 1,
         receivedAt: '2026-02-27T00:01:00.000Z',
         action: 'create',
-        uri: 'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-a',
+        uri: 'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-a',
         collection: recordNsid.aidPost,
         authorDid: 'did:example:p8-alice',
         trustScore: 0.85,
@@ -139,7 +139,7 @@ export const buildPhase8FixtureFirehoseEvents = (): unknown[] => [
         seq: 2,
         receivedAt: '2026-02-27T00:02:00.000Z',
         action: 'create',
-        uri: 'at://did:example:p8-bob/app.mutualhub.directory.resource/p8-resource-a',
+        uri: 'at://did:example:p8-bob/app.patchwork.directory.resource/p8-resource-a',
         collection: recordNsid.directoryResource,
         authorDid: 'did:example:p8-bob',
         trustScore: 0.9,
@@ -149,7 +149,7 @@ export const buildPhase8FixtureFirehoseEvents = (): unknown[] => [
         seq: 3,
         receivedAt: '2026-02-27T00:03:00.000Z',
         action: 'update',
-        uri: 'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-a',
+        uri: 'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-a',
         collection: recordNsid.aidPost,
         authorDid: 'did:example:p8-alice',
         trustScore: 0.85,
@@ -171,21 +171,21 @@ export const buildPhase8FixtureFirehoseEvents = (): unknown[] => [
  */
 export const PHASE8_RANKING_CARDS: readonly RankableCard[] = [
     {
-        uri: 'at://did:example:p8-rank/app.mutualhub.aid.post/rank-a',
+        uri: 'at://did:example:p8-rank/app.patchwork.aid.post/rank-a',
         distanceKm: 1.5,
         createdAt: '2026-02-26T23:00:00.000Z',
         trustScore: 0.9,
         updatedAt: '2026-02-26T23:30:00.000Z',
     },
     {
-        uri: 'at://did:example:p8-rank/app.mutualhub.aid.post/rank-b',
+        uri: 'at://did:example:p8-rank/app.patchwork.aid.post/rank-b',
         distanceKm: 8,
         createdAt: '2026-02-26T20:00:00.000Z',
         trustScore: 0.6,
         updatedAt: '2026-02-26T21:00:00.000Z',
     },
     {
-        uri: 'at://did:example:p8-rank/app.mutualhub.aid.post/rank-c',
+        uri: 'at://did:example:p8-rank/app.patchwork.aid.post/rank-c',
         distanceKm: 20,
         createdAt: '2026-02-25T00:00:00.000Z',
         trustScore: 0.4,
@@ -202,7 +202,7 @@ export const PHASE8_PRIVACY_LOG_PAYLOAD = {
     eventType: 'chat.safety.evaluated',
     senderDid: 'did:example:p8-sender',
     recipientDid: 'did:example:p8-recipient',
-    subjectUri: 'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-a',
+    subjectUri: 'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-a',
     latitude: 40.713274,
     longitude: -74.005678,
     details: 'Evaluated chat safety for p8 fixture',
@@ -214,7 +214,7 @@ export const PHASE8_PRIVACY_LOG_PAYLOAD = {
 
 /** Deterministic chat initiation request used in routing tests. */
 export const PHASE8_CHAT_REQUEST: ApiChatInitiationRequest = {
-    aidPostUri: 'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-a',
+    aidPostUri: 'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-a',
     initiatedByDid: 'did:example:p8-helper',
     recipientDid: 'did:example:p8-alice',
     initiatedFrom: 'map',
@@ -240,7 +240,7 @@ export const PHASE8_MAP_QUERY_REQUEST: ApiQueryAidRequest = {
 /** Deterministic FirehoseNormalizedEvent matching the service contract. */
 export const PHASE8_FIREHOSE_EVENT: FirehoseNormalizedEvent = {
     type: 'firehose.normalized',
-    recordUri: 'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-a',
+    recordUri: 'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-a',
     authorDid: 'did:example:p8-alice',
     indexedAt: '2026-02-27T00:01:00.000Z',
     action: 'create',
@@ -250,7 +250,7 @@ export const PHASE8_FIREHOSE_EVENT: FirehoseNormalizedEvent = {
 /** Deterministic ModerationReviewRequestedEvent matching the service contract. */
 export const PHASE8_MODERATION_EVENT: ModerationReviewRequestedEvent = {
     type: 'moderation.review.requested',
-    subjectUri: 'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-a',
+    subjectUri: 'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-a',
     reason: 'user-report:spam',
     requestedAt: '2026-02-27T00:05:00.000Z',
 };

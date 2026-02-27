@@ -9,7 +9,7 @@ import {
     type ApiQueryDirectoryResponse,
     type ApiQueryErrorResponse,
     type NormalizedFirehoseEvent,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import {
     createPostgresPool,
     loadDiscoveryEvents,

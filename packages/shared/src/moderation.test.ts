@@ -6,7 +6,7 @@ describe('P7.1 moderation queue + policy actions', () => {
         const queue = new ModerationReviewQueue();
 
         queue.enqueueReview({
-            subjectUri: 'at://did:example:alice/app.mutualhub.aid.post/post-1',
+            subjectUri: 'at://did:example:alice/app.patchwork.aid.post/post-1',
             reason: 'user-report:spam',
             requestedAt: '2026-02-27T02:00:00.000Z',
             context: {
@@ -17,7 +17,7 @@ describe('P7.1 moderation queue + policy actions', () => {
         });
 
         const item = queue.getState(
-            'at://did:example:alice/app.mutualhub.aid.post/post-1',
+            'at://did:example:alice/app.patchwork.aid.post/post-1',
         );
 
         expect(item).not.toBeNull();
@@ -36,14 +36,14 @@ describe('P7.1 moderation queue + policy actions', () => {
 
         queue.enqueueReview({
             subjectUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-1',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-1',
             reason: 'abuse-keyword:threat',
             requestedAt: '2026-02-27T02:10:00.000Z',
         });
 
         const updated = queue.applyPolicyAction({
             subjectUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-1',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-1',
             actorDid: 'did:example:mod-1',
             action: 'suspend-visibility',
             reason: 'Threat language requires immediate suspension',
@@ -57,7 +57,7 @@ describe('P7.1 moderation queue + policy actions', () => {
     it('represents appeal lifecycle states and supports filtered queries', () => {
         const queue = new ModerationReviewQueue();
         const subjectUri =
-            'at://did:example:org/app.mutualhub.directory.resource/resource-1';
+            'at://did:example:org/app.patchwork.directory.resource/resource-1';
 
         queue.enqueueReview({
             subjectUri,
@@ -108,7 +108,7 @@ describe('P7.1 moderation queue + policy actions', () => {
     it('stores and returns moderation policy audit metadata', () => {
         const queue = new ModerationReviewQueue();
         const subjectUri =
-            'at://did:example:alice/app.mutualhub.aid.post/post-44';
+            'at://did:example:alice/app.patchwork.aid.post/post-44';
 
         queue.enqueueReview({
             subjectUri,
@@ -143,7 +143,7 @@ describe('P7.1 moderation queue + policy actions', () => {
     it('rejects invalid appeal transitions', () => {
         const queue = new ModerationReviewQueue();
         const subjectUri =
-            'at://did:example:alice/app.mutualhub.aid.post/post-99';
+            'at://did:example:alice/app.patchwork.aid.post/post-99';
 
         queue.enqueueReview({
             subjectUri,

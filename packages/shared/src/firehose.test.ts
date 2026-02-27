@@ -4,7 +4,7 @@ import {
     buildPhase3FixtureFirehoseEvents,
     normalizeFirehoseEvent,
 } from './firehose.js';
-import { recordNsid } from '@mutual-hub/at-lexicons';
+import { recordNsid } from '@patchwork/at-lexicons';
 
 describe('P3.1 firehose consumer + normalization', () => {
     it('ingests fixture streams with deterministic normalized output', () => {
@@ -49,20 +49,20 @@ describe('P3.1 firehose consumer + normalization', () => {
             {
                 seq: 'bad',
                 action: 'create',
-                uri: 'at://did:example:alice/app.mutualhub.aid.post/oops',
+                uri: 'at://did:example:alice/app.patchwork.aid.post/oops',
                 collection: recordNsid.aidPost,
             },
             {
                 seq: 9,
                 action: 'create',
-                uri: 'at://did:example:alice/app.mutualhub.aid.post/partial',
+                uri: 'at://did:example:alice/app.patchwork.aid.post/partial',
                 collection: recordNsid.aidPost,
                 authorDid: 'did:example:alice',
             },
             {
                 seq: 10,
                 action: 'create',
-                uri: 'at://did:example:alice/app.mutualhub.aid.post/invalid',
+                uri: 'at://did:example:alice/app.patchwork.aid.post/invalid',
                 collection: recordNsid.aidPost,
                 authorDid: 'did:example:alice',
                 record: {
@@ -105,7 +105,7 @@ describe('P3.1 firehose consumer + normalization', () => {
         const normalized = normalizeFirehoseEvent({
             seq: 44,
             action: 'delete',
-            uri: 'at://did:example:alice/app.mutualhub.aid.post/post-z',
+            uri: 'at://did:example:alice/app.patchwork.aid.post/post-z',
             collection: recordNsid.aidPost,
         });
 
@@ -119,7 +119,7 @@ describe('P3.1 firehose consumer + normalization', () => {
         const normalized = normalizeFirehoseEvent({
             seq: 51,
             action: 'create',
-            uri: 'at://did:example:org/app.mutualhub.directory.resource/resource-z',
+            uri: 'at://did:example:org/app.patchwork.directory.resource/resource-z',
             collection: recordNsid.directoryResource,
             authorDid: 'did:example:org',
             record: {

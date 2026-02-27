@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { recordNsid } from '@mutual-hub/at-lexicons';
+import { recordNsid } from '@patchwork/at-lexicons';
 import type { ModerationReviewRequestedEvent } from './contracts.js';
 import { deepClone } from './clone.js';
 import { atUriSchema, didSchema, isoDateTimeSchema } from './schemas.js';

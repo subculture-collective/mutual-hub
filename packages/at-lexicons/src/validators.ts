@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 export const recordNsid = {
-    aidPost: 'app.mutualhub.aid.post',
-    volunteerProfile: 'app.mutualhub.volunteer.profile',
-    conversationMeta: 'app.mutualhub.conversation.meta',
-    moderationReport: 'app.mutualhub.moderation.report',
-    directoryResource: 'app.mutualhub.directory.resource',
+    aidPost: 'app.patchwork.aid.post',
+    volunteerProfile: 'app.patchwork.volunteer.profile',
+    conversationMeta: 'app.patchwork.conversation.meta',
+    moderationReport: 'app.patchwork.moderation.report',
+    directoryResource: 'app.patchwork.directory.resource',
 } as const;
 
 export type RecordNsid = (typeof recordNsid)[keyof typeof recordNsid];
@@ -163,11 +163,11 @@ export type ModerationReportRecord = z.infer<typeof moderationReportSchema>;
 export type DirectoryResourceRecord = z.infer<typeof directoryResourceSchema>;
 
 export type RecordByNsid = {
-    'app.mutualhub.aid.post': AidPostRecord;
-    'app.mutualhub.volunteer.profile': VolunteerProfileRecord;
-    'app.mutualhub.conversation.meta': ConversationMetaRecord;
-    'app.mutualhub.moderation.report': ModerationReportRecord;
-    'app.mutualhub.directory.resource': DirectoryResourceRecord;
+    'app.patchwork.aid.post': AidPostRecord;
+    'app.patchwork.volunteer.profile': VolunteerProfileRecord;
+    'app.patchwork.conversation.meta': ConversationMetaRecord;
+    'app.patchwork.moderation.report': ModerationReportRecord;
+    'app.patchwork.directory.resource': DirectoryResourceRecord;
 };
 
 export const recordValidators: {

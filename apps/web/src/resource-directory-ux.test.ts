@@ -11,7 +11,7 @@ const buildResource = (
     overrides: Partial<ResourceDirectoryCard> = {},
 ): ResourceDirectoryCard => {
     return {
-        uri: 'at://did:example:org/app.mutualhub.directory.resource/resource-1',
+        uri: 'at://did:example:org/app.patchwork.directory.resource/resource-1',
         id: 'resource-1',
         name: 'Neighborhood Clinic',
         category: 'clinic',
@@ -34,13 +34,13 @@ describe('phase 6 resource directory overlays + details ui', () => {
     it('updates overlays by shared discovery filters and category selection', () => {
         const cards: ResourceDirectoryCard[] = [
             buildResource({
-                uri: 'at://did:example:a/app.mutualhub.directory.resource/clinic-1',
+                uri: 'at://did:example:a/app.patchwork.directory.resource/clinic-1',
                 id: 'clinic-1',
                 name: 'Central Clinic',
                 category: 'clinic',
             }),
             buildResource({
-                uri: 'at://did:example:b/app.mutualhub.directory.resource/food-1',
+                uri: 'at://did:example:b/app.patchwork.directory.resource/food-1',
                 id: 'food-1',
                 name: 'Sunrise Food Bank',
                 category: 'food-bank',
@@ -48,7 +48,7 @@ describe('phase 6 resource directory overlays + details ui', () => {
                 eligibilityNotes: 'Families prioritized',
             }),
             buildResource({
-                uri: 'at://did:example:c/app.mutualhub.directory.resource/shelter-1',
+                uri: 'at://did:example:c/app.patchwork.directory.resource/shelter-1',
                 id: 'shelter-1',
                 name: 'Harbor Shelter',
                 category: 'shelter',
@@ -85,7 +85,7 @@ describe('phase 6 resource directory overlays + details ui', () => {
     it('shows hours and eligibility details in resource panel', () => {
         const cards = [
             buildResource({
-                uri: 'at://did:example:org/app.mutualhub.directory.resource/clinic-2',
+                uri: 'at://did:example:org/app.patchwork.directory.resource/clinic-2',
                 id: 'clinic-2',
                 name: 'Northside Clinic',
                 openHours: 'Mon-Fri 18:00-22:00',

@@ -1,5 +1,5 @@
 {
-    "name": "@mutual-hub/api",
+    "name": "@patchwork/api",
     "version": "0.1.0",
     "private": true,
     "type": "module",
@@ -18,7 +18,7 @@
         "test:phase8-e2e": "vitest run src/phase8-e2e.test.ts"
     },
     "dependencies": {
-        "@mutual-hub/shared": "0.1.0",
+        "@patchwork/shared": "0.1.0",
         "pg": "^8.19.0"
     },
     "devDependencies": {

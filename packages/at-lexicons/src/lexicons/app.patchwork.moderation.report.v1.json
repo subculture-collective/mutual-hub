@@ -1,6 +1,6 @@
 {
     "lexicon": 1,
-    "id": "app.mutualhub.moderation.report",
+    "id": "app.patchwork.moderation.report",
     "revision": "1.0.0",
     "description": "Moderation report record for posts/chats/resources.",
     "defs": {
@@ -20,7 +20,7 @@
                 "properties": {
                     "$type": {
                         "type": "string",
-                        "const": "app.mutualhub.moderation.report"
+                        "const": "app.patchwork.moderation.report"
                     },
                     "version": { "type": "string", "const": "1.0.0" },
                     "subjectUri": { "type": "string" },

@@ -1,5 +1,5 @@
 {
-    "$type": "app.mutualhub.volunteer.profile",
+    "$type": "app.patchwork.volunteer.profile",
     "version": "1.0.0",
     "displayName": "Alex Rivera",
     "capabilities": [],

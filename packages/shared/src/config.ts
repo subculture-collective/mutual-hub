@@ -19,7 +19,7 @@ const atprotoSchema = z.object({
 });
 
 const webSchema = baseSchema.extend({
-    VITE_APP_NAME: z.string().min(1).default('Mutual Hub'),
+    VITE_APP_NAME: z.string().min(1).default('Patchwork'),
     VITE_API_BASE_URL: z.string().url().default('http://localhost:4000'),
 });
 

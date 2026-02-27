@@ -5,7 +5,7 @@ import {
     buildPhase3FixtureFirehoseEvents,
     buildPilotScenarioFirehoseEvents,
     loadApiConfig,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import {
     appendDiscoveryEvents,
     countDiscoveryEvents,

@@ -144,7 +144,7 @@ It serves as the Phase 8 (P8.1) traceability artifact for the automated test mat
 
 ## Fixture Index
 
-The following deterministic fixture exports are available from `@mutual-hub/shared` for use across all test suites:
+The following deterministic fixture exports are available from `@patchwork/shared` for use across all test suites:
 
 | Export | Domain | Description |
 |---|---|---|
@@ -172,10 +172,10 @@ The following deterministic fixture exports are available from `@mutual-hub/shar
 npm run test:phase8
 
 # Run per workspace
-npm run test:phase8 -w @mutual-hub/shared
-npm run test:phase8 -w @mutual-hub/api
-npm run test:phase8 -w @mutual-hub/indexer
-npm run test:phase8 -w @mutual-hub/moderation-worker
+npm run test:phase8 -w @patchwork/shared
+npm run test:phase8 -w @patchwork/api
+npm run test:phase8 -w @patchwork/indexer
+npm run test:phase8 -w @patchwork/moderation-worker
 ```
 
 All tests are deterministic and require no external services or environment variables.

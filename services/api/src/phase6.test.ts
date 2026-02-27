@@ -107,7 +107,7 @@ describe('api phase 6 volunteer onboarding + preference routing', () => {
         const routed = service.routePreferenceAwareFromParams(
             new URLSearchParams({
                 aidPostUri:
-                    'at://did:example:requester/app.mutualhub.aid.post/phase6-route',
+                    'at://did:example:requester/app.patchwork.aid.post/phase6-route',
                 requesterDid: 'did:example:requester',
                 category: 'medical',
                 urgency: 'critical',

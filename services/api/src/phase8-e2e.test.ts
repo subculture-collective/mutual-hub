@@ -31,7 +31,7 @@ import {
     PILOT_MEDICAL_AUTHOR_DID,
     PILOT_SHELTER_AID_POST_URI,
     PUBLIC_MIN_PRECISION_KM,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import { createFixtureChatService } from './chat-service.js';
 import { ApiDiscoveryQueryService } from './query-service.js';
 

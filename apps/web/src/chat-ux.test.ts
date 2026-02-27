@@ -9,14 +9,14 @@ import {
 } from './chat-ux.js';
 
 const mapIntent: ChatInitiationIntent = {
-    aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-map',
+    aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/post-map',
     aidPostTitle: 'Need groceries',
     recipientDid: 'did:example:alice',
     initiatedFrom: 'map',
 };
 
 const feedIntent: ChatInitiationIntent = {
-    aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-feed',
+    aidPostUri: 'at://did:example:alice/app.patchwork.aid.post/post-feed',
     aidPostTitle: 'Need shelter',
     recipientDid: 'did:example:alice',
     initiatedFrom: 'feed',
@@ -76,7 +76,7 @@ describe('chat ux', () => {
             intent: mapIntent,
             result: {
                 conversationUri:
-                    'at://did:example:alice/app.mutualhub.conversation.meta/conv-1',
+                    'at://did:example:alice/app.patchwork.conversation.meta/conv-1',
                 created: true,
                 transportPath: 'manual-fallback',
                 fallbackNotice: {

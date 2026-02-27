@@ -28,7 +28,7 @@ describe('posting form', () => {
             { now: '2026-02-26T17:00:00.000Z', id: 'post-1' },
         );
 
-        expect(payload.record.$type).toBe('app.mutualhub.aid.post');
+        expect(payload.record.$type).toBe('app.patchwork.aid.post');
         expect(payload.record.location.precisionKm).toBeGreaterThanOrEqual(0.3);
         expect(payload.record.status).toBe('open');
         expect(payload.metadata.accessibilityTags).toEqual(['wheelchair']);

@@ -28,14 +28,14 @@ describe('P3.4 ranking pipeline', () => {
         const ranked = rankCardsDeterministically(
             [
                 {
-                    uri: 'at://did:example:z/app.mutualhub.aid.post/2',
+                    uri: 'at://did:example:z/app.patchwork.aid.post/2',
                     distanceKm: 5,
                     createdAt: '2026-02-26T10:00:00.000Z',
                     trustScore: 0.7,
                     updatedAt: '2026-02-26T12:00:00.000Z',
                 },
                 {
-                    uri: 'at://did:example:a/app.mutualhub.aid.post/1',
+                    uri: 'at://did:example:a/app.patchwork.aid.post/1',
                     distanceKm: 5,
                     createdAt: '2026-02-26T10:00:00.000Z',
                     trustScore: 0.7,
@@ -46,10 +46,10 @@ describe('P3.4 ranking pipeline', () => {
         );
 
         expect(ranked[0]?.uri).toBe(
-            'at://did:example:a/app.mutualhub.aid.post/1',
+            'at://did:example:a/app.patchwork.aid.post/1',
         );
         expect(ranked[1]?.uri).toBe(
-            'at://did:example:z/app.mutualhub.aid.post/2',
+            'at://did:example:z/app.patchwork.aid.post/2',
         );
     });
 });

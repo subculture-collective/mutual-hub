@@ -1,7 +1,7 @@
 /**
  * P8.2 – Browser E2E tests for the request-to-handoff lifecycle.
  *
- * Tests the critical user journey through the Mutual Hub web shell:
+ * Tests the critical user journey through the Patchwork web shell:
  *   discovery shell renders → search input is interactive →
  *   "Create post" action is accessible → "Find nearby" action is accessible
  *
@@ -20,9 +20,9 @@ test.describe('P8.2 app shell', () => {
         await page.goto('/');
     });
 
-    test('renders the Mutual Hub heading', async ({ page }) => {
+    test('renders the Patchwork heading', async ({ page }) => {
         await expect(
-            page.getByRole('heading', { name: /mutual hub/i }),
+            page.getByRole('heading', { name: /patchwork/i }),
         ).toBeVisible();
     });
 

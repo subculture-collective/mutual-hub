@@ -1,5 +1,5 @@
 {
-    "name": "@mutual-hub/shared",
+    "name": "@patchwork/shared",
     "version": "0.1.0",
     "private": true,
     "type": "module",
@@ -14,7 +14,7 @@
         "test:phase8": "vitest run src/contracts.test.ts src/ranking.test.ts src/firehose.test.ts src/privacy.test.ts src/messaging.test.ts src/moderation.test.ts"
     },
     "dependencies": {
-        "@mutual-hub/at-lexicons": "0.1.0",
+        "@patchwork/at-lexicons": "0.1.0",
         "zod": "3.25.76"
     }
 }

@@ -1,4 +1,4 @@
-import { type NormalizedFirehoseEvent } from '@mutual-hub/shared';
+import { type NormalizedFirehoseEvent } from '@patchwork/shared';
 import { Pool, type PoolClient } from 'pg';
 
 const DISCOVERY_EVENTS_TABLE = 'discovery_events';

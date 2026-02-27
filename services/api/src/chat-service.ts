@@ -12,7 +12,7 @@ import {
     type AidPostRecord,
     type ChatInitiationSurface,
     type RecipientTransportCapability,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 
 export interface ApiChatRouteResult {
     statusCode: number;
