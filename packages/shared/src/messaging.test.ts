@@ -282,4 +282,60 @@ describe('P5.4 safety controls + abuse protections', () => {
             2,
         );
     });
+
+    it('enforces duplicate spam blocking and exposes operational safety metrics', () => {
+        const safety = new ChatSafetyControls({
+            maxMessagesPerWindow: 10,
+            windowMs: 30_000,
+            duplicateWindowMs: 120_000,
+            maxDuplicateMessages: 1,
+            suspiciousSignalThreshold: 2,
+            abuseKeywords: ['scam'],
+        });
+
+        const first = safety.evaluateOutboundMessage({
+            senderDid: 'did:example:spammer',
+            recipientDid: 'did:example:target',
+            conversationUri:
+                'at://did:example:target/app.mutualhub.conversation.meta/conv-spam-1',
+            message: 'same copy',
+            sentAt: '2026-02-27T03:00:00.000Z',
+        });
+
+        const second = safety.evaluateOutboundMessage({
+            senderDid: 'did:example:spammer',
+            recipientDid: 'did:example:target',
+            conversationUri:
+                'at://did:example:target/app.mutualhub.conversation.meta/conv-spam-1',
+            message: 'same copy',
+            sentAt: '2026-02-27T03:00:10.000Z',
+        });
+
+        const third = safety.evaluateOutboundMessage({
+            senderDid: 'did:example:spammer',
+            recipientDid: 'did:example:target',
+            conversationUri:
+                'at://did:example:target/app.mutualhub.conversation.meta/conv-spam-1',
+            message: 'same copy',
+            sentAt: '2026-02-27T03:00:20.000Z',
+        });
+
+        expect(first.code).toBe('OK');
+        expect(second.code).toBe('DUPLICATE_BLOCKED');
+        expect(third.code).toBe('DUPLICATE_BLOCKED');
+
+        const metrics = safety.getMetrics();
+        expect(metrics).toMatchObject({
+            evaluated: 3,
+            duplicateBlocked: 2,
+            suspiciousSignals: 1,
+        });
+
+        const signals = safety.drainModerationSignals();
+        expect(
+            signals.some(signal =>
+                signal.reason.startsWith('suspicious-pattern:'),
+            ),
+        ).toBe(true);
+    });
 });

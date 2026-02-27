@@ -8,3 +8,5 @@ export * from './ranking.js';
 export * from '@mutual-hub/at-lexicons';
 export * from './records.js';
 export * from './volunteer-onboarding.js';
+export * from './moderation.js';
+export * from './privacy.js';

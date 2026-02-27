@@ -9,7 +9,8 @@
         "start": "tsx src/index.ts",
         "lint": "npm run typecheck",
         "typecheck": "tsc -p tsconfig.json --noEmit",
-        "test": "vitest run"
+        "test": "vitest run",
+        "test:phase7": "vitest run src/phase7.test.ts"
     },
     "dependencies": {
         "@mutual-hub/shared": "0.1.0"

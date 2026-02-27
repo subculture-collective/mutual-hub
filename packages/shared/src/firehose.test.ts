@@ -155,4 +155,16 @@ describe('P3.1 firehose consumer + normalization', () => {
             });
         }
     });
+
+    it('redacts sensitive ingestion log fields and avoids raw AT URIs', () => {
+        const consumer = new FirehoseConsumer();
+        const result = consumer.ingest(buildPhase3FixtureFirehoseEvents());
+
+        expect(result.logs.length).toBeGreaterThan(0);
+
+        const infoLog = result.logs.find(log => log.level === 'info');
+        expect(infoLog?.uri).toContain('at://[did]/');
+        expect(infoLog?.uri).not.toContain('did:example');
+        expect(infoLog?.uri).not.toContain('/post-a');
+    });
 });

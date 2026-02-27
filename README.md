@@ -1,6 +1,6 @@
-# Mutual Hub (Phase 6 Baseline)
+# Mutual Hub (Phase 7 Baseline)
 
-This repository is scaffolded through **Phase 6** of roadmap issue #41.
+This repository is scaffolded through **Phase 7** of roadmap issue #41.
 
 ## Stack
 
@@ -47,6 +47,13 @@ This repository is scaffolded through **Phase 6** of roadmap issue #41.
 - Volunteer onboarding/profile management domain with validation and checkpoint tracking.
 - Preference-aware volunteer routing inputs integrated into deterministic routing decisions.
 
+## Phase 7 additions
+
+- Moderation review queue domain with policy actions, appeal lifecycle states, and audit trail records.
+- Anti-spam hardening for chat safety (duplicate-message blocking, suspicious-pattern signaling, and safety metrics).
+- Geoprivacy/logging hardening (minimum precision enforcement + sensitive-field redaction in ingestion logs).
+- Dedicated moderation/privacy regression gate scripts integrated into CI release checks.
+
 ## Service boundaries
 
 - **API service**: request/response boundary for web clients and downstream contracts.
@@ -65,6 +72,7 @@ Detailed domain and boundary docs:
 - `docs/architecture/phase3-ingestion-query.md`
 - `docs/architecture/phase5-chat-routing.md`
 - `docs/architecture/phase6-directory-onboarding.md`
+- `docs/architecture/phase7-moderation-privacy.md`
 
 ## Local setup
 
@@ -87,33 +95,42 @@ Each backend service exposes a health endpoint:
 - Indexer: `GET http://localhost:4100/health`
 - Moderation worker: `GET http://localhost:4200/health`
 
-Phase 6 service endpoints:
+Phase 7 service endpoints:
 
 - API:
-    - `GET /query/map`
-    - `GET /query/feed`
-    - `GET /query/directory`
-    - `GET /chat/initiate`
-    - `GET /chat/route`
-    - `GET /chat/conversations`
-    - `GET /chat/safety/evaluate`
-    - `GET /chat/safety/block`
-    - `GET /chat/safety/mute`
-    - `GET /chat/safety/report`
-    - `GET /chat/safety/signals/drain`
-    - `GET /chat/route/preference-aware`
-    - `GET /volunteer/profile/upsert`
-    - `GET /volunteer/profiles`
+  - `GET /query/map`
+  - `GET /query/feed`
+  - `GET /query/directory`
+  - `GET /chat/initiate`
+  - `GET /chat/route`
+  - `GET /chat/conversations`
+  - `GET /chat/safety/evaluate`
+  - `GET /chat/safety/block`
+  - `GET /chat/safety/mute`
+  - `GET /chat/safety/report`
+  - `GET /chat/safety/signals/drain`
+  - `GET /chat/safety/metrics`
+  - `GET /chat/route/preference-aware`
+  - `GET /volunteer/profile/upsert`
+  - `GET /volunteer/profiles`
 - Indexer:
-    - `GET /ingestion/metrics`
-    - `GET /ingestion/logs`
-    - `GET /indexes/stats`
+  - `GET /ingestion/metrics`
+  - `GET /ingestion/logs`
+  - `GET /indexes/stats`
+- Moderation worker:
+  - `GET /decisions/sample`
+  - `GET /moderation/queue/enqueue`
+  - `GET /moderation/queue`
+  - `GET /moderation/policy/apply`
+  - `GET /moderation/state`
+  - `GET /moderation/audit`
 
 ## Quality gates
 
 - Lint: `npm run lint`
 - Typecheck: `npm run typecheck`
 - Unit tests: `npm run test`
+- Moderation/privacy regression gate: `npm run test:phase7`
 - Combined: `npm run check`
 
 CI runs these on pull requests and pushes to `main`.
