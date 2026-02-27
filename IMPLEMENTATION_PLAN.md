@@ -36,7 +36,7 @@ Go/Indigo remains a valid future path for high-throughput infra components, but 
         1.2 Integrate design system into Tailwind and global styles:
 
     - map color/typography tokens from `design-system.md`
-    - implement neo-retro brutal primitives (`Button`, `Card`, `Panel`, `Input`, `Badge`, `Link`)
+    - implement dark mixed-style primitives (`Button`, `Card`, `Panel`, `Input`, `Badge`, `Link`)
     - enforce focus-visible and reduced-motion baselines
 
         1.3 Set shared config/env contracts, lint/test/typecheck, and CI gates.

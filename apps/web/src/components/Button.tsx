@@ -8,8 +8,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClassMap: Record<ButtonVariant, string> = {
     primary: 'bg-[var(--mh-accent)] text-black',
-    secondary: 'bg-[var(--mh-accent-2)] text-black',
-    neutral: 'bg-[var(--mh-surface)] text-black',
+    secondary: 'bg-[var(--mh-accent-2)] text-white',
+    neutral: 'bg-[var(--mh-surface-elev)] text-white',
 };
 
 export const Button = ({
@@ -23,7 +23,7 @@ export const Button = ({
         <button
             type={type}
             className={[
-                'mh-button border-2 border-[var(--mh-border)] px-4 py-2 text-sm font-bold uppercase tracking-wide',
+                'mh-button rounded-none px-4 py-2 text-sm font-bold uppercase tracking-[0.1em]',
                 variantClassMap[variant],
                 className,
             ].join(' ')}
