@@ -40,7 +40,8 @@ const serviceBoundariesCard = (
                 Indexer shell at <code>localhost:4100</code>
             </li>
             <li>
-                Moderation worker shell at <code>localhost:4200</code>
+                Moderation worker shell at{' '}
+                <code>localhost:4200</code>
             </li>
         </ul>
         <p className='mt-3'>
