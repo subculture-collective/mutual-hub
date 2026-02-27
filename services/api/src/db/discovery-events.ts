@@ -21,7 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_discovery_events_seq
     ON ${DISCOVERY_EVENTS_TABLE} (seq ASC);
 `;
 
-const upsertDiscoveryEventSql = `
+const batchUpsertDiscoveryEventsSql = `
 INSERT INTO ${DISCOVERY_EVENTS_TABLE} (
     event_id,
     seq,
@@ -33,7 +33,16 @@ INSERT INTO ${DISCOVERY_EVENTS_TABLE} (
     payload,
     delete_reason
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9)
+SELECT
+    UNNEST($1::text[]),
+    UNNEST($2::bigint[]),
+    UNNEST($3::text[]),
+    UNNEST($4::text[]),
+    UNNEST($5::text[]),
+    UNNEST($6::text[]),
+    UNNEST($7::timestamptz[]),
+    UNNEST($8::text[])::jsonb,
+    UNNEST($9::text[])
 ON CONFLICT (event_id)
 DO UPDATE SET
     seq = EXCLUDED.seq,
@@ -58,7 +67,7 @@ interface DiscoveryEventRow {
     delete_reason: string | null;
 }
 
-const toNormalizedFirehoseEvent = (
+export const toNormalizedFirehoseEvent = (
     row: DiscoveryEventRow,
 ): NormalizedFirehoseEvent => {
     return {
@@ -78,23 +87,30 @@ const upsertDiscoveryEventsWithClient = async (
     client: PoolClient,
     events: readonly NormalizedFirehoseEvent[],
 ): Promise<void> => {
-    for (const event of events) {
-        await client.query(upsertDiscoveryEventSql, [
-            event.eventId,
-            event.seq,
-            event.action,
-            event.uri,
-            event.collection,
-            event.authorDid,
-            event.receivedAt,
-            JSON.stringify(event.payload ?? null),
-            event.deleteReason ?? null,
-        ]);
+    if (events.length === 0) {
+        return;
     }
+
+    await client.query(batchUpsertDiscoveryEventsSql, [
+        events.map(e => e.eventId),
+        events.map(e => e.seq),
+        events.map(e => e.action),
+        events.map(e => e.uri),
+        events.map(e => e.collection),
+        events.map(e => e.authorDid),
+        events.map(e => e.receivedAt),
+        events.map(e => JSON.stringify(e.payload ?? null)),
+        events.map(e => e.deleteReason ?? null),
+    ]);
 };
 
 export const createPostgresPool = (connectionString: string): Pool => {
-    return new Pool({ connectionString });
+    return new Pool({
+        connectionString,
+        max: 10,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 5_000,
+    });
 };
 
 export const ensureDiscoveryEventsTable = async (

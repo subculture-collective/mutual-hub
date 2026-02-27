@@ -6,6 +6,7 @@ services:
     environment:
       POSTGRES_DB: mutual_hub
       POSTGRES_USER: mutual_hub
+      # NOTE: This password is for local development only and must never be used in production.
       POSTGRES_PASSWORD: mutual_hub
     ports:
       - '5432:5432'
