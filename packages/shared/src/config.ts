@@ -23,35 +23,21 @@ const webSchema = baseSchema.extend({
     VITE_API_BASE_URL: z.string().url().default('http://localhost:4000'),
 });
 
+const optionalUrlField = z
+    .preprocess(
+        (value: unknown) =>
+            typeof value === 'string' && value.trim() === '' ? undefined : value,
+        z.string().url().optional(),
+    )
+    .optional();
+
 const apiSchema = baseSchema.merge(atprotoSchema).extend({
     API_HOST: z.string().min(1).default('0.0.0.0'),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     API_PUBLIC_ORIGIN: z.string().url().default('http://localhost:5173'),
     API_DATA_SOURCE: z.enum(['fixture', 'postgres']).default('fixture'),
-    API_DATABASE_URL: z
-        .preprocess(
-            value => {
-                if (typeof value !== 'string') {
-                    return value;
-                }
-
-                return value.trim() === '' ? undefined : value;
-            },
-            z.string().url().optional(),
-        )
-        .optional(),
-    DATABASE_URL: z
-        .preprocess(
-            value => {
-                if (typeof value !== 'string') {
-                    return value;
-                }
-
-                return value.trim() === '' ? undefined : value;
-            },
-            z.string().url().optional(),
-        )
-        .optional(),
+    API_DATABASE_URL: optionalUrlField,
+    DATABASE_URL: optionalUrlField,
 });
 
 const apiSchemaWithRefinements = apiSchema.superRefine((value, context) => {
