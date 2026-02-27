@@ -1,5 +1,16 @@
 # Mutual Hub Design System
 
+## Hybrid convergence pass (Option 3)
+
+Selected strategy: **Hybrid** — keep the established neo-retro brutal direction while converging token usage and component behavior where inconsistencies appear.
+
+This pass prioritizes:
+
+- stable, reusable primitive class contracts (`mh-button`, `mh-card`, `mh-input`, `mh-link`)
+- accessibility behavior consistency (focus, error announcements, contrast)
+- controlled motion (reduced-motion support + no decorative infinite animation)
+- responsive spacing/container guardrails for production surfaces
+
 ## Style: Neo-Retro Brutal (Hybrid of 13 + 30)
 
 This project uses a **hybrid visual style** combining:
@@ -54,6 +65,11 @@ The result should feel: **funky, warm, community-first, and unmistakably non-cor
 
 --mh-titlebar-start:#000080;   // retro window title bar
 --mh-titlebar-end:  #1084D0;
+
+// community palette helpers (from design intelligence enrichment)
+--mh-community-primary:   #7C3AED;
+--mh-community-secondary: #A78BFA;
+--mh-community-cta:       #F97316;
 ```
 
 ### Typography tokens
@@ -63,6 +79,7 @@ Based on the typography search enrichment:
 - **Heading**: `Space Mono`, `Arial Black`, `Impact`, sans-serif
 - **Body**: `MS Sans Serif`, `Tahoma`, `Segoe UI`, sans-serif
 - **Decorative/terminal** (optional small areas): `VT323`, monospace
+- **Optional editorial pair** (hero/story modules only): `Abril Fatface` + `Merriweather`
 
 Rules:
 
@@ -131,6 +148,7 @@ Do **not** overwhelm content with dense textures.
 - Interaction:
     - hover: slight lift + stronger hard shadow
     - active: inset/pressed state
+    - disabled: visibly muted + no hover lift
     - focus-visible: high contrast ring (see a11y section)
 
 ### Links
@@ -151,6 +169,7 @@ Do **not** overwhelm content with dense textures.
 - Use inset look for fields
 - Clear focus state with ring + border color shift
 - Avoid low-contrast placeholder text
+- Validation errors must include semantic announcement (`role="alert"` or `aria-live="polite"`)
 
 ---
 
@@ -161,6 +180,7 @@ From UX guardrail enrichment:
 1. Respect `prefers-reduced-motion`.
 2. Animate only **1-2 key elements per view**.
 3. Use `ease-out` for entry interactions (avoid excessive linear motion for UI transitions).
+4. Infinite animation is loader-only (never decorative chrome).
 
 Allowed playful motion:
 
@@ -199,6 +219,11 @@ focus-visible {
 - Meet minimum $4.5:1$ for normal text.
 - Prefer black text on light surfaces for core content blocks.
 
+### Error announcements
+
+- Form/status errors must be machine-readable via `role="alert"` or `aria-live`.
+- Do not rely on red borders or color-only communication.
+
 ---
 
 ## 7) React/UI Architecture Guardrails
@@ -208,6 +233,8 @@ From stack guidance:
 1. Keep components small and single-purpose.
 2. Destructure props in component signatures.
 3. Use error boundaries around major page sections.
+4. Use consistent container widths and responsive horizontal padding (`px-4` → `sm:px-6` → `lg:px-8`).
+5. Avoid one-off inline style values when a token/utility primitive exists.
 
 ---
 
@@ -219,6 +246,8 @@ From stack guidance:
 - [ ] Apply style to first-impression page (landing/feed shell)
 - [ ] Apply style to core flow surfaces (aid post, resource card, volunteer card)
 - [ ] Add reduced-motion fallback
+- [ ] Ensure links include visited state and clear hover/focus affordance
+- [ ] Ensure error messages are announced with `role=alert`/`aria-live`
 
 ---
 

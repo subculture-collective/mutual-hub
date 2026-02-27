@@ -21,7 +21,7 @@ export const Button = ({
     return (
         <button
             className={[
-                'mh-button border-2 border-[var(--mh-border)] px-4 py-2 text-sm font-bold uppercase tracking-wide',
+                'mh-button border-2 border-[var(--mh-border)] px-4 py-2 text-sm font-bold uppercase tracking-wide disabled:cursor-not-allowed',
                 variantClassMap[variant],
                 className,
             ].join(' ')}
