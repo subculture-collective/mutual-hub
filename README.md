@@ -1,155 +1,95 @@
-# Mutual Hub (Phase 7 Baseline)
+# Mutual Hub
 
-This repository is scaffolded through **Phase 7** of roadmap issue #41.
+AT Protocol-native mutual aid platform with a web client, query API, ingestion/indexing pipeline, and moderation worker.
 
-## Stack
+This monorepo is designed for fast local development with deterministic fixtures, strong type contracts, and CI quality gates.
 
-- Frontend: `apps/web` → Vite + React + TypeScript + Tailwind
-- Backend services:
-    - `services/api` (TypeScript)
-    - `services/indexer` (TypeScript)
-    - `services/moderation-worker` (TypeScript)
-- Shared contracts/config: `packages/shared`
-- AT Lexicon schemas + fixtures: `packages/at-lexicons`
+## What’s in this repo
 
-## Phase 2 additions
+- `apps/web` — Vite + React + TypeScript + Tailwind frontend
+- `services/api` — HTTP API for query/chat/volunteer flows
+- `services/indexer` — ingestion + indexing service
+- `services/moderation-worker` — moderation/trust-safety worker
+- `packages/shared` — shared contracts, config/env schemas, utilities
+- `packages/at-lexicons` — AT lexicon schemas, fixtures, and validators
 
-- Versioned AT Lexicon schema set for all v1 record types.
-- DID identity/session primitives with handle resolution and refresh semantics.
-- Typed create/update/delete record primitives with schema validation and structured errors.
-- Tombstone/delete propagation contract with round-trip serialization tests.
+## Tech stack
 
-## Phase 3 additions
+- Node.js + TypeScript (monorepo workspaces)
+- React + Vite + Tailwind (web)
+- Vitest + Playwright (unit + browser E2E)
+- Optional local Postgres for API datasource mode
 
-- Firehose ingestion consumer with deterministic normalization and replay support.
-- In-memory geo/full-text/category/status index strategy for aid + directory records.
-- Server-side query APIs for map/feed/directory with validation, filters, and pagination.
-- Deterministic ranking pipeline combining distance band, recency, and trust signals.
+## Prerequisites
 
-## Phase 4 additions
+- Node.js `>=20.19.0`
+- npm
+- Docker (only needed for Postgres mode)
 
-- Shared discovery filter model + chip primitives for map/feed surfaces.
-- Map UX logic for clustering, approximate markers, and detail drawer actions.
-- Feed UX logic for latest/nearby tabs and post lifecycle interactions.
-- Shared posting form validation + geoprivacy payload shaping.
+## Quick start
 
-## Phase 5 additions
+1. Install dependencies: `npm ci`
+2. Create local env file: copy `.env.example` → `.env`
+3. Start the app surfaces you need:
+   - Web: `npm run dev:web`
+   - API: `npm run dev:api`
+   - Indexer: `npm run dev:indexer`
+   - Moderation worker: `npm run dev:moderation`
 
-- Post-linked 1:1 chat initiation contract with map/feed/detail source context.
-- Deterministic routing assistant for post author vs volunteer pool vs verified resource.
-- Conversation metadata persistence with recipient-capability fallback notices.
-- Chat safety controls: block/mute/report, abuse keyword flagging, and rate limits.
+Default local URLs:
 
-## Phase 6 additions
+- Web: `http://localhost:5173`
+- API health: `http://localhost:4000/health`
+- Indexer health: `http://localhost:4100/health`
+- Moderation health: `http://localhost:4200/health`
 
-- Resource directory operational metadata ingestion/indexing (location overlays, open hours, eligibility notes).
-- Resource directory UX logic for overlays, detail panel actions, and accessible loading/empty/error states.
-- Volunteer onboarding/profile management domain with validation and checkpoint tracking.
-- Preference-aware volunteer routing inputs integrated into deterministic routing decisions.
+## API datasource modes
 
-## Phase 7 additions
+The API supports two datasource modes:
 
-- Moderation review queue domain with policy actions, appeal lifecycle states, and audit trail records.
-- Anti-spam hardening for chat safety (duplicate-message blocking, suspicious-pattern signaling, and safety metrics).
-- Geoprivacy/logging hardening (minimum precision enforcement + sensitive-field redaction in ingestion logs).
-- Dedicated moderation/privacy regression gate scripts integrated into CI release checks.
+- `fixture` (default): deterministic in-memory data for local development
+- `postgres`: local DB-backed mode for integration testing
 
-## Service boundaries
+### Postgres mode
 
-- **API service**: request/response boundary for web clients and downstream contracts.
-- **Indexer service**: ingestion and normalization boundary for event streams.
-- **Moderation worker**: asynchronous moderation and trust/safety processing boundary.
-- **Shared package**: env/config schema and inter-service contract stubs.
+1. Start Postgres: `npm run db:up`
+2. Set in `.env`:
+   - `API_DATA_SOURCE=postgres`
+   - `API_DATABASE_URL=postgresql://mutual_hub:mutual_hub@localhost:5432/mutual_hub`
+3. Seed deterministic data: `npm run db:seed`
+4. Start API in postgres mode: `npm run dev:api:postgres`
 
-Detailed domain and boundary docs:
+Additional seed scripts (API workspace):
 
-- `docs/architecture/domain-map.md`
-- `docs/architecture/service-boundaries.md`
-- `docs/architecture/adr/0001-v1-stack-and-domain-boundaries.md`
-- `docs/at-protocol/lexicon-versioning.md`
-- `docs/at-protocol/identity-session.md`
-- `docs/at-protocol/tombstone-contract.md`
-- `docs/architecture/phase3-ingestion-query.md`
-- `docs/architecture/phase5-chat-routing.md`
-- `docs/architecture/phase6-directory-onboarding.md`
-- `docs/architecture/phase7-moderation-privacy.md`
+- Append mode: `npm run db:seed:append -w @mutual-hub/api`
+- Phase 3 fixtures only: `npm run db:seed:phase3 -w @mutual-hub/api`
 
-## Local setup
+Stop Postgres when done: `npm run db:down`
 
-1. Install dependencies:
-    - `npm ci`
-2. Copy config:
-    - `.env.example` is provided
-    - copy `.env.example` to `.env` for local placeholder defaults
-
-## Run services
-
-- Web: `npm run dev:web`
-- API: `npm run dev:api`
-- Indexer: `npm run dev:indexer`
-- Moderation worker: `npm run dev:moderation`
-
-### Postgres-backed API mode (testing)
-
-The API can run in `postgres` mode for local integration testing.
-
-1. Start Postgres:
-    - `npm run db:up`
-2. In `.env`, set:
-    - `API_DATA_SOURCE=postgres`
-    - `API_DATABASE_URL=postgresql://mutual_hub:mutual_hub@localhost:5432/mutual_hub`
-3. Seed deterministic fixture data:
-    - `npm run db:seed`
-4. Start API in postgres mode:
-    - `npm run dev:api:postgres`
-
-Additional seed options (API workspace):
-
-- Append without truncating: `npm run db:seed:append -w @mutual-hub/api`
-- Seed Phase 3 fixtures only: `npm run db:seed:phase3 -w @mutual-hub/api`
-
-Each backend service exposes a health endpoint:
-
-- API: `GET http://localhost:4000/health`
-- Indexer: `GET http://localhost:4100/health`
-- Moderation worker: `GET http://localhost:4200/health`
-
-Phase 7 service endpoints:
-
-- API:
-    - `GET /query/map`
-    - `GET /query/feed`
-    - `GET /query/directory`
-    - `GET /chat/initiate`
-    - `GET /chat/route`
-    - `GET /chat/conversations`
-    - `GET /chat/safety/evaluate`
-    - `GET /chat/safety/block`
-    - `GET /chat/safety/mute`
-    - `GET /chat/safety/report`
-    - `GET /chat/safety/signals/drain`
-    - `GET /chat/safety/metrics`
-    - `GET /chat/route/preference-aware`
-    - `GET /volunteer/profile/upsert`
-    - `GET /volunteer/profiles`
-- Indexer:
-    - `GET /ingestion/metrics`
-    - `GET /ingestion/logs`
-    - `GET /indexes/stats`
-- Moderation worker:
-    - `GET /decisions/sample`
-    - `GET /moderation/queue/enqueue`
-    - `GET /moderation/queue`
-    - `GET /moderation/policy/apply`
-    - `GET /moderation/state`
-    - `GET /moderation/audit`
-
-## Quality gates
+## Common commands
 
 - Lint: `npm run lint`
 - Typecheck: `npm run typecheck`
 - Unit tests: `npm run test`
-- Moderation/privacy regression gate: `npm run test:phase7`
-- Combined: `npm run check`
+- Moderation/privacy regression suite: `npm run test:phase7`
+- End-to-end contract flow: `npm run test:phase8-e2e`
+- Browser E2E (web): `npm run test:e2e -w @mutual-hub/web`
+- Build all workspaces: `npm run build`
+- Combined local gate: `npm run check`
 
-CI runs these on pull requests and pushes to `main`.
+## Architecture and protocol docs
+
+- `docs/architecture/domain-map.md`
+- `docs/architecture/service-boundaries.md`
+- `docs/architecture/adr/0001-v1-stack-and-domain-boundaries.md`
+- `docs/at-protocol/README.md`
+- `docs/at-protocol/identity-session.md`
+- `docs/at-protocol/lexicon-versioning.md`
+- `docs/at-protocol/tombstone-contract.md`
+- `docs/quality-gates.md`
+
+## Notes for contributors
+
+- Keep cross-service contracts in `packages/shared`.
+- Prefer deterministic fixtures in tests.
+- Treat geoprivacy/moderation regressions as release blockers.
