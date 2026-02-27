@@ -1,22 +1,22 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: mutual-hub-postgres
+    container_name: patchwork-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: mutual_hub
-      POSTGRES_USER: mutual_hub
+      POSTGRES_DB: patchwork
+      POSTGRES_USER: patchwork
       # NOTE: This password is for local development only and must never be used in production.
-      POSTGRES_PASSWORD: mutual_hub
+      POSTGRES_PASSWORD: patchwork
     ports:
       - '5432:5432'
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U mutual_hub -d mutual_hub']
+      test: ['CMD-SHELL', 'pg_isready -U patchwork -d patchwork']
       interval: 5s
       timeout: 3s
       retries: 20
     volumes:
-      - mutual-hub-postgres-data:/var/lib/postgresql/data
+      - patchwork-postgres-data:/var/lib/postgresql/data
 
 volumes:
-  mutual-hub-postgres-data:
+  patchwork-postgres-data:

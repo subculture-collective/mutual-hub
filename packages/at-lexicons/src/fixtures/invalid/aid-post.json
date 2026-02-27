@@ -1,5 +1,5 @@
 {
-    "$type": "app.mutualhub.aid.post",
+    "$type": "app.patchwork.aid.post",
     "version": "1.0.0",
     "description": "Missing title and invalid urgency enum",
     "category": "food",

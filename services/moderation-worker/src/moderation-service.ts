@@ -8,7 +8,7 @@ import {
     type ModerationPolicyAction,
     type ModerationQueueStatus,
     type ModerationVisibilityState,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 
 export interface ModerationServiceResult {
     statusCode: number;

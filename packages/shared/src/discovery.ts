@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { type AidPostRecord } from '@mutual-hub/at-lexicons';
+import { type AidPostRecord } from '@patchwork/at-lexicons';
 import {
     type ApproximateGeoPoint,
     type NormalizedAidPost,

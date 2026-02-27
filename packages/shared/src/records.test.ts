@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { recordNsid } from '@mutual-hub/at-lexicons';
+import { recordNsid } from '@patchwork/at-lexicons';
 import { AtRecordRepository, RecordWriteError } from './records.js';
 
 const baseAidPost = {
@@ -131,7 +131,7 @@ describe('P2.3/P2.4 CRUD + tombstone contract', () => {
             reason: 'resolved-offline',
         });
 
-        expect(tombstone.$type).toBe('app.mutualhub.system.tombstone');
+        expect(tombstone.$type).toBe('app.patchwork.system.tombstone');
         expect(repository.getActiveRecord(created.uri)).toBeNull();
 
         const events = repository.listMutationEvents();

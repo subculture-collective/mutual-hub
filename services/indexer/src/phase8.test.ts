@@ -7,7 +7,7 @@ import {
     buildPhase8FixtureFirehoseEvents,
     recordNsid,
     safeValidateRecordPayload,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import { IndexerPipeline } from './pipeline.js';
 
 describe('P8.1 indexer contract test matrix', () => {
@@ -66,7 +66,7 @@ describe('P8.1 indexer contract test matrix', () => {
                 {
                     seq: 99,
                     action: 'create',
-                    uri: 'at://did:example:p8/app.mutualhub.aid.post/bad',
+                    uri: 'at://did:example:p8/app.patchwork.aid.post/bad',
                     collection: recordNsid.aidPost,
                     authorDid: 'did:example:p8',
                     record: { $type: recordNsid.aidPost },

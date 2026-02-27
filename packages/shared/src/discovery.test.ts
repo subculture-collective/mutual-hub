@@ -9,7 +9,7 @@ import {
     buildPhase3FixtureFirehoseEvents,
     type NormalizedFirehoseEvent,
 } from './firehose.js';
-import { recordNsid } from '@mutual-hub/at-lexicons';
+import { recordNsid } from '@patchwork/at-lexicons';
 
 const buildStore = (): DiscoveryIndexStore => {
     const consumer = new FirehoseConsumer();
@@ -30,7 +30,7 @@ describe('P3.2/P3.3 discovery indexing + query APIs', () => {
             eventId: '6:delete:post-b',
             seq: 6,
             action: 'delete',
-            uri: 'at://did:example:bob/app.mutualhub.aid.post/post-b',
+            uri: 'at://did:example:bob/app.patchwork.aid.post/post-b',
             collection: recordNsid.aidPost,
             authorDid: 'did:example:bob',
             receivedAt: '2026-02-26T12:05:00.000Z',
@@ -152,7 +152,7 @@ describe('P3.2/P3.3 discovery indexing + query APIs', () => {
             eventId: '6:create:directory-c',
             seq: 6,
             action: 'create',
-            uri: 'at://did:example:ella/app.mutualhub.directory.resource/resource-c',
+            uri: 'at://did:example:ella/app.patchwork.directory.resource/resource-c',
             collection: recordNsid.directoryResource,
             authorDid: 'did:example:ella',
             receivedAt: '2026-02-26T12:06:00.000Z',
@@ -192,7 +192,7 @@ describe('P3.2/P3.3 discovery indexing + query APIs', () => {
             eventId: '7:update:directory-c',
             seq: 7,
             action: 'update',
-            uri: 'at://did:example:ella/app.mutualhub.directory.resource/resource-c',
+            uri: 'at://did:example:ella/app.patchwork.directory.resource/resource-c',
             collection: recordNsid.directoryResource,
             authorDid: 'did:example:ella',
             receivedAt: '2026-02-26T12:07:00.000Z',
@@ -233,7 +233,7 @@ describe('P3.2/P3.3 discovery indexing + query APIs', () => {
             eventId: '8:delete:directory-c',
             seq: 8,
             action: 'delete',
-            uri: 'at://did:example:ella/app.mutualhub.directory.resource/resource-c',
+            uri: 'at://did:example:ella/app.patchwork.directory.resource/resource-c',
             collection: recordNsid.directoryResource,
             authorDid: 'did:example:ella',
             receivedAt: '2026-02-26T12:08:00.000Z',

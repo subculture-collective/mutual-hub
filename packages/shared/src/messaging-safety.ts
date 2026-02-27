@@ -2,7 +2,7 @@ import {
     recordNsid,
     type ModerationReportRecord,
     validateRecordPayload,
-} from '@mutual-hub/at-lexicons';
+} from '@patchwork/at-lexicons';
 import type { ModerationReviewRequestedEvent } from './contracts.js';
 import { deepClone } from './clone.js';
 import { atUriRecordSchema, didSchema, isoDateTimeSchema } from './schemas.js';

@@ -1,6 +1,6 @@
 {
     "lexicon": 1,
-    "id": "app.mutualhub.directory.resource",
+    "id": "app.patchwork.directory.resource",
     "revision": "1.1.0",
     "description": "Resource directory listing record.",
     "defs": {
@@ -22,7 +22,7 @@
                 "properties": {
                     "$type": {
                         "type": "string",
-                        "const": "app.mutualhub.directory.resource"
+                        "const": "app.patchwork.directory.resource"
                     },
                     "version": {
                         "type": "string",

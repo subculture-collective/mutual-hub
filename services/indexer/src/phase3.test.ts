@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     buildPhase3FixtureFirehoseEvents,
     recordNsid,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import { IndexerPipeline } from './pipeline.js';
 
 describe('indexer phase 3 pipeline', () => {
@@ -44,7 +44,7 @@ describe('indexer phase 3 pipeline', () => {
             {
                 seq: 2,
                 action: 'create',
-                uri: 'at://did:example:alice/app.mutualhub.aid.post/post-z',
+                uri: 'at://did:example:alice/app.patchwork.aid.post/post-z',
                 collection: recordNsid.aidPost,
                 authorDid: 'did:example:alice',
             },

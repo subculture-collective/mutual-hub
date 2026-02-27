@@ -31,7 +31,7 @@ Runs on pull requests and pushes to `main`:
 5. Unit tests
 6. API/contract E2E request-to-handoff flow (`npm run test:phase8-e2e`)
 7. Install Playwright browsers (`npx playwright install --with-deps chromium` in `apps/web`)
-8. Browser E2E tests (`npm run test:e2e -w @mutual-hub/web`)
+8. Browser E2E tests (`npm run test:e2e -w @patchwork/web`)
 9. Build
 
 If any step fails, the workflow fails and merge should be blocked via branch protection using this workflow check as required.

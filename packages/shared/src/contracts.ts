@@ -285,14 +285,14 @@ export const serviceContractStubs = {
         } satisfies ApiQueryAidResponse,
         chatInitiation: {
             aidPostUri:
-                'at://did:example:alice/app.mutualhub.aid.post/post-123',
+                'at://did:example:alice/app.patchwork.aid.post/post-123',
             initiatedByDid: 'did:example:helper',
             recipientDid: 'did:example:alice',
             initiatedFrom: 'map',
         } satisfies ApiChatInitiationRequest,
         chatInitiationResponse: {
             conversationUri:
-                'at://did:example:alice/app.mutualhub.conversation.meta/conv-123',
+                'at://did:example:alice/app.patchwork.conversation.meta/conv-123',
             created: true,
             transportPath: 'atproto-direct',
         } satisfies ApiChatInitiationResponse,
@@ -300,7 +300,7 @@ export const serviceContractStubs = {
     indexer: {
         event: {
             type: 'firehose.normalized',
-            recordUri: 'at://did:example:alice/app.mutualhub.aid.post/abc123',
+            recordUri: 'at://did:example:alice/app.patchwork.aid.post/abc123',
             authorDid: 'did:example:alice',
             indexedAt: new Date(0).toISOString(),
             action: 'create',
@@ -310,7 +310,7 @@ export const serviceContractStubs = {
     moderationWorker: {
         event: {
             type: 'moderation.review.requested',
-            subjectUri: 'at://did:example:alice/app.mutualhub.aid.post/abc123',
+            subjectUri: 'at://did:example:alice/app.patchwork.aid.post/abc123',
             reason: 'stub-reason',
             requestedAt: new Date(0).toISOString(),
         } satisfies ModerationReviewRequestedEvent,

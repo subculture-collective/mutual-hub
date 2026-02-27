@@ -1,4 +1,4 @@
-# Mutual Hub Design System
+# Patchwork Design System
 
 ## Hybrid convergence pass (Option 3)
 

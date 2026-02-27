@@ -3,7 +3,7 @@ import {
     VolunteerOnboardingStore,
     buildVolunteerRoutingCandidates,
     type AidPostRecord,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 
 export interface ApiVolunteerRouteResult {
     statusCode: number;
@@ -203,7 +203,7 @@ export class ApiVolunteerService {
             const decision = this.routingAssistant.decide({
                 aidPostUri:
                     readString(params, 'aidPostUri') ??
-                    'at://did:example:requester/app.mutualhub.aid.post/preference-route',
+                    'at://did:example:requester/app.patchwork.aid.post/preference-route',
                 requesterDid:
                     readString(params, 'requesterDid') ??
                     'did:example:requester',

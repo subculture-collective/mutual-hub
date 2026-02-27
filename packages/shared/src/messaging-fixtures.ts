@@ -13,7 +13,7 @@ export const buildPhase5RoutingFixtures = (): readonly RoutingFixture[] => {
             id: 'post-author-direct',
             input: {
                 aidPostUri:
-                    'at://did:example:requester/app.mutualhub.aid.post/post-author-1',
+                    'at://did:example:requester/app.patchwork.aid.post/post-author-1',
                 requesterDid: 'did:example:requester',
                 aidCategory: 'food',
                 urgency: 'high',
@@ -29,7 +29,7 @@ export const buildPhase5RoutingFixtures = (): readonly RoutingFixture[] => {
             id: 'volunteer-best-match',
             input: {
                 aidPostUri:
-                    'at://did:example:requester/app.mutualhub.aid.post/volunteer-1',
+                    'at://did:example:requester/app.patchwork.aid.post/volunteer-1',
                 requesterDid: 'did:example:requester',
                 aidCategory: 'transport',
                 urgency: 'critical',
@@ -59,7 +59,7 @@ export const buildPhase5RoutingFixtures = (): readonly RoutingFixture[] => {
             id: 'resource-verified',
             input: {
                 aidPostUri:
-                    'at://did:example:requester/app.mutualhub.aid.post/resource-1',
+                    'at://did:example:requester/app.patchwork.aid.post/resource-1',
                 requesterDid: 'did:example:requester',
                 aidCategory: 'medical',
                 urgency: 'medium',
@@ -95,7 +95,7 @@ export const buildPhase5RoutingFixtures = (): readonly RoutingFixture[] => {
             id: 'volunteer-preference-aware',
             input: {
                 aidPostUri:
-                    'at://did:example:requester/app.mutualhub.aid.post/volunteer-2',
+                    'at://did:example:requester/app.patchwork.aid.post/volunteer-2',
                 requesterDid: 'did:example:requester',
                 aidCategory: 'medical',
                 urgency: 'critical',

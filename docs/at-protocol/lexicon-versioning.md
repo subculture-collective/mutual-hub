@@ -6,19 +6,19 @@ This document defines the v1 AT Lexicon schema set, constraints, and evolution p
 
 Records are currently published at:
 
-- `app.mutualhub.aid.post`
-- `app.mutualhub.volunteer.profile`
-- `app.mutualhub.conversation.meta`
-- `app.mutualhub.moderation.report`
-- `app.mutualhub.directory.resource`
+- `app.patchwork.aid.post`
+- `app.patchwork.volunteer.profile`
+- `app.patchwork.conversation.meta`
+- `app.patchwork.moderation.report`
+- `app.patchwork.directory.resource`
 
 Revision map:
 
-- `app.mutualhub.aid.post`: `1.0.0`
-- `app.mutualhub.volunteer.profile`: `1.1.0`
-- `app.mutualhub.conversation.meta`: `1.0.0`
-- `app.mutualhub.moderation.report`: `1.0.0`
-- `app.mutualhub.directory.resource`: `1.1.0`
+- `app.patchwork.aid.post`: `1.0.0`
+- `app.patchwork.volunteer.profile`: `1.1.0`
+- `app.patchwork.conversation.meta`: `1.0.0`
+- `app.patchwork.moderation.report`: `1.0.0`
+- `app.patchwork.directory.resource`: `1.1.0`
 
 Canonical schema JSON files live in:
 
@@ -30,7 +30,7 @@ Executable validators and typed record models live in:
 
 ## Field-level constraints (summary)
 
-### `app.mutualhub.aid.post`
+### `app.patchwork.aid.post`
 
 Required fields:
 
@@ -44,7 +44,7 @@ Key constraints:
 - `status`: `open | in-progress | resolved | closed`
 - `location.precisionKm`: 0.1..50
 
-### `app.mutualhub.volunteer.profile`
+### `app.patchwork.volunteer.profile`
 
 Required fields:
 
@@ -60,7 +60,7 @@ Key constraints:
 - `verificationCheckpoints` (optional): identity/safety/reference status object
 - `matchingPreferences` (optional): preferred categories + urgencies + max distance
 
-### `app.mutualhub.conversation.meta`
+### `app.patchwork.conversation.meta`
 
 Required fields:
 
@@ -72,7 +72,7 @@ Key constraints:
 - exactly 2 participant DIDs
 - `status`: `open | handoff | closed`
 
-### `app.mutualhub.moderation.report`
+### `app.patchwork.moderation.report`
 
 Required fields:
 
@@ -84,7 +84,7 @@ Key constraints:
 - `reporterDid` must be DID-formatted
 - `reason`: `spam | abuse | fraud | other`
 
-### `app.mutualhub.directory.resource`
+### `app.patchwork.directory.resource`
 
 Required fields:
 

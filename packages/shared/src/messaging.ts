@@ -4,7 +4,7 @@ import {
     type AidPostRecord,
     type ConversationMetaRecord,
     validateRecordPayload,
-} from '@mutual-hub/at-lexicons';
+} from '@patchwork/at-lexicons';
 import { deepClone } from './clone.js';
 import { atUriSchema, didSchema, isoDateTimeSchema } from './schemas.js';
 

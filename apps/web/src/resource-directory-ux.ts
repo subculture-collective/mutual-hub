@@ -1,4 +1,4 @@
-import { mapAidCategoryToDirectoryCategories } from '@mutual-hub/shared/category-policy';
+import { mapAidCategoryToDirectoryCategories } from '@patchwork/shared/category-policy';
 import {
     type DiscoveryFilterState,
     type SharedAidDiscoveryQuery,

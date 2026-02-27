@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [react(), tailwindcss()],
     resolve: {
         alias: {
-            '@mutual-hub/shared/category-policy': fileURLToPath(
+            '@patchwork/shared/category-policy': fileURLToPath(
                 new URL(
                     '../../packages/shared/src/category-policy.ts',
                     import.meta.url,

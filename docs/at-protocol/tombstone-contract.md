@@ -10,7 +10,7 @@ This document defines delete semantics for downstream ingestion consumers.
 
 A deleted record is represented as:
 
-- `$type`: `app.mutualhub.system.tombstone`
+- `$type`: `app.patchwork.system.tombstone`
 - `uri`: original AT URI
 - `collection`: original record NSID
 - `deletedByDid`: DID that initiated deletion

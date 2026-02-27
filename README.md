@@ -1,4 +1,4 @@
-# Mutual Hub
+# Patchwork
 
 AT Protocol-native mutual aid platform with a web client, query API, ingestion/indexing pipeline, and moderation worker.
 
@@ -12,6 +12,15 @@ This monorepo is designed for fast local development with deterministic fixtures
 - `services/moderation-worker` — moderation/trust-safety worker
 - `packages/shared` — shared contracts, config/env schemas, utilities
 - `packages/at-lexicons` — AT lexicon schemas, fixtures, and validators
+
+## Patchwork component naming
+
+- **Patchwork Web** — client (`patchwork-web`)
+- **Patchwork API** — query + auth (`patchwork-api`)
+- **Spool** — ingestion + queueing (`patchwork-spool`)
+- **Quilt** — indexing + search layer (network alias on `patchwork-spool`: `patchwork-quilt`)
+- **Stitch** — chat service (network alias on `patchwork-api`: `patchwork-stitch`)
+- **Thimble** — moderation worker (`patchwork-thimble`)
 
 ## Tech stack
 
@@ -55,14 +64,14 @@ The API supports two datasource modes:
 1. Start Postgres: `npm run db:up`
 2. Set in `.env`:
    - `API_DATA_SOURCE=postgres`
-   - `API_DATABASE_URL=postgresql://mutual_hub:mutual_hub@localhost:5432/mutual_hub`
+   - `API_DATABASE_URL=postgresql://patchwork:patchwork@localhost:5432/patchwork`
 3. Seed deterministic data: `npm run db:seed`
 4. Start API in postgres mode: `npm run dev:api:postgres`
 
 Additional seed scripts (API workspace):
 
-- Append mode: `npm run db:seed:append -w @mutual-hub/api`
-- Phase 3 fixtures only: `npm run db:seed:phase3 -w @mutual-hub/api`
+- Append mode: `npm run db:seed:append -w @patchwork/api`
+- Phase 3 fixtures only: `npm run db:seed:phase3 -w @patchwork/api`
 
 Stop Postgres when done: `npm run db:down`
 
@@ -73,9 +82,29 @@ Stop Postgres when done: `npm run db:down`
 - Unit tests: `npm run test`
 - Moderation/privacy regression suite: `npm run test:phase7`
 - End-to-end contract flow: `npm run test:phase8-e2e`
-- Browser E2E (web): `npm run test:e2e -w @mutual-hub/web`
+- Browser E2E (web): `npm run test:e2e -w @patchwork/web`
 - Build all workspaces: `npm run build`
 - Combined local gate: `npm run check`
+
+## Docker deployment (shared `web` network)
+
+The production compose stack is defined in `docker-compose.yml`.
+
+- Caddy route host: `https://patchwork.subcult.tv`
+- Shared Docker network: `web` (external)
+- Internal service network: `internal`
+
+Services:
+
+- `patchwork-web` (nginx serving built Vite app)
+- `patchwork-api`
+- `patchwork-spool` (also aliased as `patchwork-quilt`)
+- `patchwork-thimble`
+- `patchwork-postgres`
+
+Monitoring:
+
+- Prometheus scrapes `/metrics` from API, Spool, and Thimble jobs via the shared network.
 
 ## Architecture and protocol docs
 

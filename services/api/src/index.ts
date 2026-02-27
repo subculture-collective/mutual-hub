@@ -5,7 +5,7 @@ import {
     CONTRACT_VERSION,
     loadApiConfig,
     type ServiceHealth,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import { createFixtureChatService } from './chat-service.js';
 import {
     createFixtureQueryService,
@@ -38,6 +38,19 @@ const healthPayload: ServiceHealth = {
     did: config.ATPROTO_SERVICE_DID,
 };
 
+const renderPrometheusMetrics = (): string => {
+    const uptimeSeconds = Math.floor(process.uptime());
+
+    return [
+        '# HELP patchwork_service_up Service health status (1 = up).',
+        '# TYPE patchwork_service_up gauge',
+        'patchwork_service_up{project="patchwork",service="api",component="stitch"} 1',
+        '# HELP patchwork_process_uptime_seconds Process uptime in seconds.',
+        '# TYPE patchwork_process_uptime_seconds counter',
+        `patchwork_process_uptime_seconds{project="patchwork",service="api",component="stitch"} ${uptimeSeconds}`,
+    ].join('\n');
+};
+
 const writeJson = (
     response: ServerResponse,
     statusCode: number,
@@ -50,6 +63,7 @@ const writeJson = (
 interface ApiRouteResult {
     statusCode: number;
     body: unknown;
+    contentType?: string;
 }
 
 type ApiRouteHandler = (requestUrl: URL) => ApiRouteResult;
@@ -71,12 +85,18 @@ const contractRoutes = [
     '/volunteer/profile/upsert',
     '/volunteer/profiles',
     '/health',
+    '/metrics',
 ] as const;
 
 const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
     '/health': () => ({
         statusCode: 200,
         body: healthPayload,
+    }),
+    '/metrics': () => ({
+        statusCode: 200,
+        body: renderPrometheusMetrics(),
+        contentType: 'text/plain; version=0.0.4',
     }),
     '/contracts': () => ({
         statusCode: 200,
@@ -122,6 +142,15 @@ export const createApiServer = () => {
         const handler = routeHandlers[requestUrl.pathname];
         if (handler) {
             const result = handler(requestUrl);
+
+            if (result.contentType) {
+                response.writeHead(result.statusCode, {
+                    'content-type': result.contentType,
+                });
+                response.end(String(result.body));
+                return;
+            }
+
             writeJson(response, result.statusCode, result.body);
             return;
         }

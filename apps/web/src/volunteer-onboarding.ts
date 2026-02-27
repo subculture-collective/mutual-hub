@@ -3,7 +3,7 @@ import {
     type AidPostRecord,
     type VolunteerProfileRecord,
     validateRecordPayload,
-} from '@mutual-hub/at-lexicons';
+} from '@patchwork/at-lexicons';
 
 const didPattern = /^did:[a-z0-9:._%-]+$/i;
 

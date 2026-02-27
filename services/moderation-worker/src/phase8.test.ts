@@ -4,7 +4,7 @@ import {
     MODERATION_LOG_RETENTION_DAYS,
     PHASE8_MODERATION_EVENT,
     redactLogData,
-} from '@mutual-hub/shared';
+} from '@patchwork/shared';
 import { createFixtureModerationWorkerService } from './moderation-service.js';
 
 describe('P8.1 moderation worker contract test matrix', () => {
@@ -31,7 +31,7 @@ describe('P8.1 moderation worker contract test matrix', () => {
         it('applies policy actions following the contract-defined state machine', () => {
             const service = createFixtureModerationWorkerService();
             const subjectUri =
-                'at://did:example:p8/app.mutualhub.aid.post/p8-mod-post';
+                'at://did:example:p8/app.patchwork.aid.post/p8-mod-post';
 
             service.enqueueFromParams(
                 new URLSearchParams({
@@ -66,7 +66,7 @@ describe('P8.1 moderation worker contract test matrix', () => {
         it('accumulates audit trail entries for each policy action', () => {
             const service = createFixtureModerationWorkerService();
             const subjectUri =
-                'at://did:example:p8/app.mutualhub.conversation.meta/p8-conv';
+                'at://did:example:p8/app.patchwork.conversation.meta/p8-conv';
 
             service.enqueueFromParams(
                 new URLSearchParams({
@@ -114,7 +114,7 @@ describe('P8.1 moderation worker contract test matrix', () => {
             const logPayload = {
                 reporterDid: 'did:example:p8-mod',
                 subjectUri:
-                    'at://did:example:p8-alice/app.mutualhub.aid.post/p8-post-a',
+                    'at://did:example:p8-alice/app.patchwork.aid.post/p8-post-a',
                 reason: 'spam',
                 occurredAt: '2026-02-27T00:01:00.000Z',
             };

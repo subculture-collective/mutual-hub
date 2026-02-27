@@ -11,7 +11,7 @@ export const aidPostingCategories = [
 
 export type AidPostingCategory = (typeof aidPostingCategories)[number];
 
-const aidPostRecordNsid = 'app.mutualhub.aid.post' as const;
+const aidPostRecordNsid = 'app.patchwork.aid.post' as const;
 
 const aidPostSchema = z.object({
     $type: z.literal(aidPostRecordNsid),
