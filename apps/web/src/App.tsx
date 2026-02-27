@@ -21,7 +21,8 @@ export const App = () => {
                 <Panel title='Discovery shell'>
                     <p className='mb-3 text-sm text-[var(--mh-text-muted)]'>
                         Vite + React + TypeScript + Tailwind are wired and ready
-                        for Phase 7 moderation, anti-spam, and privacy hardening.
+                        for Phase 7 moderation, anti-spam, and privacy
+                        hardening.
                     </p>
                     <label className='mb-2 block text-xs font-bold uppercase tracking-wide'>
                         Search requests

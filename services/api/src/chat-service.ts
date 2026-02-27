@@ -40,13 +40,13 @@ const readString = (
     return value;
 };
 
-const requireString = (
-    params: URLSearchParams,
-    key: string,
-): string => {
+const requireString = (params: URLSearchParams, key: string): string => {
     const value = readString(params, key);
     if (!value) {
-        throw new ChatFlowError('INVALID_CONTEXT', `Missing required field: ${key}`);
+        throw new ChatFlowError(
+            'INVALID_CONTEXT',
+            `Missing required field: ${key}`,
+        );
     }
 
     return value;
@@ -98,11 +98,9 @@ const toErrorResult = (
 ): ApiChatRouteResult => {
     if (error instanceof ChatFlowError) {
         const code: ApiChatErrorResponse['error']['code'] =
-            error.code === 'UNAUTHORIZED' ?
-                'UNAUTHORIZED'
-            : error.code === 'INVALID_CONTEXT' ?
-                'INVALID_CONTEXT'
-            :   'INVALID_QUERY';
+            error.code === 'UNAUTHORIZED' ? 'UNAUTHORIZED'
+            : error.code === 'INVALID_CONTEXT' ? 'INVALID_CONTEXT'
+            : 'INVALID_QUERY';
 
         return {
             statusCode: code === 'UNAUTHORIZED' ? 403 : 400,
@@ -180,8 +178,12 @@ export class ApiChatService {
                 readString(params, 'initiatedFrom'),
             );
 
-            const allowInitiation = readString(params, 'allowInitiation') !== 'false';
-            const allowedParticipants = readString(params, 'allowedParticipants')
+            const allowInitiation =
+                readString(params, 'allowInitiation') !== 'false';
+            const allowedParticipants = readString(
+                params,
+                'allowedParticipants',
+            )
                 ?.split(',')
                 .map(value => value.trim())
                 .filter(Boolean);
@@ -207,7 +209,9 @@ export class ApiChatService {
                 now: readString(params, 'now'),
             });
 
-            const existing = this.metadataStore.getConversation(chat.conversationUri);
+            const existing = this.metadataStore.getConversation(
+                chat.conversationUri,
+            );
             const persisted = this.metadataStore.upsertConversation({
                 chat,
                 routingDecision: routing,
@@ -230,13 +234,18 @@ export class ApiChatService {
                 },
             };
         } catch (error) {
-            return toErrorResult(error, 'Failed to initiate chat conversation.');
+            return toErrorResult(
+                error,
+                'Failed to initiate chat conversation.',
+            );
         }
     }
 
     routeScenarioFromParams(params: URLSearchParams): ApiChatRouteResult {
         const scenario = readString(params, 'scenario') ?? 'post-author-direct';
-        const fixture = buildPhase5RoutingFixtures().find(item => item.id === scenario);
+        const fixture = buildPhase5RoutingFixtures().find(
+            item => item.id === scenario,
+        );
 
         if (!fixture) {
             return {
@@ -273,7 +282,10 @@ export class ApiChatService {
                 },
             };
         } catch (error) {
-            return toErrorResult(error, 'Failed to list conversation metadata.');
+            return toErrorResult(
+                error,
+                'Failed to list conversation metadata.',
+            );
         }
     }
 

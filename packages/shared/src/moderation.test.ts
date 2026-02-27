@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-    ModerationPolicyError,
-    ModerationReviewQueue,
-} from './moderation.js';
+import { ModerationPolicyError, ModerationReviewQueue } from './moderation.js';
 
 describe('P7.1 moderation queue + policy actions', () => {
     it('adds reported items to queue with sufficient context', () => {

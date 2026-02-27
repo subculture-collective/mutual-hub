@@ -122,10 +122,7 @@ const subjectTypeFromUri = (subjectUri: string): ModerationSubjectType => {
 };
 
 const toQueueId = (subjectUri: string): string => {
-    return createHash('sha256')
-        .update(subjectUri)
-        .digest('hex')
-        .slice(0, 20);
+    return createHash('sha256').update(subjectUri).digest('hex').slice(0, 20);
 };
 
 const toAuditId = (
@@ -151,7 +148,7 @@ const mergeContext = (
         tags:
             next.tags && next.tags.length > 0 ?
                 [...new Set(next.tags.map(tag => tag.trim()).filter(Boolean))]
-            : existing.tags,
+            :   existing.tags,
     };
 };
 
@@ -177,8 +174,10 @@ const applyTransition = (
         case 'restore-visibility':
             next.visibility = 'visible';
             next.queueStatus =
-                current.appealState === 'pending' ||
-                current.appealState === 'under-review' ?
+                (
+                    current.appealState === 'pending' ||
+                    current.appealState === 'under-review'
+                ) ?
                     'queued'
                 :   'resolved';
             break;
@@ -391,13 +390,22 @@ export class ModerationReviewQueue {
     }): ModerationQueueItem[] {
         return [...this.queueBySubject.values()]
             .filter(item => {
-                if (filters?.queueStatus && item.queueStatus !== filters.queueStatus) {
+                if (
+                    filters?.queueStatus &&
+                    item.queueStatus !== filters.queueStatus
+                ) {
                     return false;
                 }
-                if (filters?.visibility && item.visibility !== filters.visibility) {
+                if (
+                    filters?.visibility &&
+                    item.visibility !== filters.visibility
+                ) {
                     return false;
                 }
-                if (filters?.appealState && item.appealState !== filters.appealState) {
+                if (
+                    filters?.appealState &&
+                    item.appealState !== filters.appealState
+                ) {
                     return false;
                 }
                 return true;

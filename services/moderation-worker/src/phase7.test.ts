@@ -7,7 +7,8 @@ describe('phase 7 moderation worker queue + policy endpoints', () => {
 
         const enqueue = service.enqueueFromParams(
             new URLSearchParams({
-                subjectUri: 'at://did:example:alice/app.mutualhub.aid.post/post-1',
+                subjectUri:
+                    'at://did:example:alice/app.mutualhub.aid.post/post-1',
                 reason: 'user-report:spam',
                 reporterDid: 'did:example:reporter-1',
                 summary: 'Repeated duplicate content',

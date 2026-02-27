@@ -747,7 +747,9 @@ export class ChatSafetyControls {
         const normalizedMessage = input.message.trim().toLowerCase();
 
         const duplicateKey = `${senderDid}:${conversationUri}:${normalizedMessage}`;
-        const duplicateWindow = (this.duplicateWindows.get(duplicateKey) ?? []).filter(
+        const duplicateWindow = (
+            this.duplicateWindows.get(duplicateKey) ?? []
+        ).filter(
             timestamp => nowMs - timestamp <= this.config.duplicateWindowMs,
         );
 
