@@ -10,7 +10,7 @@ export const Card = ({ title, children }: PropsWithChildren<CardProps>) => {
             <h2 className='font-heading text-xl font-black uppercase'>
                 {title}
             </h2>
-            <div className='mt-3 text-sm text-(--mh-text-muted)'>
+            <div className='mt-3 text-sm text-[var(--mh-text-muted)]'>
                 {children}
             </div>
         </article>

@@ -7,7 +7,7 @@ export const TextLink = ({
 }: PropsWithChildren<AnchorHTMLAttributes<HTMLAnchorElement>>) => {
     return (
         <a
-            className={['mh-link cursor-pointer', className].join(' ')}
+            className={['mh-link', className].join(' ')}
             {...props}
         >
             {children}
