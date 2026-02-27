@@ -6,6 +6,9 @@ import {
     DeterministicRoutingAssistant,
     buildPhase5RoutingFixtures,
     createPostLinkedChatContext,
+    toErrorHttpResult,
+    readQueryString,
+    requireQueryString,
     type AidPostRecord,
     type ChatInitiationSurface,
     type RecipientTransportCapability,
@@ -28,29 +31,19 @@ interface ApiChatErrorResponse {
     };
 }
 
-const readString = (
-    params: URLSearchParams,
-    key: string,
-): string | undefined => {
-    const value = params.get(key);
-    if (value === null || value.trim() === '') {
-        return undefined;
-    }
-
-    return value;
-};
-
 const requireString = (params: URLSearchParams, key: string): string => {
-    const value = readString(params, key);
-    if (!value) {
-        throw new ChatFlowError(
-            'INVALID_CONTEXT',
-            `Missing required field: ${key}`,
-        );
-    }
-
-    return value;
+    return requireQueryString(
+        params,
+        key,
+        missingKey =>
+            new ChatFlowError(
+                'INVALID_CONTEXT',
+                `Missing required field: ${missingKey}`,
+            ),
+    );
 };
+
+const readString = readQueryString;
 
 const parseInitiationSurface = (
     value: string | undefined,
@@ -102,45 +95,24 @@ const toErrorResult = (
             : error.code === 'INVALID_CONTEXT' ? 'INVALID_CONTEXT'
             : 'INVALID_QUERY';
 
-        return {
-            statusCode: code === 'UNAUTHORIZED' ? 403 : 400,
-            body: {
-                error: {
-                    code,
-                    message: error.message,
-                    details: error.details,
-                },
-            } satisfies ApiChatErrorResponse,
-        };
+        return toErrorHttpResult(
+            code === 'UNAUTHORIZED' ? 403 : 400,
+            code,
+            error.message,
+            error.details,
+        );
     }
 
     if (error instanceof ZodError) {
-        return {
-            statusCode: 400,
-            body: {
-                error: {
-                    code: 'INVALID_QUERY',
-                    message: 'Input validation failed.',
-                    details: {
-                        issues: error.issues.map(issue => ({
-                            path: issue.path.join('.'),
-                            message: issue.message,
-                        })),
-                    },
-                },
-            } satisfies ApiChatErrorResponse,
-        };
+        return toErrorHttpResult(400, 'INVALID_QUERY', 'Input validation failed.', {
+            issues: error.issues.map(issue => ({
+                path: issue.path.join('.'),
+                message: issue.message,
+            })),
+        });
     }
 
-    return {
-        statusCode: 400,
-        body: {
-            error: {
-                code: 'INVALID_QUERY',
-                message: fallbackMessage,
-            },
-        } satisfies ApiChatErrorResponse,
-    };
+    return toErrorHttpResult(400, 'INVALID_QUERY', fallbackMessage);
 };
 
 const fixtureCapabilities = new Map<string, RecipientTransportCapability>([

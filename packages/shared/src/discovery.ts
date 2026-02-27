@@ -432,18 +432,23 @@ export class DiscoveryIndexStore {
             sets.push(new Set(this.aidUrgencyIndex.get(input.urgency) ?? []));
         }
 
-        const uriSet =
-            sets.length === 0 ?
-                new Set(this.aidRecords.keys())
-            :   sets.reduce((accumulator, current) => {
-                    if (accumulator.size === 0) {
-                        return current;
-                    }
+        let uriSet: Set<string>;
 
-                    return new Set(
+        if (sets.length === 0) {
+            // No filters specified: all aid records are candidates.
+            uriSet = new Set(this.aidRecords.keys());
+        } else {
+            // Start intersection from the smallest filter set to minimize work.
+            const [first, ...rest] = sets.sort((a, b) => a.size - b.size);
+
+            uriSet = rest.reduce(
+                (accumulator, current) =>
+                    new Set(
                         [...accumulator].filter(uri => current.has(uri)),
-                    );
-                });
+                    ),
+                new Set(first),
+            );
+        }
 
         return [...uriSet]
             .map(uri => this.aidRecords.get(uri))
@@ -477,18 +482,31 @@ export class DiscoveryIndexStore {
             );
         }
 
-        const uriSet =
-            sets.length === 0 ?
-                new Set(this.directoryRecords.keys())
-            :   sets.reduce((accumulator, current) => {
-                    if (accumulator.size === 0) {
-                        return current;
-                    }
+        let uriSet: Set<string>;
 
-                    return new Set(
-                        [...accumulator].filter(uri => current.has(uri)),
-                    );
-                });
+        if (sets.length === 0) {
+            // No filters: include all directory records.
+            uriSet = new Set(this.directoryRecords.keys());
+        } else {
+            // Start intersecting from the smallest filter set to avoid scanning all records.
+            const [first, ...rest] = sets.sort((a, b) => a.size - b.size);
+
+            uriSet = rest.reduce<Set<string>>((accumulator, current) => {
+                // If either side is empty, intersection is empty.
+                if (accumulator.size === 0 || current.size === 0) {
+                    return new Set<string>();
+                }
+
+                const intersection = new Set<string>();
+                for (const uri of accumulator) {
+                    if (current.has(uri)) {
+                        intersection.add(uri);
+                    }
+                }
+
+                return intersection;
+            }, new Set(first));
+        }
 
         return [...uriSet]
             .map(uri => this.directoryRecords.get(uri))

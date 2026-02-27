@@ -1,6 +1,9 @@
 import {
     ModerationPolicyError,
     ModerationReviewQueue,
+    toErrorHttpResult,
+    readQueryString,
+    requireQueryString,
     type ModerationAppealState,
     type ModerationPolicyAction,
     type ModerationQueueStatus,
@@ -12,30 +15,20 @@ export interface ModerationServiceResult {
     body: unknown;
 }
 
-const readString = (
-    params: URLSearchParams,
-    key: string,
-): string | undefined => {
-    const value = params.get(key);
-    if (value === null || value.trim() === '') {
-        return undefined;
-    }
-
-    return value;
-};
-
 const requireString = (params: URLSearchParams, key: string): string => {
-    const value = readString(params, key);
-    if (!value) {
-        throw new ModerationPolicyError(
-            'INVALID_POLICY_INPUT',
-            `Missing required query parameter: ${key}`,
-            { key },
-        );
-    }
-
-    return value;
+    return requireQueryString(
+        params,
+        key,
+        missingKey =>
+            new ModerationPolicyError(
+                'INVALID_POLICY_INPUT',
+                `Missing required query parameter: ${missingKey}`,
+                { key: missingKey },
+            ),
+    );
 };
+
+const readString = readQueryString;
 
 const toErrorResult = (
     error: unknown,
@@ -47,27 +40,15 @@ const toErrorResult = (
             : error.code === 'INVALID_APPEAL_TRANSITION' ? 409
             : 400;
 
-        return {
+        return toErrorHttpResult(
             statusCode,
-            body: {
-                error: {
-                    code: error.code,
-                    message: error.message,
-                    details: error.details,
-                },
-            },
-        };
+            error.code,
+            error.message,
+            error.details,
+        );
     }
 
-    return {
-        statusCode: 400,
-        body: {
-            error: {
-                code: 'INVALID_POLICY_INPUT',
-                message: fallbackMessage,
-            },
-        },
-    };
+    return toErrorHttpResult(400, 'INVALID_POLICY_INPUT', fallbackMessage);
 };
 
 const parseQueueStatus = (

@@ -2,6 +2,8 @@ export * from './config.js';
 export * from './contracts.js';
 export * from './discovery.js';
 export * from './firehose.js';
+export * from './http-error.js';
+export * from './http-query.js';
 export * from './identity.js';
 export * from './messaging.js';
 export * from './phase8-fixtures.js';
