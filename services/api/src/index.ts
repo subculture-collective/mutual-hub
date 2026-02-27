@@ -20,14 +20,10 @@ const resolveQueryService = async () => {
         return createFixtureQueryService();
     }
 
-    const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
-    if (!databaseUrl) {
-        throw new Error(
-            'API_DATABASE_URL (or DATABASE_URL) is required when API_DATA_SOURCE=postgres.',
-        );
-    }
-
-    return createPostgresQueryService(databaseUrl);
+    return createPostgresQueryService(
+        // Config validation guarantees this is set when API_DATA_SOURCE=postgres
+        (config.API_DATABASE_URL ?? config.DATABASE_URL)!,
+    );
 };
 
 const queryService = await resolveQueryService();
