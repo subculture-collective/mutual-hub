@@ -1,12 +1,11 @@
+import { mapAidCategoryToDirectoryCategories } from '@mutual-hub/shared/category-policy';
 import {
-    type AidCategory,
     type DiscoveryFilterState,
     type SharedAidDiscoveryQuery,
     toMapDiscoveryQuery,
 } from './discovery-filters.js';
-
-const earthRadiusMeters = 6_371_000;
-const minimumOverlayPrecisionMeters = 300;
+import { MINIMUM_GEO_PRIVACY_RADIUS_METERS } from './geo-constants.js';
+import { haversineDistanceMeters } from './geo-utils.js';
 
 export type DirectoryResourceCategory =
     | 'food-bank'
@@ -95,47 +94,6 @@ export type ResourceDirectoryUiState =
           ariaLiveMessage: string;
       };
 
-const toRadians = (value: number): number => (value * Math.PI) / 180;
-
-const haversineDistanceMeters = (
-    from: { lat: number; lng: number },
-    to: { lat: number; lng: number },
-): number => {
-    const latDelta = toRadians(to.lat - from.lat);
-    const lngDelta = toRadians(to.lng - from.lng);
-    const fromLat = toRadians(from.lat);
-    const toLat = toRadians(to.lat);
-
-    const a =
-        Math.sin(latDelta / 2) * Math.sin(latDelta / 2) +
-        Math.cos(fromLat) *
-            Math.cos(toLat) *
-            Math.sin(lngDelta / 2) *
-            Math.sin(lngDelta / 2);
-
-    return 2 * earthRadiusMeters * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
-
-const categoryToDirectoryCategories = (
-    category: AidCategory | undefined,
-): DirectoryResourceCategory[] => {
-    if (!category) {
-        return [];
-    }
-
-    if (category === 'food') {
-        return ['food-bank'];
-    }
-    if (category === 'shelter') {
-        return ['shelter'];
-    }
-    if (category === 'medical') {
-        return ['clinic'];
-    }
-
-    return [];
-};
-
 const resourceMatchesText = (
     resource: ResourceDirectoryCard,
     text: string,
@@ -156,7 +114,7 @@ const toOverlayMarker = (
     resource: ResourceDirectoryCard,
 ): ResourceOverlayMarker => {
     const precisionMeters = Math.max(
-        minimumOverlayPrecisionMeters,
+        MINIMUM_GEO_PRIVACY_RADIUS_METERS,
         Math.round(resource.location.precisionMeters),
     );
 
@@ -187,7 +145,7 @@ export const filterResourceDirectoryCards = (
     filters: ResourceOverlayFilters = {},
 ): ResourceDirectoryCard[] => {
     const query = toMapDiscoveryQuery(state);
-    const categoryFilters = categoryToDirectoryCategories(state.category);
+    const categoryFilters = mapAidCategoryToDirectoryCategories(state.category);
 
     return cards
         .filter(card => {

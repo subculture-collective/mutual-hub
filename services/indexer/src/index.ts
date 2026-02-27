@@ -27,48 +27,60 @@ const writeJson = (
     response.end(JSON.stringify(body));
 };
 
+interface IndexerRouteResult {
+    statusCode: number;
+    body: unknown;
+}
+
+type IndexerRouteHandler = (requestUrl: URL) => IndexerRouteResult;
+
+const routeHandlers: Readonly<Record<string, IndexerRouteHandler>> = {
+    '/health': () => ({
+        statusCode: 200,
+        body: healthPayload,
+    }),
+    '/ingestion/metrics': () => ({
+        statusCode: 200,
+        body: {
+            metrics: pipeline.getMetrics(),
+            checkpointSeq: pipeline.getCheckpointSeq(),
+        },
+    }),
+    '/ingestion/logs': () => ({
+        statusCode: 200,
+        body: {
+            logs: pipeline.getLogs(),
+        },
+    }),
+    '/indexes/stats': () => ({
+        statusCode: 200,
+        body: {
+            stats: pipeline.getStats(),
+        },
+    }),
+    '/events/sample': () => ({
+        statusCode: 200,
+        body: {
+            sampleFeed: pipeline.queryFeed({
+                latitude: 40.7128,
+                longitude: -74.006,
+                radiusKm: 25,
+                page: 1,
+                pageSize: 1,
+                nowIso: '2026-02-26T13:00:00.000Z',
+            }),
+        },
+    }),
+};
+
 export const createIndexerServer = () => {
     return createServer((request, response) => {
         const requestUrl = new URL(request.url ?? '/', 'http://localhost');
 
-        if (requestUrl.pathname === '/health') {
-            writeJson(response, 200, healthPayload);
-            return;
-        }
-
-        if (requestUrl.pathname === '/ingestion/metrics') {
-            writeJson(response, 200, {
-                metrics: pipeline.getMetrics(),
-                checkpointSeq: pipeline.getCheckpointSeq(),
-            });
-            return;
-        }
-
-        if (requestUrl.pathname === '/ingestion/logs') {
-            writeJson(response, 200, {
-                logs: pipeline.getLogs(),
-            });
-            return;
-        }
-
-        if (requestUrl.pathname === '/indexes/stats') {
-            writeJson(response, 200, {
-                stats: pipeline.getStats(),
-            });
-            return;
-        }
-
-        if (requestUrl.pathname === '/events/sample') {
-            writeJson(response, 200, {
-                sampleFeed: pipeline.queryFeed({
-                    latitude: 40.7128,
-                    longitude: -74.006,
-                    radiusKm: 25,
-                    page: 1,
-                    pageSize: 1,
-                    nowIso: '2026-02-26T13:00:00.000Z',
-                }),
-            });
+        const handler = routeHandlers[requestUrl.pathname];
+        if (handler) {
+            const result = handler(requestUrl);
+            writeJson(response, result.statusCode, result.body);
             return;
         }
 

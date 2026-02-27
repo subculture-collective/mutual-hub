@@ -1,9 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-
-const didSchema = z
-    .string()
-    .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
+import { didSchema, isoDateTimeSchema } from './schemas.js';
 
 const handleSchema = z
     .string()
@@ -15,8 +12,8 @@ const handleSchema = z
 const sessionTokenSchema = z.object({
     accessJwt: z.string().min(16),
     refreshJwt: z.string().min(16),
-    expiresAt: z.string().datetime({ offset: true }),
-    refreshExpiresAt: z.string().datetime({ offset: true }),
+    expiresAt: isoDateTimeSchema,
+    refreshExpiresAt: isoDateTimeSchema,
 });
 
 export interface HandleResolution {

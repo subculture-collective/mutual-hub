@@ -13,14 +13,11 @@ import {
     redactSensitiveText,
     toRedactedUriReference,
 } from './privacy.js';
-
-const didSchema = z
-    .string()
-    .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
-
-const atUriSchema = z
-    .string()
-    .regex(/^at:\/\/[\w:%.-]+\/[\w.-]+\/[\w.-]+$/i, 'Expected a valid AT URI');
+import {
+    atUriRecordSchema,
+    didSchema,
+    isoDateTimeSchema,
+} from './schemas.js';
 
 const actionSchema = z.enum(['create', 'update', 'delete']);
 
@@ -34,9 +31,9 @@ const recordNsidEnumValues = [
 
 const envelopeSchema = z.object({
     seq: z.number().int().nonnegative(),
-    receivedAt: z.string().datetime({ offset: true }).optional(),
+    receivedAt: isoDateTimeSchema.optional(),
     action: actionSchema,
-    uri: atUriSchema,
+    uri: atUriRecordSchema,
     collection: z.enum(recordNsidEnumValues),
     authorDid: didSchema.optional(),
     record: z.unknown().optional(),

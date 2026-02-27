@@ -6,10 +6,9 @@ import {
     validateRecordPayload,
 } from '@mutual-hub/at-lexicons';
 import type { VolunteerRoutingCandidate } from './messaging.js';
-
-const didSchema = z
-    .string()
-    .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
+import { capabilitySupportsAidCategory } from './category-policy.js';
+import { deepClone } from './clone.js';
+import { didSchema } from './schemas.js';
 
 const capabilitySchema = z.enum([
     'transport',
@@ -85,8 +84,6 @@ export interface VolunteerCheckpointSummary {
     rejected: number;
 }
 
-const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-
 const normalizeStringList = (values: readonly string[]): string[] => {
     const seen = new Map<string, string>();
 
@@ -125,28 +122,6 @@ export const summarizeVolunteerCheckpoints = (
         pending: statuses.filter(status => status === 'pending').length,
         rejected: statuses.filter(status => status === 'rejected').length,
     };
-};
-
-const capabilitySupportsCategory = (
-    capability: VolunteerProfileRecord['capabilities'][number],
-    category: AidPostRecord['category'],
-): boolean => {
-    if (category === 'food') {
-        return capability === 'food-delivery';
-    }
-    if (category === 'medical') {
-        return capability === 'first-aid';
-    }
-    if (category === 'transport') {
-        return capability === 'transport';
-    }
-    if (category === 'childcare') {
-        return capability === 'childcare';
-    }
-    if (category === 'shelter') {
-        return capability === 'other';
-    }
-    return true;
 };
 
 const toRoutingCandidateId = (did: string): string => {
@@ -191,7 +166,7 @@ export const buildVolunteerRoutingCandidates = (
             );
 
         const capabilityMatch = profile.record.capabilities.some(capability =>
-            capabilitySupportsCategory(capability, input.aidCategory),
+            capabilitySupportsAidCategory(capability, input.aidCategory),
         );
         const preferenceMatch =
             profile.matchingPreferences.preferredCategories.includes(
@@ -264,18 +239,18 @@ export class VolunteerOnboardingStore {
         };
 
         this.entries.set(normalized.did, entry);
-        return clone(entry);
+        return deepClone(entry);
     }
 
     getProfile(did: string): VolunteerProfileEntry | null {
         const parsedDid = didSchema.parse(did);
         const found = this.entries.get(parsedDid);
-        return found ? clone(found) : null;
+        return found ? deepClone(found) : null;
     }
 
     listProfiles(): VolunteerProfileEntry[] {
         return [...this.entries.values()]
             .sort((left, right) => left.did.localeCompare(right.did))
-            .map(value => clone(value));
+            .map(value => deepClone(value));
     }
 }

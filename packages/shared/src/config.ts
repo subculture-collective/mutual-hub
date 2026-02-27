@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { loadWorkspaceEnvFiles } from './env-file.js';
+import { DID_PATTERN } from './schemas.js';
 
 const nodeEnvSchema = z
     .enum(['development', 'test', 'production'])
@@ -13,10 +14,7 @@ const baseSchema = z.object({
 const atprotoSchema = z.object({
     ATPROTO_SERVICE_DID: z
         .string()
-        .regex(
-            /^did:[a-z0-9]+:[a-z0-9._:%-]+$/i,
-            'ATPROTO_SERVICE_DID must be a valid DID string.',
-        ),
+        .regex(DID_PATTERN, 'ATPROTO_SERVICE_DID must be a valid DID string.'),
     ATPROTO_PDS_URL: z.string().url().default('https://bsky.social'),
 });
 

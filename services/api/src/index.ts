@@ -31,140 +31,79 @@ const writeJson = (
     response.end(JSON.stringify(body));
 };
 
+interface ApiRouteResult {
+    statusCode: number;
+    body: unknown;
+}
+
+type ApiRouteHandler = (requestUrl: URL) => ApiRouteResult;
+
+const contractRoutes = [
+    '/query/map',
+    '/query/feed',
+    '/query/directory',
+    '/chat/initiate',
+    '/chat/route',
+    '/chat/conversations',
+    '/chat/safety/evaluate',
+    '/chat/safety/block',
+    '/chat/safety/mute',
+    '/chat/safety/report',
+    '/chat/safety/signals/drain',
+    '/chat/safety/metrics',
+    '/chat/route/preference-aware',
+    '/volunteer/profile/upsert',
+    '/volunteer/profiles',
+    '/health',
+] as const;
+
+const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
+    '/health': () => ({
+        statusCode: 200,
+        body: healthPayload,
+    }),
+    '/contracts': () => ({
+        statusCode: 200,
+        body: {
+            contractVersion: CONTRACT_VERSION,
+            routes: contractRoutes,
+        },
+    }),
+    '/query/map': requestUrl => queryService.queryMap(requestUrl.searchParams),
+    '/query/feed': requestUrl =>
+        queryService.queryFeed(requestUrl.searchParams),
+    '/query/directory': requestUrl =>
+        queryService.queryDirectory(requestUrl.searchParams),
+    '/chat/initiate': requestUrl =>
+        chatService.initiateFromParams(requestUrl.searchParams),
+    '/chat/route': requestUrl =>
+        chatService.routeScenarioFromParams(requestUrl.searchParams),
+    '/chat/conversations': requestUrl =>
+        chatService.listConversationsFromParams(requestUrl.searchParams),
+    '/chat/safety/evaluate': requestUrl =>
+        chatService.evaluateSafetyFromParams(requestUrl.searchParams),
+    '/chat/safety/block': requestUrl =>
+        chatService.blockFromParams(requestUrl.searchParams),
+    '/chat/safety/mute': requestUrl =>
+        chatService.muteFromParams(requestUrl.searchParams),
+    '/chat/safety/report': requestUrl =>
+        chatService.reportFromParams(requestUrl.searchParams),
+    '/chat/safety/signals/drain': () => chatService.drainModerationSignals(),
+    '/chat/safety/metrics': () => chatService.safetyMetrics(),
+    '/chat/route/preference-aware': requestUrl =>
+        volunteerService.routePreferenceAwareFromParams(requestUrl.searchParams),
+    '/volunteer/profile/upsert': requestUrl =>
+        volunteerService.upsertFromParams(requestUrl.searchParams),
+    '/volunteer/profiles': () => volunteerService.listFromParams(),
+};
+
 export const createApiServer = () => {
     return createServer((request, response) => {
         const requestUrl = new URL(request.url ?? '/', 'http://localhost');
 
-        if (requestUrl.pathname === '/health') {
-            writeJson(response, 200, healthPayload);
-            return;
-        }
-
-        if (requestUrl.pathname === '/contracts') {
-            writeJson(response, 200, {
-                contractVersion: CONTRACT_VERSION,
-                routes: [
-                    '/query/map',
-                    '/query/feed',
-                    '/query/directory',
-                    '/chat/initiate',
-                    '/chat/route',
-                    '/chat/conversations',
-                    '/chat/safety/evaluate',
-                    '/chat/safety/block',
-                    '/chat/safety/mute',
-                    '/chat/safety/report',
-                    '/chat/safety/signals/drain',
-                    '/chat/safety/metrics',
-                    '/chat/route/preference-aware',
-                    '/volunteer/profile/upsert',
-                    '/volunteer/profiles',
-                    '/health',
-                ],
-            });
-            return;
-        }
-
-        if (requestUrl.pathname === '/query/map') {
-            const result = queryService.queryMap(requestUrl.searchParams);
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/query/feed') {
-            const result = queryService.queryFeed(requestUrl.searchParams);
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/query/directory') {
-            const result = queryService.queryDirectory(requestUrl.searchParams);
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/initiate') {
-            const result = chatService.initiateFromParams(
-                requestUrl.searchParams,
-            );
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/route') {
-            const result = chatService.routeScenarioFromParams(
-                requestUrl.searchParams,
-            );
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/conversations') {
-            const result = chatService.listConversationsFromParams(
-                requestUrl.searchParams,
-            );
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/safety/evaluate') {
-            const result = chatService.evaluateSafetyFromParams(
-                requestUrl.searchParams,
-            );
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/safety/block') {
-            const result = chatService.blockFromParams(requestUrl.searchParams);
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/safety/mute') {
-            const result = chatService.muteFromParams(requestUrl.searchParams);
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/safety/report') {
-            const result = chatService.reportFromParams(
-                requestUrl.searchParams,
-            );
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/safety/signals/drain') {
-            const result = chatService.drainModerationSignals();
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/safety/metrics') {
-            const result = chatService.safetyMetrics();
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/chat/route/preference-aware') {
-            const result = volunteerService.routePreferenceAwareFromParams(
-                requestUrl.searchParams,
-            );
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/volunteer/profile/upsert') {
-            const result = volunteerService.upsertFromParams(
-                requestUrl.searchParams,
-            );
-            writeJson(response, result.statusCode, result.body);
-            return;
-        }
-
-        if (requestUrl.pathname === '/volunteer/profiles') {
-            const result = volunteerService.listFromParams();
+        const handler = routeHandlers[requestUrl.pathname];
+        if (handler) {
+            const result = handler(requestUrl);
             writeJson(response, result.statusCode, result.body);
             return;
         }

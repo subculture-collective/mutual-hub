@@ -1,7 +1,4 @@
-import type {
-    RoutingAssistantInput,
-    RoutingDecision,
-} from './messaging.js';
+import type { RoutingAssistantInput, RoutingDecision } from './messaging.js';
 
 export interface RoutingFixture {
     id: string;
