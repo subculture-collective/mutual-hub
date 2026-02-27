@@ -20,6 +20,7 @@
         "typecheck": "npm run typecheck --workspaces --if-present",
         "test": "npm run test --workspaces --if-present",
         "test:phase7": "npm run test:phase7 --workspaces --if-present",
+        "test:phase8": "npm run test:phase8 --workspaces --if-present",
         "check": "npm run lint && npm run typecheck && npm run test"
     },
     "devDependencies": {

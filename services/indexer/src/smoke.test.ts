@@ -3,6 +3,6 @@ import { CONTRACT_VERSION } from '@mutual-hub/shared';
 
 describe('indexer service shell', () => {
     it('references shared contracts', () => {
-        expect(CONTRACT_VERSION).toBe('0.7.0-phase7');
+        expect(CONTRACT_VERSION).toBe('0.8.0-phase8');
     });
 });

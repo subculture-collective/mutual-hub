@@ -3,6 +3,6 @@ import { CONTRACT_VERSION } from '@mutual-hub/shared';
 
 describe('api service shell', () => {
     it('references shared contracts', () => {
-        expect(CONTRACT_VERSION).toContain('phase7');
+        expect(CONTRACT_VERSION).toContain('phase8');
     });
 });

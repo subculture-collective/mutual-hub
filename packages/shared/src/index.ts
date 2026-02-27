@@ -4,6 +4,7 @@ export * from './discovery.js';
 export * from './firehose.js';
 export * from './identity.js';
 export * from './messaging.js';
+export * from './phase8-fixtures.js';
 export * from './ranking.js';
 export * from '@mutual-hub/at-lexicons';
 export * from './records.js';
