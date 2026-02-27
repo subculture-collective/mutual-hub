@@ -73,6 +73,8 @@ const redactByKey = (key: string, value: unknown): unknown => {
         if (key === 'latitude' || key === 'longitude') {
             return Number(value.toFixed(2));
         }
+
+        return value;
     }
 
     if (typeof value === 'object') {
