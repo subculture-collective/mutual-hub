@@ -170,7 +170,9 @@ export class ModerationWorkerService {
             const items = this.queue.listQueue({
                 queueStatus: parseQueueStatus(readString(params, 'status')),
                 visibility: parseVisibility(readString(params, 'visibility')),
-                appealState: parseAppealState(readString(params, 'appealState')),
+                appealState: parseAppealState(
+                    readString(params, 'appealState'),
+                ),
             });
 
             return {
@@ -202,7 +204,10 @@ export class ModerationWorkerService {
                 },
             };
         } catch (error) {
-            return toErrorResult(error, 'Failed to apply moderation policy action.');
+            return toErrorResult(
+                error,
+                'Failed to apply moderation policy action.',
+            );
         }
     }
 
@@ -242,11 +247,15 @@ export class ModerationWorkerService {
                 },
             };
         } catch (error) {
-            return toErrorResult(error, 'Failed to list moderation audit trail.');
+            return toErrorResult(
+                error,
+                'Failed to list moderation audit trail.',
+            );
         }
     }
 }
 
-export const createFixtureModerationWorkerService = (): ModerationWorkerService => {
-    return new ModerationWorkerService();
-};
+export const createFixtureModerationWorkerService =
+    (): ModerationWorkerService => {
+        return new ModerationWorkerService();
+    };

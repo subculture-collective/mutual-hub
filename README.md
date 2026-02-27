@@ -98,32 +98,32 @@ Each backend service exposes a health endpoint:
 Phase 7 service endpoints:
 
 - API:
-  - `GET /query/map`
-  - `GET /query/feed`
-  - `GET /query/directory`
-  - `GET /chat/initiate`
-  - `GET /chat/route`
-  - `GET /chat/conversations`
-  - `GET /chat/safety/evaluate`
-  - `GET /chat/safety/block`
-  - `GET /chat/safety/mute`
-  - `GET /chat/safety/report`
-  - `GET /chat/safety/signals/drain`
-  - `GET /chat/safety/metrics`
-  - `GET /chat/route/preference-aware`
-  - `GET /volunteer/profile/upsert`
-  - `GET /volunteer/profiles`
+    - `GET /query/map`
+    - `GET /query/feed`
+    - `GET /query/directory`
+    - `GET /chat/initiate`
+    - `GET /chat/route`
+    - `GET /chat/conversations`
+    - `GET /chat/safety/evaluate`
+    - `GET /chat/safety/block`
+    - `GET /chat/safety/mute`
+    - `GET /chat/safety/report`
+    - `GET /chat/safety/signals/drain`
+    - `GET /chat/safety/metrics`
+    - `GET /chat/route/preference-aware`
+    - `GET /volunteer/profile/upsert`
+    - `GET /volunteer/profiles`
 - Indexer:
-  - `GET /ingestion/metrics`
-  - `GET /ingestion/logs`
-  - `GET /indexes/stats`
+    - `GET /ingestion/metrics`
+    - `GET /ingestion/logs`
+    - `GET /indexes/stats`
 - Moderation worker:
-  - `GET /decisions/sample`
-  - `GET /moderation/queue/enqueue`
-  - `GET /moderation/queue`
-  - `GET /moderation/policy/apply`
-  - `GET /moderation/state`
-  - `GET /moderation/audit`
+    - `GET /decisions/sample`
+    - `GET /moderation/queue/enqueue`
+    - `GET /moderation/queue`
+    - `GET /moderation/policy/apply`
+    - `GET /moderation/state`
+    - `GET /moderation/audit`
 
 ## Quality gates
 
