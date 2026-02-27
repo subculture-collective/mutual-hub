@@ -91,7 +91,9 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
     '/chat/safety/signals/drain': () => chatService.drainModerationSignals(),
     '/chat/safety/metrics': () => chatService.safetyMetrics(),
     '/chat/route/preference-aware': requestUrl =>
-        volunteerService.routePreferenceAwareFromParams(requestUrl.searchParams),
+        volunteerService.routePreferenceAwareFromParams(
+            requestUrl.searchParams,
+        ),
     '/volunteer/profile/upsert': requestUrl =>
         volunteerService.upsertFromParams(requestUrl.searchParams),
     '/volunteer/profiles': () => volunteerService.listFromParams(),

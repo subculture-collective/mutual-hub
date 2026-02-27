@@ -12,7 +12,12 @@ export const aidCategories = [
     'other',
 ] as const;
 
-export const aidStatuses = ['open', 'in-progress', 'resolved', 'closed'] as const;
+export const aidStatuses = [
+    'open',
+    'in-progress',
+    'resolved',
+    'closed',
+] as const;
 
 export type AidCategory = (typeof aidCategories)[number];
 export type AidStatus = (typeof aidStatuses)[number];
@@ -83,7 +88,9 @@ const normalizeText = (text: string | undefined): string | undefined => {
     return normalized.length > 0 ? normalized : undefined;
 };
 
-const normalizeCategory = (category: string | undefined): AidCategory | undefined => {
+const normalizeCategory = (
+    category: string | undefined,
+): AidCategory | undefined => {
     if (!category) {
         return undefined;
     }
@@ -110,7 +117,9 @@ const normalizeUrgency = (
     return clamp(Math.round(value), 1, 5) as DiscoveryFilterState['minUrgency'];
 };
 
-const normalizeRadius = (radiusMeters: number | undefined): number | undefined => {
+const normalizeRadius = (
+    radiusMeters: number | undefined,
+): number | undefined => {
     if (radiusMeters === undefined || Number.isNaN(radiusMeters)) {
         return undefined;
     }
@@ -122,7 +131,9 @@ const normalizeRadius = (radiusMeters: number | undefined): number | undefined =
     );
 };
 
-const normalizeFeedTab = (value: string | null | undefined): FeedTab | undefined => {
+const normalizeFeedTab = (
+    value: string | null | undefined,
+): FeedTab | undefined => {
     if (value === 'nearby' || value === 'latest') {
         return value;
     }
@@ -141,7 +152,12 @@ const normalizeCenter = (
         return undefined;
     }
 
-    if (center.lat < -90 || center.lat > 90 || center.lng < -180 || center.lng > 180) {
+    if (
+        center.lat < -90 ||
+        center.lat > 90 ||
+        center.lng < -180 ||
+        center.lng > 180
+    ) {
         return undefined;
     }
 
@@ -245,7 +261,9 @@ export function toFeedDiscoveryQuery(
     };
 }
 
-export function serializeDiscoveryFilterState(state: DiscoveryFilterState): string {
+export function serializeDiscoveryFilterState(
+    state: DiscoveryFilterState,
+): string {
     const params = new URLSearchParams();
 
     if (state.feedTab === 'nearby') {
@@ -296,7 +314,10 @@ export function parseDiscoveryFilterState(
 
     return normalizeDiscoveryFilterState({
         ...fallback,
-        feedTab: parsedTab ?? fallback.feedTab ?? defaultDiscoveryFilterState.feedTab,
+        feedTab:
+            parsedTab ??
+            fallback.feedTab ??
+            defaultDiscoveryFilterState.feedTab,
         text: params.get('q') ?? fallback.text,
         category: parsedCategory ?? fallback.category,
         status: parsedStatus ?? fallback.status,

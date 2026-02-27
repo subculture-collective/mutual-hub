@@ -5,11 +5,9 @@ import {
 } from '@mutual-hub/at-lexicons';
 import type { ModerationReviewRequestedEvent } from './contracts.js';
 import { deepClone } from './clone.js';
-import {
-    atUriRecordSchema,
-    didSchema,
-    isoDateTimeSchema,
-} from './schemas.js';
+import { atUriRecordSchema, didSchema, isoDateTimeSchema } from './schemas.js';
+
+const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 export interface ChatSafetyEvaluationInput {
     senderDid: string;

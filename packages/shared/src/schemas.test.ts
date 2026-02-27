@@ -24,7 +24,9 @@ describe('shared schemas', () => {
     it('rejects invalid values', () => {
         expect(() => didSchema.parse('not-a-did')).toThrowError();
         expect(() => atUriSchema.parse('https://example.com')).toThrowError();
-        expect(() => atUriRecordSchema.parse('at://did:example:alice')).toThrowError();
+        expect(() =>
+            atUriRecordSchema.parse('at://did:example:alice'),
+        ).toThrowError();
         expect(() => isoDateTimeSchema.parse('2026-02-26')).toThrowError();
     });
 });

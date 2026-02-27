@@ -34,4 +34,16 @@ describe('http query helpers', () => {
             ),
         ).toThrowError('missing:missing');
     });
+
+    it('throws provided error for present-but-blank values', () => {
+        const params = new URLSearchParams({ blank: '   ' });
+
+        expect(() =>
+            requireQueryString(
+                params,
+                'blank',
+                key => new Error(`missing:${key}`),
+            ),
+        ).toThrowError('missing:blank');
+    });
 });

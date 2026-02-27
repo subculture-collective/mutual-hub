@@ -13,11 +13,7 @@ import {
     redactSensitiveText,
     toRedactedUriReference,
 } from './privacy.js';
-import {
-    atUriRecordSchema,
-    didSchema,
-    isoDateTimeSchema,
-} from './schemas.js';
+import { atUriRecordSchema, didSchema, isoDateTimeSchema } from './schemas.js';
 
 const actionSchema = z.enum(['create', 'update', 'delete']);
 

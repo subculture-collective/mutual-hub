@@ -417,7 +417,7 @@ export class ModerationReviewQueue {
                 }
                 return left.queueId.localeCompare(right.queueId);
             })
-                .map(entry => deepClone(entry));
+            .map(entry => deepClone(entry));
     }
 
     listAuditTrail(subjectUri?: string): ModerationPolicyAuditEntry[] {

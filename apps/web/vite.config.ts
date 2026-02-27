@@ -8,7 +8,10 @@ export default defineConfig({
     resolve: {
         alias: {
             '@mutual-hub/shared/category-policy': fileURLToPath(
-                new URL('../../packages/shared/src/category-policy.ts', import.meta.url),
+                new URL(
+                    '../../packages/shared/src/category-policy.ts',
+                    import.meta.url,
+                ),
             ),
         },
     },
