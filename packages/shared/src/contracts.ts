@@ -1,4 +1,4 @@
-export const CONTRACT_VERSION = '0.7.0-phase7';
+export const CONTRACT_VERSION = '0.8.0-phase8';
 
 export type DomainName =
     | 'identity'

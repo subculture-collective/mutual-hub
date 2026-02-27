@@ -16,7 +16,7 @@ import {
 describe('P8.1 service contract definitions', () => {
     it('CONTRACT_VERSION is a semver-prefixed phase identifier', () => {
         expect(CONTRACT_VERSION).toMatch(/^\d+\.\d+\.\d+-phase\d+$/);
-        expect(CONTRACT_VERSION).toBe('0.7.0-phase7');
+        expect(CONTRACT_VERSION).toBe('0.8.0-phase8');
     });
 
     it('serviceContractStubs.api satisfies ApiQueryAidRequest and ApiQueryAidResponse shapes', () => {

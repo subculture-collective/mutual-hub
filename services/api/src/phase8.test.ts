@@ -158,7 +158,7 @@ describe('P8.1 API contract test matrix', () => {
 
     describe('contract version', () => {
         it('CONTRACT_VERSION is present and matches the expected phase tag', () => {
-            expect(CONTRACT_VERSION).toContain('phase7');
+            expect(CONTRACT_VERSION).toContain('phase8');
         });
     });
 });
