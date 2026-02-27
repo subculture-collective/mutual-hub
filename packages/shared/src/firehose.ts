@@ -7,6 +7,12 @@ import {
     type RecordNsid,
     validateRecordPayload,
 } from '@mutual-hub/at-lexicons';
+import {
+    enforceMinimumGeoPrecisionKm,
+    redactLogData,
+    redactSensitiveText,
+    toRedactedUriReference,
+} from './privacy.js';
 
 const didSchema = z
     .string()
@@ -133,6 +139,8 @@ export interface IngestionLogEntry {
     message: string;
 }
 
+const MAX_INGESTION_LOG_ENTRIES = 500;
+
 export interface FirehoseBatchResult {
     normalizedEvents: NormalizedFirehoseEvent[];
     failures: IngestionFailure[];
@@ -166,7 +174,7 @@ const quantizeCoordinate = (
     longitude: number,
     precisionKm: number,
 ): ApproximateGeoPoint => {
-    const safePrecisionKm = Math.max(precisionKm, 1);
+    const safePrecisionKm = enforceMinimumGeoPrecisionKm(precisionKm);
 
     const latitudeStep = safePrecisionKm / 111;
     const latitudeBucket = Math.round(latitude / latitudeStep) * latitudeStep;
@@ -419,12 +427,12 @@ export class FirehoseConsumer {
                 }
 
                 failures.push(normalized.failure);
-                this.logs.push({
+                this.pushLog({
                     level: 'error',
                     event: 'ingestion.failed',
                     seq: normalized.failure.seq,
                     code: normalized.failure.code,
-                    message: normalized.failure.message,
+                    message: redactSensitiveText(normalized.failure.message),
                 });
                 continue;
             }
@@ -435,12 +443,12 @@ export class FirehoseConsumer {
                 normalized.event.seq,
             );
             normalizedEvents.push(normalized.event);
-            this.logs.push({
+            this.pushLog({
                 level: 'info',
                 event: 'ingestion.normalized',
                 seq: normalized.event.seq,
                 action: normalized.event.action,
-                uri: normalized.event.uri,
+                uri: toRedactedUriReference(normalized.event.uri),
                 message: `normalized ${normalized.event.collection}`,
             });
         }
@@ -475,6 +483,15 @@ export class FirehoseConsumer {
         this.metrics = zeroMetrics();
         this.checkpointSeq = -1;
         this.logs = [];
+    }
+
+    private pushLog(entry: IngestionLogEntry): void {
+        const sanitized = redactLogData(entry) as IngestionLogEntry;
+        this.logs.push(sanitized);
+
+        if (this.logs.length > MAX_INGESTION_LOG_ENTRIES) {
+            this.logs.splice(0, this.logs.length - MAX_INGESTION_LOG_ENTRIES);
+        }
     }
 }
 

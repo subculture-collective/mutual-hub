@@ -1,4 +1,4 @@
-export const CONTRACT_VERSION = '0.6.0-phase6';
+export const CONTRACT_VERSION = '0.7.0-phase7';
 
 export type DomainName =
     | 'identity'
@@ -8,7 +8,9 @@ export type DomainName =
     | 'messaging'
     | 'moderation'
     | 'directory'
-    | 'volunteer-onboarding';
+    | 'volunteer-onboarding'
+    | 'anti-spam'
+    | 'privacy';
 
 export interface ServiceHealth {
     service: 'api' | 'indexer' | 'moderation-worker';
@@ -173,9 +175,37 @@ export interface ApiChatInitiationResponse {
 
 export interface ApiChatSafetyEvaluationResponse {
     allowed: boolean;
-    code: 'OK' | 'BLOCKED' | 'RATE_LIMITED' | 'ABUSE_FLAGGED';
+    code:
+        | 'OK'
+        | 'BLOCKED'
+        | 'RATE_LIMITED'
+        | 'DUPLICATE_BLOCKED'
+        | 'ABUSE_FLAGGED';
     userMessage: string;
     matchedKeywords: string[];
+}
+
+export interface ApiChatSafetyMetricsResponse {
+    metrics: {
+        evaluated: number;
+        blockedByRelationship: number;
+        rateLimited: number;
+        duplicateBlocked: number;
+        abuseKeywordFlags: number;
+        suspiciousSignals: number;
+    };
+}
+
+export interface ModerationQueueSummary {
+    queueId: string;
+    subjectUri: string;
+    subjectType: 'aid-post' | 'conversation' | 'directory-resource' | 'other';
+    queueStatus: 'queued' | 'resolved';
+    visibility: 'visible' | 'delisted' | 'suspended';
+    appealState: 'none' | 'pending' | 'under-review' | 'upheld' | 'rejected';
+    latestReason: string;
+    reportCount: number;
+    updatedAt: string;
 }
 
 export interface IndexerNormalizedAidEvent {

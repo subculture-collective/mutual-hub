@@ -5,8 +5,10 @@ import {
     type ModerationDecisionEvent,
     type ServiceHealth,
 } from '@mutual-hub/shared';
+import { createFixtureModerationWorkerService } from './moderation-service.js';
 
 const config = loadModerationWorkerConfig();
+const moderationService = createFixtureModerationWorkerService();
 
 const healthPayload: ServiceHealth = {
     service: 'moderation-worker',
@@ -24,6 +26,8 @@ const sampleDecision: ModerationDecisionEvent = {
 };
 
 const server = createServer((request, response) => {
+    const requestUrl = new URL(request.url ?? '/', 'http://localhost');
+
     if (request.url === '/health') {
         response.writeHead(200, { 'content-type': 'application/json' });
         response.end(JSON.stringify(healthPayload));
@@ -33,6 +37,61 @@ const server = createServer((request, response) => {
     if (request.url === '/decisions/sample') {
         response.writeHead(200, { 'content-type': 'application/json' });
         response.end(JSON.stringify(sampleDecision));
+        return;
+    }
+
+    if (requestUrl.pathname === '/moderation/queue/enqueue') {
+        const result = moderationService.enqueueFromParams(
+            requestUrl.searchParams,
+        );
+        response.writeHead(result.statusCode, {
+            'content-type': 'application/json',
+        });
+        response.end(JSON.stringify(result.body));
+        return;
+    }
+
+    if (requestUrl.pathname === '/moderation/queue') {
+        const result = moderationService.listQueueFromParams(
+            requestUrl.searchParams,
+        );
+        response.writeHead(result.statusCode, {
+            'content-type': 'application/json',
+        });
+        response.end(JSON.stringify(result.body));
+        return;
+    }
+
+    if (requestUrl.pathname === '/moderation/policy/apply') {
+        const result = moderationService.applyPolicyFromParams(
+            requestUrl.searchParams,
+        );
+        response.writeHead(result.statusCode, {
+            'content-type': 'application/json',
+        });
+        response.end(JSON.stringify(result.body));
+        return;
+    }
+
+    if (requestUrl.pathname === '/moderation/state') {
+        const result = moderationService.getStateFromParams(
+            requestUrl.searchParams,
+        );
+        response.writeHead(result.statusCode, {
+            'content-type': 'application/json',
+        });
+        response.end(JSON.stringify(result.body));
+        return;
+    }
+
+    if (requestUrl.pathname === '/moderation/audit') {
+        const result = moderationService.listAuditFromParams(
+            requestUrl.searchParams,
+        );
+        response.writeHead(result.statusCode, {
+            'content-type': 'application/json',
+        });
+        response.end(JSON.stringify(result.body));
         return;
     }
 

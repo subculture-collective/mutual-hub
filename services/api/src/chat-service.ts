@@ -368,6 +368,15 @@ export class ApiChatService {
         };
     }
 
+    safetyMetrics(): ApiChatRouteResult {
+        return {
+            statusCode: 200,
+            body: {
+                metrics: this.safetyControls.getMetrics(),
+            },
+        };
+    }
+
     private resolveCapability(
         recipientDid: string,
         explicitFlag: string | undefined,

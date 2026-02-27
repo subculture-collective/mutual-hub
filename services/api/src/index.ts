@@ -55,6 +55,7 @@ export const createApiServer = () => {
                     '/chat/safety/mute',
                     '/chat/safety/report',
                     '/chat/safety/signals/drain',
+                    '/chat/safety/metrics',
                     '/chat/route/preference-aware',
                     '/volunteer/profile/upsert',
                     '/volunteer/profiles',
@@ -136,6 +137,12 @@ export const createApiServer = () => {
 
         if (requestUrl.pathname === '/chat/safety/signals/drain') {
             const result = chatService.drainModerationSignals();
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/safety/metrics') {
+            const result = chatService.safetyMetrics();
             writeJson(response, result.statusCode, result.body);
             return;
         }
