@@ -10,7 +10,7 @@ export const Panel = ({ title, children }: PropsWithChildren<PanelProps>) => {
             <header className='mh-panel-titlebar mb-3 px-2 py-1 text-sm font-bold text-white'>
                 {title}
             </header>
-            <div className='mh-texture-dots rounded-none border-2 border-(--mh-border) bg-(--mh-surface) p-3'>
+            <div className='mh-texture-dots rounded-none border-2 border-[var(--mh-border)] bg-[var(--mh-surface)] p-3'>
                 {children}
             </div>
         </section>

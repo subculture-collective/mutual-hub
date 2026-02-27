@@ -19,7 +19,7 @@ export const App = () => {
 
             <div className='grid gap-6 md:grid-cols-2'>
                 <Panel title='Discovery shell'>
-                    <p className='mb-3 text-sm text-(--mh-text-muted)'>
+                    <p className='mb-3 text-sm text-[var(--mh-text-muted)]'>
                         Vite + React + TypeScript + Tailwind are wired and ready
                         for Phase 7 moderation, anti-spam, and privacy
                         hardening.
