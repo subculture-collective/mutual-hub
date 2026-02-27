@@ -16,10 +16,12 @@ export const Button = ({
     children,
     className = '',
     variant = 'primary',
+    type = 'button',
     ...props
 }: PropsWithChildren<ButtonProps>) => {
     return (
         <button
+            type={type}
             className={[
                 'mh-button border-2 border-[var(--mh-border)] px-4 py-2 text-sm font-bold uppercase tracking-wide',
                 variantClassMap[variant],
