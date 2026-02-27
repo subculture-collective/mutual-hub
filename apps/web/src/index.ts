@@ -5,3 +5,5 @@ export * from './discovery-primitives.js';
 export * from './feed-ux.js';
 export * from './map-ux.js';
 export * from './posting-form.js';
+export * from './resource-directory-ux.js';
+export * from './volunteer-onboarding.js';

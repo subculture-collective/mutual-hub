@@ -112,6 +112,110 @@ describe('P3.2/P3.3 discovery indexing + query APIs', () => {
 
         expect(filtered.total).toBe(1);
         expect(filtered.items[0]?.name).toContain('Pantry');
+        expect(filtered.items[0]?.openHours).toContain('Mon-Fri');
+        expect(filtered.items[0]?.eligibilityNotes).toContain('residents');
+    });
+
+    it('applies directory create/update/delete lifecycle events deterministically', () => {
+        const store = buildStore();
+
+        store.applyEvent({
+            eventId: '6:create:directory-c',
+            seq: 6,
+            action: 'create',
+            uri: 'at://did:example:ella/app.mutualhub.directory.resource/resource-c',
+            collection: recordNsid.directoryResource,
+            authorDid: 'did:example:ella',
+            receivedAt: '2026-02-26T12:06:00.000Z',
+            payload: {
+                kind: 'directory-resource',
+                name: 'Late Night Food Hub',
+                serviceArea: 'West district',
+                category: 'food-bank',
+                verificationStatus: 'partner-verified',
+                contact: {
+                    phone: '+1-555-0900',
+                },
+                approximateGeo: {
+                    latitude: 40.715,
+                    longitude: -74.001,
+                    precisionKm: 1.8,
+                },
+                openHours: 'Daily 20:00-02:00',
+                eligibilityNotes: 'Walk-ins welcome for emergency meals',
+                operationalStatus: 'open',
+                createdAt: '2026-02-26T12:06:00.000Z',
+                updatedAt: '2026-02-26T12:06:00.000Z',
+                searchableText:
+                    'late night food hub west district food-bank partner-verified daily 20:00-02:00 walk-ins welcome emergency meals',
+                trustScore: 0.88,
+            },
+        });
+
+        const created = store.queryDirectory({
+            searchText: 'emergency meals',
+            nowIso: '2026-02-26T13:00:00.000Z',
+        });
+        expect(created.total).toBe(1);
+        expect(created.items[0]?.name).toBe('Late Night Food Hub');
+
+        store.applyEvent({
+            eventId: '7:update:directory-c',
+            seq: 7,
+            action: 'update',
+            uri: 'at://did:example:ella/app.mutualhub.directory.resource/resource-c',
+            collection: recordNsid.directoryResource,
+            authorDid: 'did:example:ella',
+            receivedAt: '2026-02-26T12:07:00.000Z',
+            payload: {
+                kind: 'directory-resource',
+                name: 'Late Night Food Hub',
+                serviceArea: 'West district',
+                category: 'food-bank',
+                verificationStatus: 'partner-verified',
+                contact: {
+                    phone: '+1-555-0900',
+                },
+                approximateGeo: {
+                    latitude: 40.715,
+                    longitude: -74.001,
+                    precisionKm: 1.8,
+                },
+                openHours: 'Daily 18:00-03:00',
+                eligibilityNotes: 'Emergency meals and grocery packs',
+                operationalStatus: 'limited',
+                createdAt: '2026-02-26T12:06:00.000Z',
+                updatedAt: '2026-02-26T12:07:00.000Z',
+                searchableText:
+                    'late night food hub west district food-bank partner-verified daily 18:00-03:00 emergency meals grocery packs',
+                trustScore: 0.88,
+            },
+        });
+
+        const updated = store.queryDirectory({
+            operationalStatus: 'limited',
+            searchText: 'grocery packs',
+            nowIso: '2026-02-26T13:00:00.000Z',
+        });
+        expect(updated.total).toBe(1);
+        expect(updated.items[0]?.openHours).toContain('18:00-03:00');
+
+        store.applyEvent({
+            eventId: '8:delete:directory-c',
+            seq: 8,
+            action: 'delete',
+            uri: 'at://did:example:ella/app.mutualhub.directory.resource/resource-c',
+            collection: recordNsid.directoryResource,
+            authorDid: 'did:example:ella',
+            receivedAt: '2026-02-26T12:08:00.000Z',
+            deleteReason: 'closed-offline',
+        });
+
+        const deleted = store.queryDirectory({
+            searchText: 'late night food hub',
+            nowIso: '2026-02-26T13:00:00.000Z',
+        });
+        expect(deleted.total).toBe(0);
     });
 
     it('validates aid and directory query payloads', () => {
@@ -126,6 +230,13 @@ describe('P3.2/P3.3 discovery indexing + query APIs', () => {
         expect(() =>
             validateDirectoryQueryInput({
                 page: 0,
+            }),
+        ).toThrow();
+
+        expect(() =>
+            validateDirectoryQueryInput({
+                latitude: 1.3,
+                radiusKm: 5,
             }),
         ).toThrow();
 

@@ -117,8 +117,8 @@ export const createPostLinkedChatContext = (
 
     validateInitiationPermission(input);
 
-    const participantDids = [initiatedByDid, recipientDid].sort(
-        (left, right) => left.localeCompare(right),
+    const participantDids = [initiatedByDid, recipientDid].sort((left, right) =>
+        left.localeCompare(right),
     );
     const conversationKey = buildConversationKey(aidPostUri, participantDids);
     const conversationUri = `at://${participantDids[0]}/${recordNsid.conversationMeta}/conv-${conversationKey}`;
@@ -156,11 +156,19 @@ export interface VolunteerRoutingCandidate {
     availability: 'immediate' | 'within-24h' | 'scheduled' | 'unavailable';
     trustScore: number;
     matchesCategory: boolean;
+    preferredCategories?: readonly AidPostRecord['category'][];
+    preferredUrgencyLevels?: readonly AidPostRecord['urgency'][];
+    maxDistanceKm?: number;
+    distanceKm?: number;
+    verificationCheckpointScore?: number;
 }
 
 export interface ResourceRoutingCandidate {
     id: string;
-    verificationStatus: 'unverified' | 'community-verified' | 'partner-verified';
+    verificationStatus:
+        | 'unverified'
+        | 'community-verified'
+        | 'partner-verified';
     supportsCategory: boolean;
     currentlyOpen: boolean;
 }
@@ -302,9 +310,31 @@ export class DeterministicRoutingAssistant {
                 continue;
             }
 
+            if (
+                volunteer.maxDistanceKm !== undefined &&
+                volunteer.distanceKm !== undefined &&
+                volunteer.distanceKm > volunteer.maxDistanceKm
+            ) {
+                continue;
+            }
+
             const trustScore = Math.max(0, Math.min(1, volunteer.trustScore));
             const trustBonus = Math.round(trustScore * 20);
             const categoryBonus = volunteer.matchesCategory ? 12 : 0;
+            const preferredCategoryBonus =
+                volunteer.preferredCategories?.includes(input.aidCategory) ?
+                    10
+                :   0;
+            const preferredUrgencyBonus =
+                volunteer.preferredUrgencyLevels?.includes(input.urgency) ?
+                    8
+                :   0;
+            const verificationBonus = Math.round(
+                Math.max(
+                    0,
+                    Math.min(1, volunteer.verificationCheckpointScore ?? 0),
+                ) * 10,
+            );
             const urgencyBonus =
                 input.urgency === 'critical' || input.urgency === 'high' ?
                     8
@@ -318,11 +348,17 @@ export class DeterministicRoutingAssistant {
                     availabilityBonus +
                     trustBonus +
                     categoryBonus +
+                    preferredCategoryBonus +
+                    preferredUrgencyBonus +
+                    verificationBonus +
                     urgencyBonus,
                 reasons: [
                     `availability=${volunteer.availability}`,
                     `trust=${trustScore.toFixed(2)}`,
                     `category-match=${volunteer.matchesCategory}`,
+                    `preferred-category=${volunteer.preferredCategories?.includes(input.aidCategory) ?? false}`,
+                    `preferred-urgency=${volunteer.preferredUrgencyLevels?.includes(input.urgency) ?? false}`,
+                    `distanceKm=${volunteer.distanceKm ?? 'n/a'}`,
                     `did=${volunteerDid}`,
                 ],
             });
@@ -337,8 +373,10 @@ export class DeterministicRoutingAssistant {
                 resource.verificationStatus,
             );
             const urgencyBonus =
-                input.urgency === 'critical' &&
-                resource.verificationStatus !== 'unverified' ?
+                (
+                    input.urgency === 'critical' &&
+                    resource.verificationStatus !== 'unverified'
+                ) ?
                     8
                 :   0;
 
@@ -371,11 +409,11 @@ export class DeterministicRoutingAssistant {
             destinationKind: top.destinationKind,
             destinationId: top.destinationId,
             destinationDid:
-                top.destinationKind === 'post-author' ? top.destinationId
-                : undefined,
-            matchedRule:
                 top.destinationKind === 'post-author' ?
-                    'RULE_POST_AUTHOR'
+                    top.destinationId
+                :   undefined,
+            matchedRule:
+                top.destinationKind === 'post-author' ? 'RULE_POST_AUTHOR'
                 : top.destinationKind === 'volunteer-pool' ?
                     'RULE_VOLUNTEER_POOL'
                 : top.destinationKind === 'verified-resource' ?
@@ -464,7 +502,10 @@ export interface PersistedConversationMetadata {
 }
 
 export class ConversationMetadataStore {
-    private readonly conversations = new Map<string, PersistedConversationMetadata>();
+    private readonly conversations = new Map<
+        string,
+        PersistedConversationMetadata
+    >();
 
     upsertConversation(
         input: PersistConversationMetadataInput,
@@ -480,7 +521,8 @@ export class ConversationMetadataStore {
         const recordCandidate = {
             ...input.chat.record,
             status,
-            createdAt: existing?.record.createdAt ?? input.chat.record.createdAt,
+            createdAt:
+                existing?.record.createdAt ?? input.chat.record.createdAt,
             updatedAt: now,
         } satisfies ConversationMetaRecord;
 
@@ -489,14 +531,21 @@ export class ConversationMetadataStore {
             recordCandidate,
         );
 
-        const recipientDid = didSchema.parse(input.recipientCapability.recipientDid);
+        const recipientDid = didSchema.parse(
+            input.recipientCapability.recipientDid,
+        );
         const capability: RecipientTransportCapability = {
             ...input.recipientCapability,
             recipientDid,
-            detectedAt: isoDateTimeSchema.parse(input.recipientCapability.detectedAt),
+            detectedAt: isoDateTimeSchema.parse(
+                input.recipientCapability.detectedAt,
+            ),
         };
 
-        const transportPath = resolveTransportPath(input.routingDecision, capability);
+        const transportPath = resolveTransportPath(
+            input.routingDecision,
+            capability,
+        );
         const fallbackNotice = buildFallbackNotice(transportPath);
 
         const persisted: PersistedConversationMetadata = {
@@ -530,7 +579,10 @@ export class ConversationMetadataStore {
         const normalizedAidPostUri = atUriSchema.parse(aidPostUri);
 
         return [...this.conversations.values()]
-            .filter(conversation => conversation.aidPostUri === normalizedAidPostUri)
+            .filter(
+                conversation =>
+                    conversation.aidPostUri === normalizedAidPostUri,
+            )
             .sort((left, right) =>
                 left.conversationUri.localeCompare(right.conversationUri),
             )
@@ -602,7 +654,9 @@ export class ChatSafetyControls {
     private readonly sendWindows = new Map<string, number[]>();
     private readonly moderationSignals: ModerationReviewRequestedEvent[] = [];
 
-    constructor(private readonly config: ChatSafetyConfig = defaultSafetyConfig) {}
+    constructor(
+        private readonly config: ChatSafetyConfig = defaultSafetyConfig,
+    ) {}
 
     blockParticipant(actorDid: string, targetDid: string): void {
         const actor = didSchema.parse(actorDid);
@@ -735,7 +789,9 @@ export class ChatSafetyControls {
     }
 
     drainModerationSignals(): ModerationReviewRequestedEvent[] {
-        const signals = [...this.moderationSignals].map(signal => clone(signal));
+        const signals = [...this.moderationSignals].map(signal =>
+            clone(signal),
+        );
         this.moderationSignals.length = 0;
         return signals;
     }
@@ -831,6 +887,46 @@ export const buildPhase5RoutingFixtures = (): readonly RoutingFixture[] => {
             },
             expectedRule: 'RULE_VERIFIED_RESOURCE',
             expectedDestinationKind: 'verified-resource',
+        },
+        {
+            id: 'volunteer-preference-aware',
+            input: {
+                aidPostUri:
+                    'at://did:example:requester/app.mutualhub.aid.post/volunteer-2',
+                requesterDid: 'did:example:requester',
+                aidCategory: 'medical',
+                urgency: 'critical',
+                volunteerCandidates: [
+                    {
+                        id: 'v4',
+                        did: 'did:example:volunteer-d',
+                        availability: 'immediate',
+                        trustScore: 0.8,
+                        matchesCategory: true,
+                        preferredCategories: ['medical'],
+                        preferredUrgencyLevels: ['critical', 'high'],
+                        maxDistanceKm: 10,
+                        distanceKm: 4,
+                        verificationCheckpointScore: 1,
+                    },
+                    {
+                        id: 'v5',
+                        did: 'did:example:volunteer-e',
+                        availability: 'immediate',
+                        trustScore: 0.8,
+                        matchesCategory: true,
+                        preferredCategories: ['food'],
+                        preferredUrgencyLevels: ['low'],
+                        maxDistanceKm: 20,
+                        distanceKm: 5,
+                        verificationCheckpointScore: 0.33,
+                    },
+                ],
+                resourceCandidates: [],
+                now: '2026-02-26T14:12:00.000Z',
+            },
+            expectedRule: 'RULE_VOLUNTEER_POOL',
+            expectedDestinationKind: 'volunteer-pool',
         },
     ] as const;
 };

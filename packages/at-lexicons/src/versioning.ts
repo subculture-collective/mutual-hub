@@ -1,4 +1,4 @@
-export const LEXICON_SET_VERSION = '1.0.0';
+export const LEXICON_SET_VERSION = '1.1.0';
 
 export const LEXICON_VERSION_POLICY = {
     baseline: 'All v1 record schemas are published as 1.0.0 lexicon revisions.',
@@ -11,10 +11,10 @@ export const LEXICON_VERSION_POLICY = {
 
 export const LEXICON_SCHEMA_REVISIONS = {
     'app.mutualhub.aid.post': '1.0.0',
-    'app.mutualhub.volunteer.profile': '1.0.0',
+    'app.mutualhub.volunteer.profile': '1.1.0',
     'app.mutualhub.conversation.meta': '1.0.0',
     'app.mutualhub.moderation.report': '1.0.0',
-    'app.mutualhub.directory.resource': '1.0.0',
+    'app.mutualhub.directory.resource': '1.1.0',
 } as const;
 
 export const isSemver = (value: string): boolean =>

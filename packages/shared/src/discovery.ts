@@ -41,6 +41,10 @@ export interface AidQueryInput extends PaginationInput {
 export interface DirectoryQueryInput extends PaginationInput {
     category?: string;
     status?: 'unverified' | 'community-verified' | 'partner-verified';
+    operationalStatus?: 'open' | 'limited' | 'closed';
+    latitude?: number;
+    longitude?: number;
+    radiusKm?: number;
     freshnessHours?: number;
     searchText?: string;
     nowIso?: string;
@@ -76,6 +80,14 @@ export interface DirectoryCard {
     category: string;
     serviceArea: string;
     status: 'unverified' | 'community-verified' | 'partner-verified';
+    contact: {
+        url?: string;
+        phone?: string;
+    };
+    approximateGeo?: ApproximateGeoPoint;
+    openHours?: string;
+    eligibilityNotes?: string;
+    operationalStatus: 'open' | 'limited' | 'closed';
     createdAt: string;
     updatedAt: string;
 }
@@ -186,6 +198,11 @@ export class DiscoveryIndexStore {
 
     private readonly directoryCategoryIndex = new Map<string, Set<string>>();
     private readonly directoryStatusIndex = new Map<string, Set<string>>();
+    private readonly directoryOperationalStatusIndex = new Map<
+        string,
+        Set<string>
+    >();
+    private readonly directoryGeoIndex = new Map<string, Set<string>>();
     private readonly directoryTextIndex = new Map<string, Set<string>>();
 
     applyEvent(event: NormalizedFirehoseEvent): void {
@@ -232,6 +249,27 @@ export class DiscoveryIndexStore {
         const candidates = this.collectDirectoryCandidates(input);
 
         const filtered = candidates.filter(record => {
+            if (
+                input.latitude !== undefined &&
+                input.longitude !== undefined &&
+                input.radiusKm !== undefined
+            ) {
+                if (!record.approximateGeo) {
+                    return false;
+                }
+
+                const distanceKm = haversineDistanceKm(
+                    input.latitude,
+                    input.longitude,
+                    record.approximateGeo.latitude,
+                    record.approximateGeo.longitude,
+                );
+
+                if (distanceKm > input.radiusKm) {
+                    return false;
+                }
+            }
+
             if (input.freshnessHours !== undefined) {
                 const recordMs = new Date(record.updatedAt).getTime();
                 if (!Number.isFinite(recordMs)) {
@@ -262,6 +300,11 @@ export class DiscoveryIndexStore {
                 category: record.category,
                 serviceArea: record.serviceArea,
                 status: record.verificationStatus,
+                contact: record.contact,
+                approximateGeo: record.approximateGeo,
+                openHours: record.openHours,
+                eligibilityNotes: record.eligibilityNotes,
+                operationalStatus: record.operationalStatus,
                 createdAt: record.createdAt,
                 updatedAt: record.updatedAt,
             }))
@@ -284,6 +327,7 @@ export class DiscoveryIndexStore {
         geoBuckets: number;
         aidTextTerms: number;
         directoryTextTerms: number;
+        directoryGeoBuckets: number;
     } {
         return {
             aidRecords: this.aidRecords.size,
@@ -291,6 +335,7 @@ export class DiscoveryIndexStore {
             geoBuckets: this.aidGeoIndex.size,
             aidTextTerms: this.aidTextIndex.size,
             directoryTextTerms: this.directoryTextIndex.size,
+            directoryGeoBuckets: this.directoryGeoIndex.size,
         };
     }
 
@@ -422,6 +467,16 @@ export class DiscoveryIndexStore {
             );
         }
 
+        if (input.operationalStatus) {
+            sets.push(
+                new Set(
+                    this.directoryOperationalStatusIndex.get(
+                        input.operationalStatus,
+                    ) ?? [],
+                ),
+            );
+        }
+
         const uriSet =
             sets.length === 0 ?
                 new Set(this.directoryRecords.keys())
@@ -509,6 +564,19 @@ export class DiscoveryIndexStore {
 
         addToIndex(this.directoryCategoryIndex, indexed.category, uri);
         addToIndex(this.directoryStatusIndex, indexed.verificationStatus, uri);
+        addToIndex(
+            this.directoryOperationalStatusIndex,
+            indexed.operationalStatus,
+            uri,
+        );
+
+        if (indexed.approximateGeo) {
+            addToIndex(
+                this.directoryGeoIndex,
+                geoBucket(indexed.approximateGeo),
+                uri,
+            );
+        }
 
         for (const token of toTokenSet(indexed.searchableText)) {
             addToIndex(this.directoryTextIndex, token, uri);
@@ -528,6 +596,19 @@ export class DiscoveryIndexStore {
             existing.verificationStatus,
             uri,
         );
+        removeFromIndex(
+            this.directoryOperationalStatusIndex,
+            existing.operationalStatus,
+            uri,
+        );
+
+        if (existing.approximateGeo) {
+            removeFromIndex(
+                this.directoryGeoIndex,
+                geoBucket(existing.approximateGeo),
+                uri,
+            );
+        }
 
         for (const token of toTokenSet(existing.searchableText)) {
             removeFromIndex(this.directoryTextIndex, token, uri);
@@ -556,22 +637,47 @@ const aidQuerySchema = z.object({
     nowIso: z.string().datetime({ offset: true }).optional(),
 });
 
-const directoryQuerySchema = z.object({
-    category: z.string().min(1).max(64).optional(),
-    status: z
-        .enum(['unverified', 'community-verified', 'partner-verified'])
-        .optional(),
-    freshnessHours: z
-        .number()
-        .int()
-        .positive()
-        .max(24 * 365)
-        .optional(),
-    searchText: z.string().min(1).max(120).optional(),
-    page: z.number().int().positive().optional(),
-    pageSize: z.number().int().positive().max(MAX_PAGE_SIZE).optional(),
-    nowIso: z.string().datetime({ offset: true }).optional(),
-});
+const directoryQuerySchema = z
+    .object({
+        category: z.string().min(1).max(64).optional(),
+        status: z
+            .enum(['unverified', 'community-verified', 'partner-verified'])
+            .optional(),
+        operationalStatus: z.enum(['open', 'limited', 'closed']).optional(),
+        latitude: z.number().min(-90).max(90).optional(),
+        longitude: z.number().min(-180).max(180).optional(),
+        radiusKm: z.number().positive().max(250).optional(),
+        freshnessHours: z
+            .number()
+            .int()
+            .positive()
+            .max(24 * 365)
+            .optional(),
+        searchText: z.string().min(1).max(120).optional(),
+        page: z.number().int().positive().optional(),
+        pageSize: z.number().int().positive().max(MAX_PAGE_SIZE).optional(),
+        nowIso: z.string().datetime({ offset: true }).optional(),
+    })
+    .superRefine((value, ctx) => {
+        const geoProvided =
+            value.latitude !== undefined ||
+            value.longitude !== undefined ||
+            value.radiusKm !== undefined;
+
+        if (
+            geoProvided &&
+            (value.latitude === undefined ||
+                value.longitude === undefined ||
+                value.radiusKm === undefined)
+        ) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message:
+                    'latitude, longitude, and radiusKm must be supplied together.',
+                path: ['latitude'],
+            });
+        }
+    });
 
 export const validateAidQueryInput = (input: unknown): AidQueryInput =>
     aidQuerySchema.parse(input);

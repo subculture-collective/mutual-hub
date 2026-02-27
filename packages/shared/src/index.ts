@@ -7,3 +7,4 @@ export * from './messaging.js';
 export * from './ranking.js';
 export * from '@mutual-hub/at-lexicons';
 export * from './records.js';
+export * from './volunteer-onboarding.js';

@@ -67,6 +67,11 @@ export interface NormalizedDirectoryResource {
     serviceArea: string;
     category: DirectoryResourceRecord['category'];
     verificationStatus: DirectoryResourceRecord['verificationStatus'];
+    contact: DirectoryResourceRecord['contact'];
+    approximateGeo?: ApproximateGeoPoint;
+    openHours?: string;
+    eligibilityNotes?: string;
+    operationalStatus: 'open' | 'limited' | 'closed';
     createdAt: string;
     updatedAt: string;
     searchableText: string;
@@ -258,6 +263,18 @@ const normalizeRecordPayload = (
             serviceArea: directoryRecord.serviceArea,
             category: directoryRecord.category,
             verificationStatus: directoryRecord.verificationStatus,
+            contact: directoryRecord.contact,
+            approximateGeo:
+                directoryRecord.location ?
+                    quantizeCoordinate(
+                        directoryRecord.location.latitude,
+                        directoryRecord.location.longitude,
+                        directoryRecord.location.precisionKm,
+                    )
+                :   undefined,
+            openHours: directoryRecord.openHours,
+            eligibilityNotes: directoryRecord.eligibilityNotes,
+            operationalStatus: directoryRecord.operationalStatus ?? 'open',
             createdAt: directoryRecord.createdAt,
             updatedAt: directoryRecord.updatedAt ?? directoryRecord.createdAt,
             searchableText: normalizeSearchableText(
@@ -265,6 +282,10 @@ const normalizeRecordPayload = (
                 directoryRecord.serviceArea,
                 directoryRecord.category,
                 directoryRecord.verificationStatus,
+                directoryRecord.openHours ?? '',
+                directoryRecord.eligibilityNotes ?? '',
+                directoryRecord.location?.areaLabel ?? '',
+                directoryRecord.operationalStatus ?? 'open',
             ),
             trustScore,
         };
@@ -517,7 +538,7 @@ export const buildPhase3FixtureFirehoseEvents = (): unknown[] => {
             trustScore: 0.95,
             record: {
                 $type: recordNsid.directoryResource,
-                version: '1.0.0',
+                version: '1.1.0',
                 name: 'Downtown Community Pantry',
                 category: 'food-bank',
                 serviceArea: 'Downtown and east side',
@@ -525,6 +546,15 @@ export const buildPhase3FixtureFirehoseEvents = (): unknown[] => {
                     url: 'https://example.org/pantry',
                 },
                 verificationStatus: 'community-verified',
+                location: {
+                    latitude: 40.712,
+                    longitude: -74.003,
+                    precisionKm: 1.5,
+                    areaLabel: 'Downtown',
+                },
+                openHours: 'Mon-Fri 09:00-18:00',
+                eligibilityNotes: 'Open to all residents',
+                operationalStatus: 'open',
                 createdAt: '2026-02-26T09:00:00.000Z',
             },
         },
@@ -563,7 +593,7 @@ export const buildPhase3FixtureFirehoseEvents = (): unknown[] => {
             trustScore: 0.75,
             record: {
                 $type: recordNsid.directoryResource,
-                version: '1.0.0',
+                version: '1.1.0',
                 name: 'Night Shelter East',
                 category: 'shelter',
                 serviceArea: 'East district',
@@ -571,6 +601,15 @@ export const buildPhase3FixtureFirehoseEvents = (): unknown[] => {
                     phone: '+1-555-0200',
                 },
                 verificationStatus: 'partner-verified',
+                location: {
+                    latitude: 40.728,
+                    longitude: -73.998,
+                    precisionKm: 2,
+                    areaLabel: 'East District',
+                },
+                openHours: 'Daily 18:00-08:00',
+                eligibilityNotes: 'Adults 18+ with same-day intake',
+                operationalStatus: 'open',
                 createdAt: '2026-02-25T23:00:00.000Z',
             },
         },

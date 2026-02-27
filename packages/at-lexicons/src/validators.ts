@@ -18,20 +18,24 @@ const atUriSchema = z
     .regex(/^at:\/\/[^\s]+$/i, 'Expected a valid at:// URI');
 const isoDateTimeSchema = z.string().datetime({ offset: true });
 
+const aidCategoryValues = [
+    'food',
+    'shelter',
+    'medical',
+    'transport',
+    'childcare',
+    'other',
+] as const;
+
+const aidUrgencyValues = ['low', 'medium', 'high', 'critical'] as const;
+
 export const aidPostSchema = z.object({
     $type: z.literal(recordNsid.aidPost),
     version: z.literal('1.0.0'),
     title: z.string().min(1).max(140),
     description: z.string().min(1).max(5000),
-    category: z.enum([
-        'food',
-        'shelter',
-        'medical',
-        'transport',
-        'childcare',
-        'other',
-    ]),
-    urgency: z.enum(['low', 'medium', 'high', 'critical']),
+    category: z.enum(aidCategoryValues),
+    urgency: z.enum(aidUrgencyValues),
     status: z.enum(['open', 'in-progress', 'resolved', 'closed']),
     location: z.object({
         latitude: z.number().min(-90).max(90),
@@ -44,7 +48,7 @@ export const aidPostSchema = z.object({
 
 export const volunteerProfileSchema = z.object({
     $type: z.literal(recordNsid.volunteerProfile),
-    version: z.literal('1.0.0'),
+    version: z.enum(['1.0.0', '1.1.0']),
     displayName: z.string().min(1).max(80),
     capabilities: z
         .array(
@@ -65,6 +69,27 @@ export const volunteerProfileSchema = z.object({
         'unavailable',
     ]),
     contactPreference: z.enum(['chat-only', 'chat-or-call']),
+    skills: z.array(z.string().min(1).max(64)).min(1).max(50).optional(),
+    availabilityWindows: z
+        .array(z.string().min(1).max(64))
+        .min(1)
+        .max(50)
+        .optional(),
+    verificationCheckpoints: z
+        .object({
+            identityCheck: z.enum(['pending', 'approved', 'rejected']),
+            safetyTraining: z.enum(['pending', 'approved', 'rejected']),
+            communityReference: z.enum(['pending', 'approved', 'rejected']),
+        })
+        .optional(),
+    matchingPreferences: z
+        .object({
+            preferredCategories: z.array(z.enum(aidCategoryValues)).min(1),
+            preferredUrgencies: z.array(z.enum(aidUrgencyValues)).min(1),
+            maxDistanceKm: z.number().min(1).max(250),
+            acceptsLateNight: z.boolean().optional(),
+        })
+        .optional(),
     notes: z.string().max(500).optional(),
     createdAt: isoDateTimeSchema,
     updatedAt: isoDateTimeSchema.optional(),
@@ -92,7 +117,7 @@ export const moderationReportSchema = z.object({
 
 export const directoryResourceSchema = z.object({
     $type: z.literal(recordNsid.directoryResource),
-    version: z.literal('1.0.0'),
+    version: z.enum(['1.0.0', '1.1.0']),
     name: z.string().min(1).max(120),
     category: z.enum([
         'food-bank',
@@ -116,6 +141,17 @@ export const directoryResourceSchema = z.object({
         'community-verified',
         'partner-verified',
     ]),
+    location: z
+        .object({
+            latitude: z.number().min(-90).max(90),
+            longitude: z.number().min(-180).max(180),
+            precisionKm: z.number().min(0.1).max(50),
+            areaLabel: z.string().min(1).max(120).optional(),
+        })
+        .optional(),
+    openHours: z.string().min(1).max(200).optional(),
+    eligibilityNotes: z.string().min(1).max(500).optional(),
+    operationalStatus: z.enum(['open', 'limited', 'closed']).optional(),
     createdAt: isoDateTimeSchema,
     updatedAt: isoDateTimeSchema.optional(),
 });
