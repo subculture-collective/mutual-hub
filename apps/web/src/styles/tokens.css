@@ -151,7 +151,9 @@
 
 .mh-input:focus-visible {
     border-color: var(--mh-focus);
-    box-shadow: 0 0 0 1px var(--mh-focus);
+    box-shadow:
+        0 0 0 2px var(--mh-focus-offset),
+        0 0 0 4px var(--mh-focus);
 }
 
 .mh-input::placeholder {
