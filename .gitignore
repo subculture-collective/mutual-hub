@@ -26,3 +26,8 @@ apps/web/.vite/
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Playwright E2E artifacts
+playwright-report/
+test-results/
+.playwright/
