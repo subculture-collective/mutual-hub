@@ -80,7 +80,7 @@ Detailed domain and boundary docs:
     - `npm ci`
 2. Copy config:
     - `.env.example` is provided
-    - `.env` is included for local placeholder defaults
+    - copy `.env.example` to `.env` for local placeholder defaults
 
 ## Run services
 

@@ -116,6 +116,35 @@ describe('P3.2/P3.3 discovery indexing + query APIs', () => {
         expect(filtered.items[0]?.eligibilityNotes).toContain('residents');
     });
 
+    it('returns no aid results when any provided filter has zero matches', () => {
+        const store = buildStore();
+
+        const filtered = store.queryFeed({
+            latitude: 40.7128,
+            longitude: -74.006,
+            radiusKm: 50,
+            category: 'transport',
+            status: 'in-progress',
+            nowIso: '2026-02-26T13:00:00.000Z',
+        });
+
+        expect(filtered.total).toBe(0);
+        expect(filtered.items).toEqual([]);
+    });
+
+    it('returns no directory results when any provided filter has zero matches', () => {
+        const store = buildStore();
+
+        const filtered = store.queryDirectory({
+            category: 'nonexistent',
+            status: 'community-verified',
+            nowIso: '2026-02-26T13:00:00.000Z',
+        });
+
+        expect(filtered.total).toBe(0);
+        expect(filtered.items).toEqual([]);
+    });
+
     it('applies directory create/update/delete lifecycle events deterministically', () => {
         const store = buildStore();
 

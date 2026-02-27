@@ -432,18 +432,11 @@ export class DiscoveryIndexStore {
             sets.push(new Set(this.aidUrgencyIndex.get(input.urgency) ?? []));
         }
 
-        const uriSet =
-            sets.length === 0 ?
-                new Set(this.aidRecords.keys())
-            :   sets.reduce((accumulator, current) => {
-                    if (accumulator.size === 0) {
-                        return current;
-                    }
-
-                    return new Set(
-                        [...accumulator].filter(uri => current.has(uri)),
-                    );
-                });
+        const uriSet = sets.reduce(
+            (accumulator, current) =>
+                new Set([...accumulator].filter(uri => current.has(uri))),
+            new Set(this.aidRecords.keys()),
+        );
 
         return [...uriSet]
             .map(uri => this.aidRecords.get(uri))
@@ -477,18 +470,11 @@ export class DiscoveryIndexStore {
             );
         }
 
-        const uriSet =
-            sets.length === 0 ?
-                new Set(this.directoryRecords.keys())
-            :   sets.reduce((accumulator, current) => {
-                    if (accumulator.size === 0) {
-                        return current;
-                    }
-
-                    return new Set(
-                        [...accumulator].filter(uri => current.has(uri)),
-                    );
-                });
+        const uriSet = sets.reduce(
+            (accumulator, current) =>
+                new Set([...accumulator].filter(uri => current.has(uri))),
+            new Set(this.directoryRecords.keys()),
+        );
 
         return [...uriSet]
             .map(uri => this.directoryRecords.get(uri))
