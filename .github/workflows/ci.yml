@@ -36,5 +36,15 @@ jobs:
             - name: Unit tests
               run: npm run test
 
+            - name: E2E request-to-handoff flow (Phase 8.2)
+              run: npm run test:phase8-e2e
+
+            - name: Install Playwright browsers
+              run: npx playwright install --with-deps chromium
+              working-directory: apps/web
+
+            - name: Browser E2E tests (Phase 8.2)
+              run: npm run test:e2e -w @mutual-hub/web
+
             - name: Build
               run: npm run build
