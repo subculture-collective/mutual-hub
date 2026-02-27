@@ -7,11 +7,7 @@ export const TextLink = ({
 }: PropsWithChildren<AnchorHTMLAttributes<HTMLAnchorElement>>) => {
     return (
         <a
-            className={[
-                'underline',
-                'text-[var(--mh-link)] hover:text-[var(--mh-danger)]',
-                className,
-            ].join(' ')}
+            className={['mh-link', className].join(' ')}
             {...props}
         >
             {children}

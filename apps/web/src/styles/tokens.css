@@ -20,25 +20,70 @@
     --mh-font-heading: 'Space Mono', 'Arial Black', Impact, sans-serif;
     --mh-font-body: 'MS Sans Serif', Tahoma, 'Segoe UI', sans-serif;
     --mh-font-mono: 'VT323', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --mh-community-primary: #7c3aed;
+    --mh-community-secondary: #a78bfa;
+    --mh-community-cta: #f97316;
+
+    --mh-space-1: 4px;
+    --mh-space-2: 8px;
+    --mh-space-3: 12px;
+    --mh-space-4: 16px;
+    --mh-space-6: 24px;
+    --mh-space-8: 32px;
+
+    --mh-shadow-hard: 8px 8px 0 0 var(--mh-border);
+    --mh-shadow-hard-hover: 12px 12px 0 0 var(--mh-border);
+    --mh-transition-standard: 180ms ease-out;
 }
 
 .font-heading {
     font-family: var(--mh-font-heading);
 }
 
+.mh-card {
+    border: 2px solid var(--mh-border);
+    background: var(--mh-surface);
+    box-shadow: var(--mh-shadow-hard);
+}
+
+.mh-panel-shell {
+    border: 2px solid var(--mh-border);
+    background: var(--mh-panel);
+}
+
+.mh-panel-titlebar {
+    background: linear-gradient(
+        to right,
+        var(--mh-titlebar-start),
+        var(--mh-titlebar-end)
+    );
+}
+
+.mh-texture-dots {
+    background-image: radial-gradient(
+        circle at 1px 1px,
+        rgb(0 0 0 / 10%) 1px,
+        transparent 0
+    );
+    background-size: 8px 8px;
+}
+
 .mh-button {
     min-height: 44px;
+    cursor: pointer;
     border-color: var(--mh-border-light) var(--mh-border-dark)
         var(--mh-border-dark) var(--mh-border-light);
-    box-shadow: 8px 8px 0 0 var(--mh-border);
+    box-shadow: var(--mh-shadow-hard);
     transition:
-        transform 120ms ease-out,
-        box-shadow 120ms ease-out;
+        transform var(--mh-transition-standard),
+        box-shadow var(--mh-transition-standard),
+        opacity var(--mh-transition-standard);
 }
 
 .mh-button:hover {
     transform: translateY(-2px);
-    box-shadow: 12px 12px 0 0 var(--mh-border);
+    box-shadow: var(--mh-shadow-hard-hover);
 }
 
 .mh-button:active {
@@ -46,6 +91,55 @@
         var(--mh-border-light) var(--mh-border-dark);
     transform: translate(1px, 1px);
     box-shadow: 6px 6px 0 0 var(--mh-border);
+}
+
+.mh-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: var(--mh-shadow-hard);
+}
+
+.mh-button:disabled:hover {
+    transform: none;
+    box-shadow: var(--mh-shadow-hard);
+}
+
+.mh-input {
+    min-height: 44px;
+    border: 2px solid;
+    border-color: var(--mh-border-dark) var(--mh-border-light)
+        var(--mh-border-light) var(--mh-border-dark);
+    background: var(--mh-surface);
+    color: var(--mh-text);
+    transition:
+        border-color var(--mh-transition-standard),
+        box-shadow var(--mh-transition-standard);
+}
+
+.mh-input::placeholder {
+    color: var(--mh-text-muted);
+}
+
+.mh-link {
+    color: var(--mh-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color var(--mh-transition-standard);
+}
+
+.mh-link:visited {
+    color: var(--mh-link-visited);
+}
+
+.mh-link:hover {
+    color: var(--mh-danger);
+}
+
+.mh-alert {
+    border-left: 4px solid var(--mh-danger);
+    color: var(--mh-danger);
+    padding-left: var(--mh-space-2);
 }
 
 :where(a, button, input, textarea, select, [role='button']):focus-visible {

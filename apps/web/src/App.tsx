@@ -9,7 +9,7 @@ export const APP_TITLE = 'Mutual Hub';
 
 export const App = () => {
     return (
-        <main className='mx-auto min-h-screen max-w-5xl px-4 py-8'>
+        <main className='mx-auto min-h-screen max-w-5xl px-4 py-8 sm:px-6 lg:px-8'>
             <header className='mb-8 flex flex-wrap items-center gap-3'>
                 <h1 className='font-heading text-4xl font-black uppercase'>
                     {APP_TITLE}
@@ -24,10 +24,16 @@ export const App = () => {
                         for Phase 7 moderation, anti-spam, and privacy
                         hardening.
                     </p>
-                    <label className='mb-2 block text-xs font-bold uppercase tracking-wide'>
+                    <label
+                        htmlFor='search-requests'
+                        className='mb-2 block text-xs font-bold uppercase tracking-wide'
+                    >
                         Search requests
                     </label>
-                    <Input placeholder='e.g. food, shelter, transport' />
+                    <Input
+                        id='search-requests'
+                        placeholder='e.g. food, shelter, transport'
+                    />
                     <div className='mt-3 flex gap-2'>
                         <Button>Find nearby</Button>
                         <Button variant='secondary'>Create post</Button>
