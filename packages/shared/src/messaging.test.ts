@@ -56,7 +56,9 @@ describe('P5.2 deterministic routing assistant', () => {
         for (const fixture of fixtures) {
             const result = assistant.decide(fixture.input);
             expect(result.matchedRule).toBe(fixture.expectedRule);
-            expect(result.destinationKind).toBe(fixture.expectedDestinationKind);
+            expect(result.destinationKind).toBe(
+                fixture.expectedDestinationKind,
+            );
             expect(result.machineRationale.length).toBeGreaterThan(0);
             expect(result.humanRationale.length).toBeGreaterThan(0);
         }
@@ -92,6 +94,53 @@ describe('P5.2 deterministic routing assistant', () => {
 
         expect(result.destinationKind).toBe('volunteer-pool');
         expect(result.destinationId).toBe('volunteer:v-a');
+    });
+
+    it('applies volunteer preference signals and distance caps deterministically', () => {
+        const assistant = new DeterministicRoutingAssistant();
+
+        const result = assistant.decide({
+            aidPostUri: 'at://did:example:alice/app.mutualhub.aid.post/post-3b',
+            requesterDid: 'did:example:requester',
+            aidCategory: 'medical',
+            urgency: 'critical',
+            volunteerCandidates: [
+                {
+                    id: 'v-a',
+                    did: 'did:example:v-a',
+                    availability: 'immediate',
+                    trustScore: 0.8,
+                    matchesCategory: true,
+                    preferredCategories: ['medical'],
+                    preferredUrgencyLevels: ['critical'],
+                    maxDistanceKm: 8,
+                    distanceKm: 7,
+                    verificationCheckpointScore: 1,
+                },
+                {
+                    id: 'v-b',
+                    did: 'did:example:v-b',
+                    availability: 'immediate',
+                    trustScore: 0.9,
+                    matchesCategory: true,
+                    preferredCategories: ['food'],
+                    preferredUrgencyLevels: ['low'],
+                    maxDistanceKm: 5,
+                    distanceKm: 7,
+                    verificationCheckpointScore: 0.33,
+                },
+            ],
+            resourceCandidates: [],
+            now: '2026-02-26T15:12:00.000Z',
+        });
+
+        expect(result.destinationKind).toBe('volunteer-pool');
+        expect(result.destinationId).toBe('volunteer:v-a');
+        expect(
+            result.machineRationale.some(reason =>
+                reason.includes('preferred-category=true'),
+            ),
+        ).toBe(true);
     });
 });
 
@@ -226,7 +275,11 @@ describe('P5.4 safety controls + abuse protections', () => {
         });
 
         expect(report.reportRecord.reason).toBe('abuse');
-        expect(report.moderationSignal.type).toBe('moderation.review.requested');
-        expect(safety.drainModerationSignals().length).toBeGreaterThanOrEqual(2);
+        expect(report.moderationSignal.type).toBe(
+            'moderation.review.requested',
+        );
+        expect(safety.drainModerationSignals().length).toBeGreaterThanOrEqual(
+            2,
+        );
     });
 });

@@ -141,6 +141,10 @@ export class ApiDiscoveryQueryService {
             const input = validateDirectoryQueryInput({
                 category: readString(params, 'category'),
                 status: readString(params, 'status'),
+                operationalStatus: readString(params, 'operationalStatus'),
+                latitude: readNumber(params, 'latitude'),
+                longitude: readNumber(params, 'longitude'),
+                radiusKm: readNumber(params, 'radiusKm'),
                 freshnessHours: readNumber(params, 'freshnessHours'),
                 searchText: readString(params, 'searchText'),
                 page: readNumber(params, 'page'),

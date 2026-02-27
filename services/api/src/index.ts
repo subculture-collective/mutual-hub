@@ -8,10 +8,12 @@ import {
 } from '@mutual-hub/shared';
 import { createFixtureChatService } from './chat-service.js';
 import { createFixtureQueryService } from './query-service.js';
+import { createFixtureVolunteerService } from './volunteer-service.js';
 
 const config = loadApiConfig();
 const queryService = createFixtureQueryService();
 const chatService = createFixtureChatService();
+const volunteerService = createFixtureVolunteerService();
 
 const healthPayload: ServiceHealth = {
     service: 'api',
@@ -53,6 +55,9 @@ export const createApiServer = () => {
                     '/chat/safety/mute',
                     '/chat/safety/report',
                     '/chat/safety/signals/drain',
+                    '/chat/route/preference-aware',
+                    '/volunteer/profile/upsert',
+                    '/volunteer/profiles',
                     '/health',
                 ],
             });
@@ -78,7 +83,9 @@ export const createApiServer = () => {
         }
 
         if (requestUrl.pathname === '/chat/initiate') {
-            const result = chatService.initiateFromParams(requestUrl.searchParams);
+            const result = chatService.initiateFromParams(
+                requestUrl.searchParams,
+            );
             writeJson(response, result.statusCode, result.body);
             return;
         }
@@ -120,13 +127,37 @@ export const createApiServer = () => {
         }
 
         if (requestUrl.pathname === '/chat/safety/report') {
-            const result = chatService.reportFromParams(requestUrl.searchParams);
+            const result = chatService.reportFromParams(
+                requestUrl.searchParams,
+            );
             writeJson(response, result.statusCode, result.body);
             return;
         }
 
         if (requestUrl.pathname === '/chat/safety/signals/drain') {
             const result = chatService.drainModerationSignals();
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/chat/route/preference-aware') {
+            const result = volunteerService.routePreferenceAwareFromParams(
+                requestUrl.searchParams,
+            );
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/volunteer/profile/upsert') {
+            const result = volunteerService.upsertFromParams(
+                requestUrl.searchParams,
+            );
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
+
+        if (requestUrl.pathname === '/volunteer/profiles') {
+            const result = volunteerService.listFromParams();
             writeJson(response, result.statusCode, result.body);
             return;
         }

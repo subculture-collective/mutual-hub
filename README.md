@@ -1,6 +1,6 @@
-# Mutual Hub (Phase 5 Baseline)
+# Mutual Hub (Phase 6 Baseline)
 
-This repository is scaffolded through **Phase 5** of roadmap issue #41.
+This repository is scaffolded through **Phase 6** of roadmap issue #41.
 
 ## Stack
 
@@ -40,6 +40,13 @@ This repository is scaffolded through **Phase 5** of roadmap issue #41.
 - Conversation metadata persistence with recipient-capability fallback notices.
 - Chat safety controls: block/mute/report, abuse keyword flagging, and rate limits.
 
+## Phase 6 additions
+
+- Resource directory operational metadata ingestion/indexing (location overlays, open hours, eligibility notes).
+- Resource directory UX logic for overlays, detail panel actions, and accessible loading/empty/error states.
+- Volunteer onboarding/profile management domain with validation and checkpoint tracking.
+- Preference-aware volunteer routing inputs integrated into deterministic routing decisions.
+
 ## Service boundaries
 
 - **API service**: request/response boundary for web clients and downstream contracts.
@@ -57,6 +64,7 @@ Detailed domain and boundary docs:
 - `docs/at-protocol/tombstone-contract.md`
 - `docs/architecture/phase3-ingestion-query.md`
 - `docs/architecture/phase5-chat-routing.md`
+- `docs/architecture/phase6-directory-onboarding.md`
 
 ## Local setup
 
@@ -79,7 +87,7 @@ Each backend service exposes a health endpoint:
 - Indexer: `GET http://localhost:4100/health`
 - Moderation worker: `GET http://localhost:4200/health`
 
-Phase 5 service endpoints:
+Phase 6 service endpoints:
 
 - API:
     - `GET /query/map`
@@ -93,6 +101,9 @@ Phase 5 service endpoints:
     - `GET /chat/safety/mute`
     - `GET /chat/safety/report`
     - `GET /chat/safety/signals/drain`
+    - `GET /chat/route/preference-aware`
+    - `GET /volunteer/profile/upsert`
+    - `GET /volunteer/profiles`
 - Indexer:
     - `GET /ingestion/metrics`
     - `GET /ingestion/logs`

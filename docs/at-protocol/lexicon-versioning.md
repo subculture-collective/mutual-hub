@@ -4,13 +4,21 @@ This document defines the v1 AT Lexicon schema set, constraints, and evolution p
 
 ## v1 schema set
 
-All records are published with revision `1.0.0`:
+Records are currently published at:
 
 - `app.mutualhub.aid.post`
 - `app.mutualhub.volunteer.profile`
 - `app.mutualhub.conversation.meta`
 - `app.mutualhub.moderation.report`
 - `app.mutualhub.directory.resource`
+
+Revision map:
+
+- `app.mutualhub.aid.post`: `1.0.0`
+- `app.mutualhub.volunteer.profile`: `1.1.0`
+- `app.mutualhub.conversation.meta`: `1.0.0`
+- `app.mutualhub.moderation.report`: `1.0.0`
+- `app.mutualhub.directory.resource`: `1.1.0`
 
 Canonical schema JSON files live in:
 
@@ -47,6 +55,10 @@ Key constraints:
 - `displayName`: 1..80 chars
 - `capabilities`: non-empty array
 - `availability`: `immediate | within-24h | scheduled | unavailable`
+- `skills` (optional): non-empty array, each item 1..64 chars
+- `availabilityWindows` (optional): non-empty array, each item 1..64 chars
+- `verificationCheckpoints` (optional): identity/safety/reference status object
+- `matchingPreferences` (optional): preferred categories + urgencies + max distance
 
 ### `app.mutualhub.conversation.meta`
 
@@ -84,6 +96,10 @@ Key constraints:
 - `serviceArea`: 1..120 chars
 - `contact`: must include at least one of `url` or `phone`
 - `verificationStatus`: `unverified | community-verified | partner-verified`
+- `location` (optional): bounded lat/lng + precisionKm + optional areaLabel
+- `openHours` (optional): 1..200 chars
+- `eligibilityNotes` (optional): 1..500 chars
+- `operationalStatus` (optional): `open | limited | closed`
 
 ## Semantic versioning policy
 

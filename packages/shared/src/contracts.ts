@@ -1,4 +1,4 @@
-export const CONTRACT_VERSION = '0.5.0-phase5';
+export const CONTRACT_VERSION = '0.6.0-phase6';
 
 export type DomainName =
     | 'identity'
@@ -75,6 +75,10 @@ export interface ApiQueryAidResponse {
 export interface ApiQueryDirectoryRequest {
     category?: string;
     status?: 'unverified' | 'community-verified' | 'partner-verified';
+    operationalStatus?: 'open' | 'limited' | 'closed';
+    latitude?: number;
+    longitude?: number;
+    radiusKm?: number;
     freshnessHours?: number;
     searchText?: string;
     page?: number;
@@ -88,6 +92,47 @@ export interface DirectoryRecordSummary {
     category: string;
     serviceArea: string;
     status: 'unverified' | 'community-verified' | 'partner-verified';
+    contact: {
+        url?: string;
+        phone?: string;
+    };
+    approximateGeo?: {
+        latitude: number;
+        longitude: number;
+        precisionKm: number;
+    };
+    openHours?: string;
+    eligibilityNotes?: string;
+    operationalStatus: 'open' | 'limited' | 'closed';
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface VolunteerVerificationCheckpointState {
+    identityCheck: 'pending' | 'approved' | 'rejected';
+    safetyTraining: 'pending' | 'approved' | 'rejected';
+    communityReference: 'pending' | 'approved' | 'rejected';
+}
+
+export interface VolunteerMatchingPreferences {
+    preferredCategories: Array<
+        'food' | 'shelter' | 'medical' | 'transport' | 'childcare' | 'other'
+    >;
+    preferredUrgencies: Array<'low' | 'medium' | 'high' | 'critical'>;
+    maxDistanceKm: number;
+    acceptsLateNight?: boolean;
+}
+
+export interface VolunteerProfileSummary {
+    did: string;
+    displayName: string;
+    capabilities: string[];
+    availability: 'immediate' | 'within-24h' | 'scheduled' | 'unavailable';
+    contactPreference: 'chat-only' | 'chat-or-call';
+    skills: string[];
+    availabilityWindows: string[];
+    verificationCheckpoints: VolunteerVerificationCheckpointState;
+    matchingPreferences: VolunteerMatchingPreferences;
     createdAt: string;
     updatedAt: string;
 }

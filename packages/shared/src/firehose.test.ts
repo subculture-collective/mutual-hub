@@ -114,4 +114,45 @@ describe('P3.1 firehose consumer + normalization', () => {
             expect(normalized.event.authorDid).toBe('did:example:alice');
         }
     });
+
+    it('normalizes directory operational metadata for indexing/search', () => {
+        const normalized = normalizeFirehoseEvent({
+            seq: 51,
+            action: 'create',
+            uri: 'at://did:example:org/app.mutualhub.directory.resource/resource-z',
+            collection: recordNsid.directoryResource,
+            authorDid: 'did:example:org',
+            record: {
+                $type: recordNsid.directoryResource,
+                version: '1.1.0',
+                name: 'Rapid Clinic',
+                category: 'clinic',
+                serviceArea: 'North zone',
+                contact: {
+                    phone: '+1-555-0101',
+                },
+                verificationStatus: 'partner-verified',
+                location: {
+                    latitude: 40.719,
+                    longitude: -74.001,
+                    precisionKm: 1.2,
+                    areaLabel: 'North Zone',
+                },
+                openHours: '24/7',
+                eligibilityNotes: 'Urgent cases prioritized',
+                operationalStatus: 'open',
+                createdAt: '2026-02-26T12:00:00.000Z',
+            },
+        });
+
+        expect(normalized.success).toBe(true);
+        if (normalized.success) {
+            expect(normalized.event.payload).toMatchObject({
+                kind: 'directory-resource',
+                openHours: '24/7',
+                eligibilityNotes: 'Urgent cases prioritized',
+                operationalStatus: 'open',
+            });
+        }
+    });
 });

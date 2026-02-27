@@ -14,14 +14,14 @@ export const App = () => {
                 <h1 className='font-heading text-4xl font-black uppercase'>
                     {APP_TITLE}
                 </h1>
-                <Badge tone='danger'>Phase 5 baseline</Badge>
+                <Badge tone='danger'>Phase 6 baseline</Badge>
             </header>
 
             <div className='grid gap-6 md:grid-cols-2'>
                 <Panel title='Discovery shell'>
                     <p className='mb-3 text-sm text-[var(--mh-text-muted)]'>
                         Vite + React + TypeScript + Tailwind are wired and ready
-                        for Phase 5 chat triage and routing.
+                        for Phase 6 directory overlays and volunteer onboarding.
                     </p>
                     <label className='mb-2 block text-xs font-bold uppercase tracking-wide'>
                         Search requests
