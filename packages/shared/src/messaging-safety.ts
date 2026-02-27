@@ -11,7 +11,7 @@ const didSchema = z
     .regex(/^did:[a-z0-9]+:[a-z0-9._:%-]+$/i, 'Expected a valid DID');
 const atUriSchema = z
     .string()
-    .regex(/^at:\/\/[\w:%.-]+\/[\w.-]+\/[\w.-]+$/i, 'Expected a valid AT URI');
+    .regex(/^at:\/\/\S+$/, 'Expected a valid AT URI');
 const isoDateTimeSchema = z.string().datetime({ offset: true });
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
