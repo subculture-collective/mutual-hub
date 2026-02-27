@@ -10,7 +10,8 @@
         "lint": "npm run typecheck",
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "test": "vitest run",
-        "test:phase7": "vitest run src/moderation.test.ts src/messaging.test.ts src/privacy.test.ts src/firehose.test.ts"
+        "test:phase7": "vitest run src/moderation.test.ts src/messaging.test.ts src/privacy.test.ts src/firehose.test.ts",
+        "test:phase8": "vitest run src/contracts.test.ts src/ranking.test.ts src/firehose.test.ts src/privacy.test.ts src/messaging.test.ts src/moderation.test.ts"
     },
     "dependencies": {
         "@mutual-hub/at-lexicons": "0.1.0",
