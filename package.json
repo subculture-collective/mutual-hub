@@ -13,8 +13,12 @@
     "scripts": {
         "dev:web": "npm run dev -w @mutual-hub/web",
         "dev:api": "npm run dev -w @mutual-hub/api",
+        "dev:api:postgres": "API_DATA_SOURCE=postgres npm run dev -w @mutual-hub/api",
         "dev:indexer": "npm run dev -w @mutual-hub/indexer",
         "dev:moderation": "npm run dev -w @mutual-hub/moderation-worker",
+        "db:up": "docker compose -f docker-compose.postgres.yml up -d postgres",
+        "db:down": "docker compose -f docker-compose.postgres.yml down",
+        "db:seed": "npm run db:seed -w @mutual-hub/api",
         "build": "npm run build --workspaces --if-present",
         "lint": "npm run lint --workspaces --if-present",
         "typecheck": "npm run typecheck --workspaces --if-present",

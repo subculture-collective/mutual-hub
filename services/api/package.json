@@ -7,6 +7,9 @@
         "dev": "tsx watch src/index.ts",
         "build": "npm run typecheck",
         "start": "tsx src/index.ts",
+        "db:seed": "tsx src/db/seed.ts",
+        "db:seed:append": "tsx src/db/seed.ts --append",
+        "db:seed:phase3": "tsx src/db/seed.ts --phase3-only",
         "lint": "npm run typecheck",
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "test": "vitest run",
@@ -15,6 +18,10 @@
         "test:phase8-e2e": "vitest run src/phase8-e2e.test.ts"
     },
     "dependencies": {
-        "@mutual-hub/shared": "0.1.0"
+        "@mutual-hub/shared": "0.1.0",
+        "pg": "^8.19.0"
+    },
+    "devDependencies": {
+        "@types/pg": "^8.16.0"
     }
 }

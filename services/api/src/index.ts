@@ -7,11 +7,31 @@ import {
     type ServiceHealth,
 } from '@mutual-hub/shared';
 import { createFixtureChatService } from './chat-service.js';
-import { createFixtureQueryService } from './query-service.js';
+import {
+    createFixtureQueryService,
+    createPostgresQueryService,
+} from './query-service.js';
 import { createFixtureVolunteerService } from './volunteer-service.js';
 
 const config = loadApiConfig();
-const queryService = createFixtureQueryService();
+
+const resolveQueryService = async () => {
+    if (config.API_DATA_SOURCE !== 'postgres') {
+        return createFixtureQueryService();
+    }
+
+    const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
+    if (!databaseUrl) {
+        throw new Error(
+            'API_DATABASE_URL (or DATABASE_URL) is required when API_DATA_SOURCE=postgres.',
+        );
+    }
+
+    return createPostgresQueryService(databaseUrl);
+};
+
+const queryService = await resolveQueryService();
+
 const chatService = createFixtureChatService();
 const volunteerService = createFixtureVolunteerService();
 
@@ -123,7 +143,7 @@ export const startApiServer = () => {
     const server = createApiServer();
     server.listen(config.API_PORT, config.API_HOST, () => {
         console.log(
-            `[api] listening on http://${config.API_HOST}:${config.API_PORT} (contracts=${CONTRACT_VERSION})`,
+            `[api] listening on http://${config.API_HOST}:${config.API_PORT} (contracts=${CONTRACT_VERSION}, datasource=${config.API_DATA_SOURCE})`,
         );
     });
     return server;

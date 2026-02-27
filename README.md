@@ -89,6 +89,25 @@ Detailed domain and boundary docs:
 - Indexer: `npm run dev:indexer`
 - Moderation worker: `npm run dev:moderation`
 
+### Postgres-backed API mode (testing)
+
+The API can run in `postgres` mode for local integration testing.
+
+1. Start Postgres:
+    - `npm run db:up`
+2. In `.env`, set:
+    - `API_DATA_SOURCE=postgres`
+    - `API_DATABASE_URL=postgresql://mutual_hub:mutual_hub@localhost:5432/mutual_hub`
+3. Seed deterministic fixture data:
+    - `npm run db:seed`
+4. Start API in postgres mode:
+    - `npm run dev:api:postgres`
+
+Additional seed options (API workspace):
+
+- Append without truncating: `npm run db:seed:append -w @mutual-hub/api`
+- Seed Phase 3 fixtures only: `npm run db:seed:phase3 -w @mutual-hub/api`
+
 Each backend service exposes a health endpoint:
 
 - API: `GET http://localhost:4000/health`

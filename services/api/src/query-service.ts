@@ -8,7 +8,12 @@ import {
     type ApiQueryAidResponse,
     type ApiQueryDirectoryResponse,
     type ApiQueryErrorResponse,
+    type NormalizedFirehoseEvent,
 } from '@mutual-hub/shared';
+import {
+    createPostgresPool,
+    loadDiscoveryEvents,
+} from './db/discovery-events.js';
 
 export interface ApiRouteResult {
     statusCode: number;
@@ -175,10 +180,29 @@ export class ApiDiscoveryQueryService {
     }
 }
 
+const createQueryServiceFromNormalizedEvents = (
+    normalizedEvents: readonly NormalizedFirehoseEvent[],
+): ApiDiscoveryQueryService => {
+    const store = new DiscoveryIndexStore();
+    store.applyEvents(normalizedEvents);
+    return new ApiDiscoveryQueryService(store);
+};
+
 export const createFixtureQueryService = (): ApiDiscoveryQueryService => {
     const consumer = new FirehoseConsumer();
     const ingested = consumer.ingest(buildPhase3FixtureFirehoseEvents());
-    const store = new DiscoveryIndexStore();
-    store.applyEvents(ingested.normalizedEvents);
-    return new ApiDiscoveryQueryService(store);
+    return createQueryServiceFromNormalizedEvents(ingested.normalizedEvents);
+};
+
+export const createPostgresQueryService = async (
+    databaseUrl: string,
+): Promise<ApiDiscoveryQueryService> => {
+    const pool = createPostgresPool(databaseUrl);
+
+    try {
+        const normalizedEvents = await loadDiscoveryEvents(pool);
+        return createQueryServiceFromNormalizedEvents(normalizedEvents);
+    } finally {
+        await pool.end();
+    }
 };
