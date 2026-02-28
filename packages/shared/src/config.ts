@@ -26,7 +26,9 @@ const webSchema = baseSchema.extend({
 const optionalUrlField = z
     .preprocess(
         (value: unknown) =>
-            typeof value === 'string' && value.trim() === '' ? undefined : value,
+            typeof value === 'string' && value.trim() === '' ?
+                undefined
+            :   value,
         z.string().url().optional(),
     )
     .optional();
