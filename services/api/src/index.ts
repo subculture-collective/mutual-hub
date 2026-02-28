@@ -1,4 +1,4 @@
-import { createServer, type ServerResponse } from 'node:http';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -8,6 +8,7 @@ import {
 } from '@patchwork/shared';
 import { createAidPostService } from './aid-post-service.js';
 import { createFixtureChatService } from './chat-service.js';
+import { createPostgresPool } from './db/discovery-events.js';
 import {
     createFixtureQueryService,
     createPostgresQueryService,
@@ -31,9 +32,17 @@ const queryService = await resolveQueryService();
 
 const chatService = createFixtureChatService();
 const volunteerService = createFixtureVolunteerService();
+
+const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
+const postgresPool =
+    config.API_DATA_SOURCE === 'postgres' && databaseUrl
+        ? createPostgresPool(databaseUrl)
+        : undefined;
+
 const aidPostService = createAidPostService(queryService, {
     dataSource: config.API_DATA_SOURCE,
-    databaseUrl: config.API_DATABASE_URL ?? config.DATABASE_URL,
+    databaseUrl,
+    pool: postgresPool,
 });
 
 const healthPayload: ServiceHealth = {
@@ -63,6 +72,21 @@ const writeJson = (
 ): void => {
     response.writeHead(statusCode, { 'content-type': 'application/json' });
     response.end(JSON.stringify(body));
+};
+
+const readJsonBody = (request: IncomingMessage): Promise<unknown> => {
+    return new Promise((resolve, reject) => {
+        const chunks: Buffer[] = [];
+        request.on('data', (chunk: Buffer) => chunks.push(chunk));
+        request.on('end', () => {
+            try {
+                resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+            } catch {
+                reject(new Error('Invalid JSON body'));
+            }
+        });
+        request.on('error', reject);
+    });
 };
 
 interface ApiRouteResult {
@@ -149,9 +173,33 @@ export const createApiServer = () => {
     return createServer((request, response) => {
         const requestUrl = new URL(request.url ?? '/', 'http://localhost');
 
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/create'
+        ) {
+            void readJsonBody(request)
+                .then(body => aidPostService.createFromBody(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
         const handler = routeHandlers[requestUrl.pathname];
         if (handler) {
-            void Promise.resolve(handler(requestUrl))
+            void Promise.resolve()
+                .then(() => handler(requestUrl))
                 .then(result => {
                     if (result.contentType) {
                         response.writeHead(result.statusCode, {
@@ -201,5 +249,10 @@ const isExecutedDirectly =
     fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 
 if (isExecutedDirectly) {
-    startApiServer();
+    const server = startApiServer();
+    process.on('SIGTERM', () => {
+        server.close(() => {
+            void postgresPool?.end();
+        });
+    });
 }

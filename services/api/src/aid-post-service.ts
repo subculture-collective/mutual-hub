@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { ZodError, z } from 'zod';
+import { type Pool } from 'pg';
 import {
     FirehoseConsumer,
     type AidPostRecord,
@@ -128,6 +129,7 @@ export class ApiAidPostService {
         private readonly options: {
             dataSource: 'fixture' | 'postgres';
             databaseUrl?: string;
+            pool?: Pool;
         },
     ) {}
 
@@ -149,6 +151,31 @@ export class ApiAidPostService {
             throw error;
         }
 
+        return this.createFromInput(input);
+    }
+
+    async createFromBody(body: unknown): Promise<AidPostRouteResult> {
+        let input: AidPostCreateInput;
+
+        try {
+            input = aidPostCreateSchema.parse(body);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return {
+                    statusCode: 400,
+                    body: toValidationError(error),
+                };
+            }
+
+            throw error;
+        }
+
+        return this.createFromInput(input);
+    }
+
+    private async createFromInput(
+        input: AidPostCreateInput,
+    ): Promise<AidPostRouteResult> {
         const now = input.now ?? new Date().toISOString();
         const rkey = input.rkey ?? `post-${randomUUID()}`;
         const uri = `at://${input.authorDid}/${recordNsid.aidPost}/${rkey}`;
@@ -205,6 +232,14 @@ export class ApiAidPostService {
         try {
             if (
                 this.options.dataSource === 'postgres' &&
+                this.options.pool
+            ) {
+                await appendDiscoveryEvents(
+                    this.options.pool,
+                    result.normalizedEvents,
+                );
+            } else if (
+                this.options.dataSource === 'postgres' &&
                 this.options.databaseUrl
             ) {
                 const pool = createPostgresPool(this.options.databaseUrl);
@@ -258,6 +293,7 @@ export const createAidPostService = (
     options: {
         dataSource: 'fixture' | 'postgres';
         databaseUrl?: string;
+        pool?: Pool;
     },
 ): ApiAidPostService => {
     return new ApiAidPostService(queryService, options);

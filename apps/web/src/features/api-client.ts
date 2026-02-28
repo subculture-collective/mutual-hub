@@ -311,6 +311,69 @@ const requestJson = async (
     }
 };
 
+const requestJsonPost = async (
+    path: string,
+    body: unknown,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<unknown>> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+        controller.abort();
+    }, REQUEST_TIMEOUT_MS);
+
+    if (signal) {
+        if (signal.aborted) {
+            controller.abort();
+        } else {
+            signal.addEventListener('abort', () => controller.abort(), {
+                once: true,
+            });
+        }
+    }
+
+    try {
+        const response = await fetch(
+            resolveApiUrl(path, new URLSearchParams()),
+            {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    accept: 'application/json',
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal,
+            },
+        );
+
+        const payload = await response.json().catch(() => undefined);
+
+        if (!response.ok) {
+            return {
+                ok: false,
+                error: toErrorMessage(
+                    payload,
+                    `API request failed (${response.status}).`,
+                ),
+            };
+        }
+
+        return {
+            ok: true,
+            data: payload,
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            error:
+                error instanceof Error ?
+                    error.message
+                :   'Unable to reach API endpoint.',
+        };
+    } finally {
+        clearTimeout(timeoutId);
+    }
+};
+
 const parseAidCategory = (value: string | undefined): AidCategory => {
     if (value && aidCategories.includes(value as AidCategory)) {
         return value as AidCategory;
@@ -670,27 +733,23 @@ export const createAidPostViaApi = async (
     input: AidPostCreateApiInput,
     signal?: AbortSignal,
 ): Promise<ApiClientResult<FeedRecordEnvelope>> => {
-    const params = new URLSearchParams({
+    const body = {
         authorDid: input.authorDid,
         title: input.draft.title,
         description: input.draft.description,
         category: input.draft.category,
         urgency: toLexiconUrgency(input.draft.urgency),
-        latitude: input.draft.location.lat.toFixed(6),
-        longitude: input.draft.location.lng.toFixed(6),
-        precisionKm: (input.draft.location.precisionMeters / 1000).toFixed(3),
+        latitude: Number(input.draft.location.lat.toFixed(6)),
+        longitude: Number(input.draft.location.lng.toFixed(6)),
+        precisionKm: Number(
+            (input.draft.location.precisionMeters / 1000).toFixed(3),
+        ),
         rkey: input.rkey,
-    });
+        now: input.now,
+        trustScore: input.trustScore,
+    };
 
-    if (input.now) {
-        params.set('now', input.now);
-    }
-
-    if (input.trustScore !== undefined) {
-        params.set('trustScore', input.trustScore.toString());
-    }
-
-    const result = await requestJson('/aid/post/create', params, signal);
+    const result = await requestJsonPost('/aid/post/create', body, signal);
     if (!result.ok) {
         return result;
     }

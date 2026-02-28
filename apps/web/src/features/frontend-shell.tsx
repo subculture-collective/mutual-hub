@@ -1549,11 +1549,12 @@ const ResourceRoute = ({
     const uiState = useMemo(
         () =>
             resolveResourceDirectoryUiState({
-                loading: false,
+                loading: isLoading,
+                errorMessage,
                 resources: viewModel.cards,
                 activeCategoryFilter: viewModel.activeCategoryFilter,
             }),
-        [viewModel.cards, viewModel.activeCategoryFilter],
+        [errorMessage, isLoading, viewModel.cards, viewModel.activeCategoryFilter],
     );
 
     const detailPanel =

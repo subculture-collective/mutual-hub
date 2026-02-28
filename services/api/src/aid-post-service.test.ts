@@ -93,42 +93,43 @@ describe('ApiAidPostService', () => {
         const queryService = new ApiDiscoveryQueryService(
             new DiscoveryIndexStore(),
         );
+        const pool = { end: vi.fn() } as never;
+        vi.mocked(appendDiscoveryEvents).mockResolvedValue(undefined);
+
         const service = createAidPostService(queryService, {
             dataSource: 'postgres',
             databaseUrl:
                 'postgresql://patchwork:patchwork@localhost:5432/patchwork',
+            pool,
         });
-
-        const pool = { end: vi.fn() };
-        vi.mocked(createPostgresPool).mockReturnValue(pool as never);
-        vi.mocked(appendDiscoveryEvents).mockResolvedValue(undefined);
 
         const createResult =
             await service.createFromParams(buildCreateParams());
 
         expect(createResult.statusCode).toBe(201);
-        expect(createPostgresPool).toHaveBeenCalledWith(
-            'postgresql://patchwork:patchwork@localhost:5432/patchwork',
+        expect(createPostgresPool).not.toHaveBeenCalled();
+        expect(appendDiscoveryEvents).toHaveBeenCalledWith(
+            pool,
+            expect.anything(),
         );
         expect(appendDiscoveryEvents).toHaveBeenCalledTimes(1);
-        expect(pool.end).toHaveBeenCalledTimes(1);
     });
 
     it('returns 500 when postgres persistence fails and does not index record', async () => {
         const queryService = new ApiDiscoveryQueryService(
             new DiscoveryIndexStore(),
         );
+        const pool = { end: vi.fn() } as never;
+        vi.mocked(appendDiscoveryEvents).mockRejectedValue(
+            new Error('insert failed'),
+        );
+
         const service = createAidPostService(queryService, {
             dataSource: 'postgres',
             databaseUrl:
                 'postgresql://patchwork:patchwork@localhost:5432/patchwork',
+            pool,
         });
-
-        const pool = { end: vi.fn() };
-        vi.mocked(createPostgresPool).mockReturnValue(pool as never);
-        vi.mocked(appendDiscoveryEvents).mockRejectedValue(
-            new Error('insert failed'),
-        );
 
         const createResult =
             await service.createFromParams(buildCreateParams());
