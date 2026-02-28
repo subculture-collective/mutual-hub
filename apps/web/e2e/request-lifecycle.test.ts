@@ -59,13 +59,17 @@ test.describe('P8.2 discovery shell interactions', () => {
         await page.goto('/');
     });
 
-    test('search input accepts text entry for a pilot food scenario', async ({ page }) => {
+    test('search input accepts text entry for a pilot food scenario', async ({
+        page,
+    }) => {
         const input = page.getByPlaceholder(/e\.g\. food, shelter, transport/i);
         await input.fill('food');
         await expect(input).toHaveValue('food');
     });
 
-    test('search input accepts text entry for a pilot medical scenario', async ({ page }) => {
+    test('search input accepts text entry for a pilot medical scenario', async ({
+        page,
+    }) => {
         const input = page.getByPlaceholder(/e\.g\. food, shelter, transport/i);
         await input.fill('medical transport');
         await expect(input).toHaveValue('medical transport');
@@ -79,7 +83,9 @@ test.describe('P8.2 discovery shell interactions', () => {
         await expect(input).toHaveValue('food');
     });
 
-    test('"Find nearby" button is keyboard-navigable via Tab', async ({ page }) => {
+    test('"Find nearby" button is keyboard-navigable via Tab', async ({
+        page,
+    }) => {
         const input = page.getByPlaceholder(/e\.g\. food, shelter, transport/i);
         await input.fill('food');
         await page.keyboard.press('Tab');
@@ -98,7 +104,9 @@ test.describe('P8.2 service boundaries', () => {
     });
 
     test('service boundaries card is present', async ({ page }) => {
-        await expect(page.getByText(/service boundaries online/i)).toBeVisible();
+        await expect(
+            page.getByText(/service boundaries online/i),
+        ).toBeVisible();
     });
 
     test('API service address is listed', async ({ page }) => {
@@ -125,7 +133,9 @@ test.describe('P8.2 accessibility baseline', () => {
         expect(count).toBeGreaterThan(0);
         for (let index = 0; index < count; index++) {
             const btn = buttons.nth(index);
-            const name = await btn.getAttribute('aria-label') ?? await btn.innerText();
+            const name =
+                (await btn.getAttribute('aria-label')) ??
+                (await btn.innerText());
             expect(name.trim().length).toBeGreaterThan(0);
         }
     });
