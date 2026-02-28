@@ -13,6 +13,12 @@ export default defineConfig({
                     import.meta.url,
                 ),
             ),
+            '@patchwork/at-lexicons': fileURLToPath(
+                new URL(
+                    '../../packages/at-lexicons/src/validators.ts',
+                    import.meta.url,
+                ),
+            ),
         },
     },
     server: {
