@@ -92,6 +92,84 @@ test.describe('P8.2 discovery shell interactions', () => {
         const findNearby = page.getByRole('button', { name: /find nearby/i });
         await expect(findNearby).toBeFocused();
     });
+
+    test('discovery filters persist in URL when navigating to map', async ({
+        page,
+    }) => {
+        const input = page.getByPlaceholder(/e\.g\. food, shelter, transport/i);
+        await input.fill('food');
+
+        await page.getByRole('button', { name: /^find nearby$/i }).click();
+
+        await expect(page).toHaveURL(/\/map\?.*q=food/i);
+    });
+
+    test('map route surfaces at least one triage marker by default nearby query', async ({
+        page,
+    }) => {
+        await page.getByRole('button', { name: /^find nearby$/i }).click();
+        await expect(
+            page.getByRole('heading', { name: /map triage/i }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole('button', { name: /open triage drawer/i }).first(),
+        ).toBeVisible();
+    });
+
+    test('primary nav marks active route with aria-current', async ({
+        page,
+    }) => {
+        await page.getByRole('link', { name: /^feed$/i }).click();
+        await expect(
+            page.getByRole('heading', { name: /feed operations/i }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole('link', { name: /^feed$/i }),
+        ).toHaveAttribute('aria-current', 'page');
+    });
+
+    test('mobile viewport keeps primary routes free from horizontal overflow', async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 320, height: 900 });
+
+        const assertNoOverflow = async () => {
+            const hasOverflow = await page.evaluate(() => {
+                const root = document.documentElement;
+                return root.scrollWidth > root.clientWidth + 1;
+            });
+
+            expect(hasOverflow).toBe(false);
+        };
+
+        await assertNoOverflow();
+
+        const routes = [
+            { name: /^map$/i, heading: /map triage/i },
+            { name: /^feed$/i, heading: /feed operations/i },
+            { name: /^resources$/i, heading: /resource directory/i },
+            { name: /^posting$/i, heading: /create request/i },
+            { name: /^chat$/i, heading: /chat handoff/i },
+        ] as const;
+
+        for (const route of routes) {
+            await page.getByRole('link', { name: route.name }).click();
+            await expect(
+                page.getByRole('heading', { name: route.heading }),
+            ).toBeVisible();
+            await assertNoOverflow();
+        }
+    });
+
+    test('mobile primary CTA remains tap-friendly', async ({ page }) => {
+        await page.setViewportSize({ width: 320, height: 900 });
+
+        const findNearby = page.getByRole('button', { name: /^find nearby$/i });
+        await expect(findNearby).toBeVisible();
+
+        const box = await findNearby.boundingBox();
+        expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+    });
 });
 
 // ---------------------------------------------------------------------------

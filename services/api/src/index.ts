@@ -1,4 +1,4 @@
-import { createServer, type ServerResponse } from 'node:http';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -6,7 +6,9 @@ import {
     loadApiConfig,
     type ServiceHealth,
 } from '@patchwork/shared';
+import { createAidPostService } from './aid-post-service.js';
 import { createFixtureChatService } from './chat-service.js';
+import { createPostgresPool } from './db/discovery-events.js';
 import {
     createFixtureQueryService,
     createPostgresQueryService,
@@ -30,6 +32,18 @@ const queryService = await resolveQueryService();
 
 const chatService = createFixtureChatService();
 const volunteerService = createFixtureVolunteerService();
+
+const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
+const postgresPool =
+    config.API_DATA_SOURCE === 'postgres' && databaseUrl
+        ? createPostgresPool(databaseUrl)
+        : undefined;
+
+const aidPostService = createAidPostService(queryService, {
+    dataSource: config.API_DATA_SOURCE,
+    databaseUrl,
+    pool: postgresPool,
+});
 
 const healthPayload: ServiceHealth = {
     service: 'api',
@@ -60,18 +74,36 @@ const writeJson = (
     response.end(JSON.stringify(body));
 };
 
+const readJsonBody = (request: IncomingMessage): Promise<unknown> => {
+    return new Promise((resolve, reject) => {
+        const chunks: Buffer[] = [];
+        request.on('data', (chunk: Buffer) => chunks.push(chunk));
+        request.on('end', () => {
+            try {
+                resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+            } catch {
+                reject(new Error('Invalid JSON body'));
+            }
+        });
+        request.on('error', reject);
+    });
+};
+
 interface ApiRouteResult {
     statusCode: number;
     body: unknown;
     contentType?: string;
 }
 
-type ApiRouteHandler = (requestUrl: URL) => ApiRouteResult;
+type ApiRouteHandler =
+    | ((requestUrl: URL) => ApiRouteResult)
+    | ((requestUrl: URL) => Promise<ApiRouteResult>);
 
 const contractRoutes = [
     '/query/map',
     '/query/feed',
     '/query/directory',
+    '/aid/post/create',
     '/chat/initiate',
     '/chat/route',
     '/chat/conversations',
@@ -133,25 +165,63 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
     '/volunteer/profile/upsert': requestUrl =>
         volunteerService.upsertFromParams(requestUrl.searchParams),
     '/volunteer/profiles': () => volunteerService.listFromParams(),
+    '/aid/post/create': requestUrl =>
+        aidPostService.createFromParams(requestUrl.searchParams),
 };
 
 export const createApiServer = () => {
     return createServer((request, response) => {
         const requestUrl = new URL(request.url ?? '/', 'http://localhost');
 
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/create'
+        ) {
+            void readJsonBody(request)
+                .then(body => aidPostService.createFromBody(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
         const handler = routeHandlers[requestUrl.pathname];
         if (handler) {
-            const result = handler(requestUrl);
+            void Promise.resolve()
+                .then(() => handler(requestUrl))
+                .then(result => {
+                    if (result.contentType) {
+                        response.writeHead(result.statusCode, {
+                            'content-type': result.contentType,
+                        });
+                        response.end(String(result.body));
+                        return;
+                    }
 
-            if (result.contentType) {
-                response.writeHead(result.statusCode, {
-                    'content-type': result.contentType,
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
                 });
-                response.end(String(result.body));
-                return;
-            }
-
-            writeJson(response, result.statusCode, result.body);
             return;
         }
 
@@ -179,5 +249,10 @@ const isExecutedDirectly =
     fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 
 if (isExecutedDirectly) {
-    startApiServer();
+    const server = startApiServer();
+    process.on('SIGTERM', () => {
+        server.close(() => {
+            void postgresPool?.end();
+        });
+    });
 }

@@ -65,6 +65,10 @@ const formatValidationError = (error: ZodError): ApiQueryErrorResponse => {
 export class ApiDiscoveryQueryService {
     constructor(private readonly store: DiscoveryIndexStore) {}
 
+    applyNormalizedEvents(events: readonly NormalizedFirehoseEvent[]): void {
+        this.store.applyEvents(events);
+    }
+
     queryMap(params: URLSearchParams): ApiRouteResult {
         try {
             const input = validateAidQueryInput({
