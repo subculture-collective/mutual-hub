@@ -40,10 +40,10 @@ This monorepo is designed for fast local development with deterministic fixtures
 1. Install dependencies: `npm ci`
 2. Create local env file: copy `.env.example` → `.env`
 3. Start the app surfaces you need:
-   - Web: `npm run dev:web`
-   - API: `npm run dev:api`
-   - Indexer: `npm run dev:indexer`
-   - Moderation worker: `npm run dev:moderation`
+    - Web: `npm run dev:web`
+    - API: `npm run dev:api`
+    - Indexer: `npm run dev:indexer`
+    - Moderation worker: `npm run dev:moderation`
 
 Default local URLs:
 
@@ -63,8 +63,8 @@ The API supports two datasource modes:
 
 1. Start Postgres: `npm run db:up`
 2. Set in `.env`:
-   - `API_DATA_SOURCE=postgres`
-   - `API_DATABASE_URL=postgresql://patchwork:patchwork@localhost:5432/patchwork`
+    - `API_DATA_SOURCE=postgres`
+    - `API_DATABASE_URL=postgresql://patchwork:patchwork@localhost:5432/patchwork`
 3. Seed deterministic data: `npm run db:seed`
 4. Start API in postgres mode: `npm run dev:api:postgres`
 
