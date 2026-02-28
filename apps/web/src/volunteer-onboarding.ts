@@ -3,7 +3,7 @@ import {
     type AidPostRecord,
     type VolunteerProfileRecord,
     validateRecordPayload,
-} from '@patchwork/at-lexicons';
+} from '@patchwork/at-lexicons/src/validators';
 
 const didPattern = /^did:[a-z0-9:._%-]+$/i;
 

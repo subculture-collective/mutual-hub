@@ -7,9 +7,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClassMap: Record<ButtonVariant, string> = {
-    primary: 'bg-[var(--mh-accent)] text-black',
-    secondary: 'bg-[var(--mh-accent-2)] text-white',
-    neutral: 'bg-[var(--mh-surface-elev)] text-white',
+    primary: 'mh-button--primary',
+    secondary: 'mh-button--secondary',
+    neutral: 'mh-button--neutral',
 };
 
 export const Button = ({
@@ -23,7 +23,7 @@ export const Button = ({
         <button
             type={type}
             className={[
-                'mh-button rounded-none px-4 py-2 text-sm font-bold uppercase tracking-[0.1em]',
+                'mh-button inline-flex items-center justify-center px-4 py-2 text-sm font-semibold tracking-[0.01em] transition',
                 variantClassMap[variant],
                 className,
             ].join(' ')}

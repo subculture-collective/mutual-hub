@@ -40,10 +40,10 @@ This monorepo is designed for fast local development with deterministic fixtures
 1. Install dependencies: `npm ci`
 2. Create local env file: copy `.env.example` → `.env`
 3. Start the app surfaces you need:
-   - Web: `npm run dev:web`
-   - API: `npm run dev:api`
-   - Indexer: `npm run dev:indexer`
-   - Moderation worker: `npm run dev:moderation`
+    - Web: `npm run dev:web`
+    - API: `npm run dev:api`
+    - Indexer: `npm run dev:indexer`
+    - Moderation worker: `npm run dev:moderation`
 
 Default local URLs:
 
@@ -63,10 +63,36 @@ The API supports two datasource modes:
 
 1. Start Postgres: `npm run db:up`
 2. Set in `.env`:
-   - `API_DATA_SOURCE=postgres`
-   - `API_DATABASE_URL=postgresql://patchwork:patchwork@localhost:5432/patchwork`
+    - `API_DATA_SOURCE=postgres`
+    - `API_DATABASE_URL=postgresql://patchwork:patchwork@localhost:5432/patchwork`
 3. Seed deterministic data: `npm run db:seed`
 4. Start API in postgres mode: `npm run dev:api:postgres`
+
+### DB-backed frontend mode (Map / Feed / Resources / Posting)
+
+The web client now calls API routes directly for discovery + posting surfaces:
+
+- `GET /query/map`
+- `GET /query/feed`
+- `GET /query/directory`
+- `GET /aid/post/create`
+
+Recommended local flow:
+
+1. Start Postgres: `npm run db:up`
+2. Seed Postgres: `npm run db:seed`
+3. Start API in postgres mode: `npm run dev:api:postgres`
+4. Start web: `npm run dev:web`
+
+In the UI, route headers show a data source badge:
+
+- **DB-backed API** when remote query succeeds
+- **Fallback dataset** when API is unavailable (network-safe local fallback)
+
+Posting behavior in DB mode:
+
+- `Publish request` calls `GET /aid/post/create`
+- On success, the created post is inserted into Postgres and becomes immediately queryable via `/query/feed` and `/query/map`
 
 Additional seed scripts (API workspace):
 

@@ -6,6 +6,7 @@ import {
     loadApiConfig,
     type ServiceHealth,
 } from '@patchwork/shared';
+import { createAidPostService } from './aid-post-service.js';
 import { createFixtureChatService } from './chat-service.js';
 import {
     createFixtureQueryService,
@@ -30,6 +31,10 @@ const queryService = await resolveQueryService();
 
 const chatService = createFixtureChatService();
 const volunteerService = createFixtureVolunteerService();
+const aidPostService = createAidPostService(queryService, {
+    dataSource: config.API_DATA_SOURCE,
+    databaseUrl: config.API_DATABASE_URL ?? config.DATABASE_URL,
+});
 
 const healthPayload: ServiceHealth = {
     service: 'api',
@@ -66,12 +71,15 @@ interface ApiRouteResult {
     contentType?: string;
 }
 
-type ApiRouteHandler = (requestUrl: URL) => ApiRouteResult;
+type ApiRouteHandler =
+    | ((requestUrl: URL) => ApiRouteResult)
+    | ((requestUrl: URL) => Promise<ApiRouteResult>);
 
 const contractRoutes = [
     '/query/map',
     '/query/feed',
     '/query/directory',
+    '/aid/post/create',
     '/chat/initiate',
     '/chat/route',
     '/chat/conversations',
@@ -133,6 +141,8 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
     '/volunteer/profile/upsert': requestUrl =>
         volunteerService.upsertFromParams(requestUrl.searchParams),
     '/volunteer/profiles': () => volunteerService.listFromParams(),
+    '/aid/post/create': requestUrl =>
+        aidPostService.createFromParams(requestUrl.searchParams),
 };
 
 export const createApiServer = () => {
@@ -141,17 +151,29 @@ export const createApiServer = () => {
 
         const handler = routeHandlers[requestUrl.pathname];
         if (handler) {
-            const result = handler(requestUrl);
+            void Promise.resolve(handler(requestUrl))
+                .then(result => {
+                    if (result.contentType) {
+                        response.writeHead(result.statusCode, {
+                            'content-type': result.contentType,
+                        });
+                        response.end(String(result.body));
+                        return;
+                    }
 
-            if (result.contentType) {
-                response.writeHead(result.statusCode, {
-                    'content-type': result.contentType,
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
                 });
-                response.end(String(result.body));
-                return;
-            }
-
-            writeJson(response, result.statusCode, result.body);
             return;
         }
 
