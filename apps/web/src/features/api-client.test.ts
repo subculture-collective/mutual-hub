@@ -207,11 +207,14 @@ describe('api client', () => {
         expect(result.data.aidPostUri).toContain('/post-new-1');
 
         const firstCall = (
-            fetchMock.mock.calls as unknown as Array<[unknown]>
+            fetchMock.mock.calls as unknown as Array<[unknown, unknown]>
         )[0];
         const url = firstCall?.[0];
-        expect(String(url)).toContain('/aid/post/create?');
-        expect(String(url)).toContain('category=transport');
-        expect(String(url)).toContain('urgency=critical');
+        const init = firstCall?.[1] as RequestInit | undefined;
+        expect(String(url)).toContain('/aid/post/create');
+        expect(init?.method).toBe('POST');
+        const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        expect(body['category']).toBe('transport');
+        expect(body['urgency']).toBe('critical');
     });
 });

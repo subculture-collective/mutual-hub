@@ -136,30 +136,30 @@
 }
 
 .mh-button--primary {
-    background: #4c663b;
-    color: #fffdf7;
+    background: var(--mh-organic-moss);
+    color: var(--mh-bg);
 }
 
 .mh-button--primary:hover {
-    background: #425935;
+    background: var(--mh-organic-moss);
 }
 
 .mh-button--secondary {
-    background: #b99361;
-    color: #2f2a22;
+    background: var(--mh-accent-3);
+    color: var(--mh-text);
 }
 
 .mh-button--secondary:hover {
-    background: #ab8758;
+    background: var(--mh-accent-3);
 }
 
 .mh-button--neutral {
-    background: #dfceb6;
-    color: #2f2a22;
+    background: var(--mh-surface-elev);
+    color: var(--mh-text);
 }
 
 .mh-button--neutral:hover {
-    background: #d4c1a7;
+    background: var(--mh-surface-elev);
 }
 
 .mh-button:hover {
