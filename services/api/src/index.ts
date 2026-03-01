@@ -14,6 +14,7 @@ import {
     createPostgresQueryService,
 } from './query-service.js';
 import { createFixtureVolunteerService } from './volunteer-service.js';
+import { createLifecycleService } from './lifecycle-service.js';
 
 const config = loadApiConfig();
 
@@ -32,6 +33,7 @@ const queryService = await resolveQueryService();
 
 const chatService = createFixtureChatService();
 const volunteerService = createFixtureVolunteerService();
+const lifecycleService = createLifecycleService();
 
 const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
 const postgresPool =
@@ -116,6 +118,8 @@ const contractRoutes = [
     '/chat/route/preference-aware',
     '/volunteer/profile/upsert',
     '/volunteer/profiles',
+    '/aid/post/transition',
+    '/aid/post/lifecycle',
     '/health',
     '/metrics',
 ] as const;
@@ -167,6 +171,10 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
     '/volunteer/profiles': () => volunteerService.listFromParams(),
     '/aid/post/create': requestUrl =>
         aidPostService.createFromParams(requestUrl.searchParams),
+    '/aid/post/transition': requestUrl =>
+        lifecycleService.transitionFromParams(requestUrl.searchParams),
+    '/aid/post/lifecycle': requestUrl =>
+        lifecycleService.queryFromParams(requestUrl.searchParams),
 };
 
 export const createApiServer = () => {
@@ -179,6 +187,29 @@ export const createApiServer = () => {
         ) {
             void readJsonBody(request)
                 .then(body => aidPostService.createFromBody(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/transition'
+        ) {
+            void readJsonBody(request)
+                .then(body => lifecycleService.transitionFromBody(body))
                 .then(result => {
                     writeJson(response, result.statusCode, result.body);
                 })

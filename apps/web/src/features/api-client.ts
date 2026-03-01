@@ -729,6 +729,119 @@ export const initiateChatViaApi = async (
     };
 };
 
+export interface LifecycleTransitionApiInput {
+    postUri: string;
+    targetStatus: string;
+    actorDid: string;
+    actorRole: string;
+    reason?: string;
+    now?: string;
+}
+
+export interface LifecycleTransitionApiResult {
+    postUri: string;
+    previousStatus: string;
+    currentStatus: string;
+    transition: {
+        from: string;
+        to: string;
+        actorDid: string;
+        actorRole: string;
+        timestamp: string;
+        reason?: string;
+    };
+    timeline: Array<{
+        from: string;
+        to: string;
+        actorDid: string;
+        actorRole: string;
+        timestamp: string;
+        reason?: string;
+    }>;
+    updatedAt: string;
+}
+
+export interface LifecycleQueryApiResult {
+    postUri: string;
+    currentStatus: string;
+    statusLabel: string;
+    timeline: Array<{
+        from: string;
+        to: string;
+        actorDid: string;
+        actorRole: string;
+        timestamp: string;
+        reason?: string;
+    }>;
+    validTransitions: string[];
+    updatedAt: string;
+}
+
+export const transitionAidPostViaApi = async (
+    input: LifecycleTransitionApiInput,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<LifecycleTransitionApiResult>> => {
+    const body = {
+        postUri: input.postUri,
+        targetStatus: input.targetStatus,
+        actorDid: input.actorDid,
+        actorRole: input.actorRole,
+        reason: input.reason,
+        now: input.now,
+    };
+
+    const result = await requestJsonPost(
+        '/aid/post/transition',
+        body,
+        signal,
+    );
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (!isRecord(result.data)) {
+        return {
+            ok: false,
+            error: 'Lifecycle transition response was malformed.',
+        };
+    }
+
+    return {
+        ok: true,
+        data: result.data as unknown as LifecycleTransitionApiResult,
+    };
+};
+
+export const queryAidPostLifecycleViaApi = async (
+    postUri: string,
+    actorRole?: string,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<LifecycleQueryApiResult>> => {
+    const params = new URLSearchParams({ postUri });
+    if (actorRole) {
+        params.set('actorRole', actorRole);
+    }
+
+    const result = await requestJson('/aid/post/lifecycle', params, signal);
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (!isRecord(result.data)) {
+        return {
+            ok: false,
+            error: 'Lifecycle query response was malformed.',
+        };
+    }
+
+    return {
+        ok: true,
+        data: result.data as unknown as LifecycleQueryApiResult,
+    };
+};
+
 export const createAidPostViaApi = async (
     input: AidPostCreateApiInput,
     signal?: AbortSignal,
