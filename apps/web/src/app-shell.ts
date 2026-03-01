@@ -3,6 +3,7 @@ export const publicRoutes = [
     '/feed',
     '/resources',
     '/volunteer',
+    '/settings',
 ] as const;
 
 export type PublicRoute = (typeof publicRoutes)[number];
@@ -33,6 +34,11 @@ export const shellSections: readonly ShellSection[] = [
         route: '/volunteer',
         title: 'Volunteer',
         description: 'Volunteer onboarding and profile management.',
+    },
+    {
+        route: '/settings',
+        title: 'Settings',
+        description: 'Account settings, privacy controls, and data management.',
     },
 ];
 

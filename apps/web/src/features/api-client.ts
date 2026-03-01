@@ -12,6 +12,10 @@ import type {
     ResourceDirectoryCard,
 } from '../resource-directory-ux';
 import { defaultDiscoveryCenter, type FeedRecordEnvelope } from './fixtures';
+import type {
+    SettingsChangeAudit,
+    UserSettings,
+} from '@patchwork/shared';
 
 export type ApiDataOrigin = 'api' | 'fallback';
 
@@ -372,6 +376,218 @@ const requestJsonPost = async (
     } finally {
         clearTimeout(timeoutId);
     }
+};
+
+const requestJsonPut = async (
+    path: string,
+    body: unknown,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<unknown>> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+        controller.abort();
+    }, REQUEST_TIMEOUT_MS);
+
+    if (signal) {
+        if (signal.aborted) {
+            controller.abort();
+        } else {
+            signal.addEventListener('abort', () => controller.abort(), {
+                once: true,
+            });
+        }
+    }
+
+    try {
+        const response = await fetch(
+            resolveApiUrl(path, new URLSearchParams()),
+            {
+                method: 'PUT',
+                headers: {
+                    'content-type': 'application/json',
+                    accept: 'application/json',
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal,
+            },
+        );
+
+        const payload = await response.json().catch(() => undefined);
+
+        if (!response.ok) {
+            return {
+                ok: false,
+                error: toErrorMessage(
+                    payload,
+                    `API request failed (${response.status}).`,
+                ),
+            };
+        }
+
+        return {
+            ok: true,
+            data: payload,
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            error:
+                error instanceof Error ?
+                    error.message
+                :   'Unable to reach API endpoint.',
+        };
+    } finally {
+        clearTimeout(timeoutId);
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Settings API
+// ---------------------------------------------------------------------------
+
+export interface SettingsApiGetResponse {
+    did: string;
+    settings: UserSettings;
+}
+
+export interface SettingsApiUpdateResponse {
+    did: string;
+    settings: UserSettings;
+    changesRecorded: number;
+}
+
+export interface SettingsApiAuditResponse {
+    did: string;
+    total: number;
+    entries: SettingsChangeAudit[];
+}
+
+export interface AccountActionApiResponse {
+    did: string;
+    action: string;
+    status: string;
+    requestedAt: string;
+    message: string;
+}
+
+export const fetchSettingsFromApi = async (
+    did: string,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<SettingsApiGetResponse>> => {
+    const params = new URLSearchParams({ did });
+    const result = await requestJson('/account/settings', params, signal);
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (!isRecord(result.data)) {
+        return { ok: false, error: 'Settings response was malformed.' };
+    }
+
+    return {
+        ok: true,
+        data: result.data as unknown as SettingsApiGetResponse,
+    };
+};
+
+export const updateSettingsViaApi = async (
+    did: string,
+    settings: UserSettings,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<SettingsApiUpdateResponse>> => {
+    const result = await requestJsonPut(
+        '/account/settings',
+        { did, settings },
+        signal,
+    );
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (!isRecord(result.data)) {
+        return { ok: false, error: 'Settings update response was malformed.' };
+    }
+
+    return {
+        ok: true,
+        data: result.data as unknown as SettingsApiUpdateResponse,
+    };
+};
+
+export const fetchSettingsAuditFromApi = async (
+    did: string,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<SettingsApiAuditResponse>> => {
+    const result = await requestJsonPost(
+        '/account/settings/audit',
+        { did },
+        signal,
+    );
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (!isRecord(result.data)) {
+        return { ok: false, error: 'Audit trail response was malformed.' };
+    }
+
+    return {
+        ok: true,
+        data: result.data as unknown as SettingsApiAuditResponse,
+    };
+};
+
+export const deactivateAccountViaApi = async (
+    did: string,
+    reason?: string,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<AccountActionApiResponse>> => {
+    const result = await requestJsonPost(
+        '/account/deactivate',
+        { did, reason },
+        signal,
+    );
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (!isRecord(result.data)) {
+        return { ok: false, error: 'Deactivation response was malformed.' };
+    }
+
+    return {
+        ok: true,
+        data: result.data as unknown as AccountActionApiResponse,
+    };
+};
+
+export const exportDataViaApi = async (
+    did: string,
+    reason?: string,
+    signal?: AbortSignal,
+): Promise<ApiClientResult<AccountActionApiResponse>> => {
+    const result = await requestJsonPost(
+        '/account/export',
+        { did, reason },
+        signal,
+    );
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (!isRecord(result.data)) {
+        return { ok: false, error: 'Export response was malformed.' };
+    }
+
+    return {
+        ok: true,
+        data: result.data as unknown as AccountActionApiResponse,
+    };
 };
 
 const parseAidCategory = (value: string | undefined): AidCategory => {

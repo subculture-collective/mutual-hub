@@ -14,6 +14,7 @@ import {
     createPostgresQueryService,
 } from './query-service.js';
 import { createFixtureVerificationService } from './verification-service.js';
+import { createFixtureSettingsService } from './settings-service.js';
 import { createFixtureVolunteerService } from './volunteer-service.js';
 
 const config = loadApiConfig();
@@ -33,6 +34,7 @@ const queryService = await resolveQueryService();
 
 const chatService = createFixtureChatService();
 const verificationService = createFixtureVerificationService();
+const settingsService = createFixtureSettingsService();
 const volunteerService = createFixtureVolunteerService();
 
 const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
@@ -124,6 +126,10 @@ const contractRoutes = [
     '/verification/renew',
     '/verification/appeal',
     '/verification/audit',
+    '/account/settings',
+    '/account/settings/audit',
+    '/account/deactivate',
+    '/account/export',
     '/health',
     '/metrics',
 ] as const;
@@ -185,6 +191,8 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
         verificationService.appeal(requestUrl.searchParams),
     '/verification/audit': requestUrl =>
         verificationService.getAuditTrail(requestUrl.searchParams),
+    '/account/settings': requestUrl =>
+        settingsService.getSettings(requestUrl.searchParams),
     '/aid/post/create': requestUrl =>
         aidPostService.createFromParams(requestUrl.searchParams),
 };
@@ -199,6 +207,98 @@ export const createApiServer = () => {
         ) {
             void readJsonBody(request)
                 .then(body => aidPostService.createFromBody(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'PUT' &&
+            requestUrl.pathname === '/account/settings'
+        ) {
+            void readJsonBody(request)
+                .then(body => settingsService.updateSettings(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/account/settings/audit'
+        ) {
+            void readJsonBody(request)
+                .then(body => settingsService.getAuditTrail(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/account/deactivate'
+        ) {
+            void readJsonBody(request)
+                .then(body => settingsService.deactivateAccount(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/account/export'
+        ) {
+            void readJsonBody(request)
+                .then(body => settingsService.exportAccountData(body))
                 .then(result => {
                     writeJson(response, result.statusCode, result.body);
                 })
