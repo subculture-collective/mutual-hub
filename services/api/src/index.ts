@@ -16,6 +16,7 @@ import {
 import { createFixtureVerificationService } from './verification-service.js';
 import { createFixtureSettingsService } from './settings-service.js';
 import { createFixtureVolunteerService } from './volunteer-service.js';
+import { createLifecycleService } from './lifecycle-service.js';
 
 const config = loadApiConfig();
 
@@ -36,6 +37,7 @@ const chatService = createFixtureChatService();
 const verificationService = createFixtureVerificationService();
 const settingsService = createFixtureSettingsService();
 const volunteerService = createFixtureVolunteerService();
+const lifecycleService = createLifecycleService();
 
 const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
 const postgresPool =
@@ -130,6 +132,8 @@ const contractRoutes = [
     '/account/settings/audit',
     '/account/deactivate',
     '/account/export',
+    '/aid/post/transition',
+    '/aid/post/lifecycle',
     '/health',
     '/metrics',
 ] as const;
@@ -195,6 +199,10 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
         settingsService.getSettings(requestUrl.searchParams),
     '/aid/post/create': requestUrl =>
         aidPostService.createFromParams(requestUrl.searchParams),
+    '/aid/post/transition': requestUrl =>
+        lifecycleService.transitionFromParams(requestUrl.searchParams),
+    '/aid/post/lifecycle': requestUrl =>
+        lifecycleService.queryFromParams(requestUrl.searchParams),
 };
 
 export const createApiServer = () => {
@@ -299,6 +307,29 @@ export const createApiServer = () => {
         ) {
             void readJsonBody(request)
                 .then(body => settingsService.exportAccountData(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/transition'
+        ) {
+            void readJsonBody(request)
+                .then(body => lifecycleService.transitionFromBody(body))
                 .then(result => {
                     writeJson(response, result.statusCode, result.body);
                 })

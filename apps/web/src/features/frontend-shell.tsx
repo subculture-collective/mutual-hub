@@ -23,6 +23,8 @@ import {
     buildFeedViewModel,
     type FeedAidCard,
     type FeedLifecycleAction,
+    type FeedStatusTransition,
+    type LifecycleStatus,
 } from '../feed-ux';
 import {
     buildMapViewModel,
@@ -80,6 +82,7 @@ import {
     fetchSettingsFromApi,
     initiateChatViaApi,
     updateSettingsViaApi,
+    transitionAidPostViaApi,
 } from './api-client';
 import {
     type SettingsPatch,
@@ -980,6 +983,86 @@ const MapRoute = ({
     );
 };
 
+const LIFECYCLE_STATUS_LABELS: Record<string, string> = {
+    open: 'Open',
+    triaged: 'Triaged',
+    assigned: 'Assigned',
+    in_progress: 'In Progress',
+    resolved: 'Resolved',
+    archived: 'Archived',
+};
+
+const LIFECYCLE_STATUS_TONES: Record<
+    string,
+    'neutral' | 'info' | 'success' | 'danger'
+> = {
+    open: 'danger',
+    triaged: 'info',
+    assigned: 'info',
+    in_progress: 'info',
+    resolved: 'success',
+    archived: 'neutral',
+};
+
+interface StatusTimelineProps {
+    timeline: readonly FeedStatusTransition[];
+}
+
+const StatusTimeline = ({ timeline }: StatusTimelineProps) => {
+    if (timeline.length === 0) {
+        return (
+            <p className='text-xs text-mh-textSoft'>
+                No lifecycle transitions recorded yet.
+            </p>
+        );
+    }
+
+    return (
+        <ol className='space-y-2'>
+            {timeline.map((entry, index) => (
+                <li
+                    key={`${entry.timestamp}-${index}`}
+                    className='flex items-start gap-3 border-l-2 border-mh-borderSoft pl-3'
+                >
+                    <div className='flex-1'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                            <Badge
+                                tone={
+                                    LIFECYCLE_STATUS_TONES[entry.from] ??
+                                    'neutral'
+                                }
+                            >
+                                {LIFECYCLE_STATUS_LABELS[entry.from] ??
+                                    entry.from}
+                            </Badge>
+                            <span className='text-xs text-mh-textSoft'>
+                                {'->'}
+                            </span>
+                            <Badge
+                                tone={
+                                    LIFECYCLE_STATUS_TONES[entry.to] ??
+                                    'neutral'
+                                }
+                            >
+                                {LIFECYCLE_STATUS_LABELS[entry.to] ?? entry.to}
+                            </Badge>
+                        </div>
+                        <p className='mt-1 text-xs text-mh-textSoft'>
+                            {entry.actorRole} ({entry.actorDid}) at{' '}
+                            {new Date(entry.timestamp).toLocaleString()}
+                        </p>
+                        {entry.reason ?
+                            <p className='mt-1 text-xs text-mh-textMuted'>
+                                Reason: {entry.reason}
+                            </p>
+                        :   null}
+                    </div>
+                </li>
+            ))}
+        </ol>
+    );
+};
+
 interface FeedRouteProps {
     discoveryState: DiscoveryFilterState;
     onPatchDiscovery: (patch: Partial<DiscoveryFilterState>) => void;
@@ -991,6 +1074,11 @@ interface FeedRouteProps {
     onOpenChat: (record: FeedRecordEnvelope, surface: ChatEntrySurface) => void;
     onUpdateCard: (id: string, patch: Partial<Omit<FeedAidCard, 'id'>>) => void;
     onCloseCard: (id: string) => void;
+    onTransition?: (
+        id: string,
+        postUri: string,
+        targetStatus: LifecycleStatus,
+    ) => void;
 }
 
 const FeedRoute = ({
@@ -1004,7 +1092,11 @@ const FeedRoute = ({
     onOpenChat,
     onUpdateCard,
     onCloseCard,
+    onTransition,
 }: FeedRouteProps) => {
+    const [expandedTimelineId, setExpandedTimelineId] = useState<
+        string | undefined
+    >();
     const cards = useMemo(
         () => feedRecords.map(record => record.card),
         [feedRecords],
@@ -1151,6 +1243,21 @@ const FeedRoute = ({
                                                                 .label
                                                         }
                                                     </Badge>
+                                                    {presentation.lifecycleBadge ?
+                                                        <Badge
+                                                            tone={
+                                                                presentation
+                                                                    .lifecycleBadge
+                                                                    .tone
+                                                            }
+                                                        >
+                                                            {
+                                                                presentation
+                                                                    .lifecycleBadge
+                                                                    .label
+                                                            }
+                                                        </Badge>
+                                                    :   null}
                                                 </>
                                             :   null}
                                         </div>
@@ -1165,6 +1272,42 @@ const FeedRoute = ({
                                             card.updatedAt,
                                         ).toLocaleString()}
                                     </p>
+
+                                    {/* Lifecycle transition actions */}
+                                    {presentation &&
+                                    presentation.transitionActions
+                                        .length > 0 &&
+                                    onTransition &&
+                                    record ?
+                                        <div className='mt-3 flex flex-wrap gap-2'>
+                                            <span className='text-xs font-bold uppercase tracking-[0.12em] text-mh-textMuted'>
+                                                Lifecycle:
+                                            </span>
+                                            {presentation.transitionActions.map(
+                                                action => (
+                                                    <Button
+                                                        key={
+                                                            action.targetStatus
+                                                        }
+                                                        variant='neutral'
+                                                        className='px-3 py-1 text-xs'
+                                                        aria-label={
+                                                            action.ariaLabel
+                                                        }
+                                                        onClick={() =>
+                                                            onTransition(
+                                                                card.id,
+                                                                record.aidPostUri,
+                                                                action.targetStatus,
+                                                            )
+                                                        }
+                                                    >
+                                                        {action.label}
+                                                    </Button>
+                                                ),
+                                            )}
+                                        </div>
+                                    :   null}
 
                                     <div className='mt-4 flex flex-wrap gap-2'>
                                         {record ?
@@ -1203,7 +1346,41 @@ const FeedRoute = ({
                                         >
                                             Close request
                                         </Button>
+
+                                        {/* Timeline toggle */}
+                                        {card.timeline &&
+                                        card.timeline.length > 0 ?
+                                            <Button
+                                                variant='neutral'
+                                                className='px-3 py-1 text-xs'
+                                                onClick={() =>
+                                                    setExpandedTimelineId(
+                                                        current =>
+                                                            current === card.id ?
+                                                                undefined
+                                                            :   card.id,
+                                                    )
+                                                }
+                                            >
+                                                {expandedTimelineId === card.id ?
+                                                    'Hide timeline'
+                                                :   `Timeline (${card.timeline.length})`}
+                                            </Button>
+                                        :   null}
                                     </div>
+
+                                    {/* Expanded timeline panel */}
+                                    {expandedTimelineId === card.id &&
+                                    card.timeline ?
+                                        <div className='mt-4 border-t-2 border-mh-borderSoft pt-4'>
+                                            <p className='mb-3 text-xs font-bold uppercase tracking-[0.12em] text-mh-textMuted'>
+                                                Audit timeline
+                                            </p>
+                                            <StatusTimeline
+                                                timeline={card.timeline}
+                                            />
+                                        </div>
+                                    :   null}
                                 </li>
                             );
                         })}
@@ -3261,6 +3438,25 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
                         action: 'close',
                         id,
                         closedAt: nowIso(),
+                    });
+                }}
+                onTransition={(id, postUri, targetStatus) => {
+                    void transitionAidPostViaApi({
+                        postUri,
+                        targetStatus,
+                        actorDid: currentUserDid,
+                        actorRole: 'coordinator',
+                        now: nowIso(),
+                    }).then(result => {
+                        if (result.ok) {
+                            applyLifecycleAction({
+                                action: 'transition',
+                                id,
+                                targetStatus,
+                                actorDid: currentUserDid,
+                                actorRole: 'coordinator',
+                            });
+                        }
                     });
                 }}
             />

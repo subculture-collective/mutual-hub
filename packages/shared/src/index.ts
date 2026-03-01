@@ -18,3 +18,4 @@ export * from './volunteer-onboarding.js';
 export * from './moderation.js';
 export * from './privacy.js';
 export * from './settings.js';
+export * from './lifecycle.js';

@@ -7,12 +7,37 @@ import {
 } from './discovery-filters.js';
 import { haversineDistanceMeters } from './geo-utils.js';
 
+/**
+ * Canonical lifecycle statuses from the lifecycle state machine.
+ * These map to the RequestStatus type in packages/shared/src/lifecycle.ts.
+ */
+export type LifecycleStatus =
+    | 'open'
+    | 'triaged'
+    | 'assigned'
+    | 'in_progress'
+    | 'resolved'
+    | 'archived';
+
+/**
+ * A recorded status transition in the audit timeline.
+ */
+export interface FeedStatusTransition {
+    from: LifecycleStatus;
+    to: LifecycleStatus;
+    actorDid: string;
+    actorRole: string;
+    timestamp: string;
+    reason?: string;
+}
+
 export interface FeedAidCard {
     id: string;
     title: string;
     description: string;
     category: AidCategory;
     status: AidStatus;
+    lifecycleStatus?: LifecycleStatus;
     urgency: 1 | 2 | 3 | 4 | 5;
     accessibilityTags: string[];
     createdAt: string;
@@ -21,6 +46,7 @@ export interface FeedAidCard {
         lat: number;
         lng: number;
     };
+    timeline?: FeedStatusTransition[];
 }
 
 export interface FeedBadge {
@@ -28,12 +54,21 @@ export interface FeedBadge {
     tone: 'neutral' | 'info' | 'success' | 'danger';
 }
 
+export interface FeedTransitionAction {
+    targetStatus: LifecycleStatus;
+    label: string;
+    ariaLabel: string;
+}
+
 export interface FeedCardPresentation {
     id: string;
     urgencyBadge: FeedBadge;
     statusBadge: FeedBadge;
+    lifecycleBadge?: FeedBadge;
     canEdit: boolean;
     canClose: boolean;
+    transitionActions: FeedTransitionAction[];
+    timelineEntryCount: number;
 }
 
 export interface FeedViewModel {
@@ -49,7 +84,15 @@ export type FeedLifecycleAction =
           id: string;
           patch: Partial<Omit<FeedAidCard, 'id'>>;
       }
-    | { action: 'close'; id: string; closedAt?: string };
+    | { action: 'close'; id: string; closedAt?: string }
+    | {
+          action: 'transition';
+          id: string;
+          targetStatus: LifecycleStatus;
+          actorDid: string;
+          actorRole: string;
+          reason?: string;
+      };
 
 const cardMatchesText = (card: FeedAidCard, text: string): boolean => {
     const fragments = [
@@ -90,6 +133,67 @@ const toStatusBadge = (status: AidStatus): FeedBadge => {
     return { label: 'Closed', tone: 'neutral' };
 };
 
+const LIFECYCLE_BADGE_MAP: Record<LifecycleStatus, FeedBadge> = {
+    open: { label: 'Open', tone: 'danger' },
+    triaged: { label: 'Triaged', tone: 'info' },
+    assigned: { label: 'Assigned', tone: 'info' },
+    in_progress: { label: 'In Progress', tone: 'info' },
+    resolved: { label: 'Resolved', tone: 'success' },
+    archived: { label: 'Archived', tone: 'neutral' },
+};
+
+const toLifecycleBadge = (
+    lifecycleStatus: LifecycleStatus | undefined,
+): FeedBadge | undefined => {
+    if (!lifecycleStatus) {
+        return undefined;
+    }
+    return LIFECYCLE_BADGE_MAP[lifecycleStatus];
+};
+
+/**
+ * Build the set of transition actions available for a card based on its
+ * lifecycle status. This is a simplified version that shows common transitions;
+ * the full role-aware check is done server-side.
+ */
+const LIFECYCLE_TRANSITION_LABELS: Partial<
+    Record<LifecycleStatus, Array<{ target: LifecycleStatus; label: string }>>
+> = {
+    open: [
+        { target: 'triaged', label: 'Triage' },
+        { target: 'resolved', label: 'Resolve' },
+    ],
+    triaged: [
+        { target: 'assigned', label: 'Assign' },
+        { target: 'resolved', label: 'Resolve' },
+    ],
+    assigned: [
+        { target: 'in_progress', label: 'Start work' },
+        { target: 'resolved', label: 'Resolve' },
+    ],
+    in_progress: [
+        { target: 'resolved', label: 'Resolve' },
+        { target: 'assigned', label: 'Reassign' },
+    ],
+    resolved: [{ target: 'archived', label: 'Archive' }],
+};
+
+const buildTransitionActions = (
+    card: FeedAidCard,
+): FeedTransitionAction[] => {
+    const status = card.lifecycleStatus;
+    if (!status) {
+        return [];
+    }
+
+    const transitions = LIFECYCLE_TRANSITION_LABELS[status] ?? [];
+    return transitions.map(({ target, label }) => ({
+        targetStatus: target,
+        label,
+        ariaLabel: `${label} request "${card.title}"`,
+    }));
+};
+
 const byUpdatedAtDesc = (left: FeedAidCard, right: FeedAidCard): number => {
     const leftMs = Date.parse(left.updatedAt);
     const rightMs = Date.parse(right.updatedAt);
@@ -108,8 +212,11 @@ const toPresentation = (card: FeedAidCard): FeedCardPresentation => {
         id: card.id,
         urgencyBadge: toUrgencyBadge(card.urgency),
         statusBadge: toStatusBadge(card.status),
-        canEdit: card.status !== 'closed',
-        canClose: card.status !== 'closed',
+        lifecycleBadge: toLifecycleBadge(card.lifecycleStatus),
+        canEdit: card.status !== 'closed' && card.lifecycleStatus !== 'archived',
+        canClose: card.status !== 'closed' && card.lifecycleStatus !== 'archived',
+        transitionActions: buildTransitionActions(card),
+        timelineEntryCount: card.timeline?.length ?? 0,
     };
 };
 
@@ -192,6 +299,26 @@ export function buildFeedViewModel(
     };
 }
 
+/**
+ * Map a lifecycle status to the legacy AidStatus for backward compatibility.
+ */
+const lifecycleToAidStatus = (
+    lifecycleStatus: LifecycleStatus,
+): AidStatus => {
+    switch (lifecycleStatus) {
+        case 'open':
+            return 'open';
+        case 'triaged':
+        case 'assigned':
+        case 'in_progress':
+            return 'in-progress';
+        case 'resolved':
+            return 'resolved';
+        case 'archived':
+            return 'closed';
+    }
+};
+
 export function applyFeedLifecycleAction(
     cards: readonly FeedAidCard[],
     input: FeedLifecycleAction,
@@ -204,6 +331,32 @@ export function applyFeedLifecycleAction(
         return cards.map(card =>
             card.id === input.id ? { ...card, ...input.patch, id: card.id } : card,
         );
+    }
+
+    if (input.action === 'transition') {
+        const now = new Date().toISOString();
+        return cards.map(card => {
+            if (card.id !== input.id) {
+                return card;
+            }
+
+            const transitionEntry: FeedStatusTransition = {
+                from: card.lifecycleStatus ?? 'open',
+                to: input.targetStatus,
+                actorDid: input.actorDid,
+                actorRole: input.actorRole,
+                timestamp: now,
+                reason: input.reason,
+            };
+
+            return {
+                ...card,
+                lifecycleStatus: input.targetStatus,
+                status: lifecycleToAidStatus(input.targetStatus),
+                updatedAt: now,
+                timeline: [...(card.timeline ?? []), transitionEntry],
+            };
+        });
     }
 
     const closedAt = input.closedAt ?? new Date().toISOString();

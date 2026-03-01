@@ -17,12 +17,24 @@ export interface MapAidLocation {
     areaLabel?: string;
 }
 
+/**
+ * Canonical lifecycle statuses from the lifecycle state machine.
+ */
+export type MapLifecycleStatus =
+    | 'open'
+    | 'triaged'
+    | 'assigned'
+    | 'in_progress'
+    | 'resolved'
+    | 'archived';
+
 export interface MapAidCard {
     id: string;
     title: string;
     summary: string;
     category: AidCategory;
     status: AidStatus;
+    lifecycleStatus?: MapLifecycleStatus;
     urgency: 1 | 2 | 3 | 4 | 5;
     updatedAt: string;
     location?: MapAidLocation;
@@ -36,6 +48,7 @@ export interface ApproximateMapMarker {
     label: string;
     urgency: MapAidCard['urgency'];
     status: MapAidCard['status'];
+    lifecycleStatus?: MapLifecycleStatus;
 }
 
 export interface MapCluster {
@@ -53,7 +66,12 @@ export interface MapCluster {
 export type MapTriageAction =
     | 'contact_helper'
     | 'mark_in_progress'
-    | 'mark_resolved';
+    | 'mark_resolved'
+    | 'transition_triaged'
+    | 'transition_assigned'
+    | 'transition_in_progress'
+    | 'transition_resolved'
+    | 'transition_archived';
 
 export interface MapDetailDrawerAction {
     action: MapTriageAction;
@@ -67,6 +85,7 @@ export interface MapDetailDrawerModel {
     title?: string;
     summary?: string;
     status?: AidStatus;
+    lifecycleStatus?: MapLifecycleStatus;
     primaryCtaLabel?: string;
     primaryCtaAriaLabel?: string;
     actions: MapDetailDrawerAction[];
@@ -151,6 +170,7 @@ export function toApproximateMapMarker(
         label: card.location.areaLabel ?? card.category,
         urgency: card.urgency,
         status: card.status,
+        lifecycleStatus: card.lifecycleStatus,
     };
 }
 
@@ -259,6 +279,35 @@ export function buildMapViewModel(
     };
 }
 
+/**
+ * Lifecycle transition actions available from the map detail drawer,
+ * based on the current lifecycle status.
+ */
+const LIFECYCLE_DRAWER_TRANSITIONS: Partial<
+    Record<
+        MapLifecycleStatus,
+        Array<{ action: MapTriageAction; label: string }>
+    >
+> = {
+    open: [
+        { action: 'transition_triaged', label: 'Triage' },
+        { action: 'transition_resolved', label: 'Resolve' },
+    ],
+    triaged: [
+        { action: 'transition_assigned', label: 'Assign' },
+        { action: 'transition_resolved', label: 'Resolve' },
+    ],
+    assigned: [
+        { action: 'transition_in_progress', label: 'Start work' },
+        { action: 'transition_resolved', label: 'Resolve' },
+    ],
+    in_progress: [
+        { action: 'transition_resolved', label: 'Resolve' },
+        { action: 'transition_assigned', label: 'Reassign' },
+    ],
+    resolved: [{ action: 'transition_archived', label: 'Archive' }],
+};
+
 export function openMapDetailDrawer(
     cards: readonly MapAidCard[],
     selectedPostId: string,
@@ -276,6 +325,7 @@ export function openMapDetailDrawer(
         },
     ];
 
+    // Legacy triage actions (backward compatible)
     if (selected.status === 'open') {
         actions.push({
             action: 'mark_in_progress',
@@ -297,12 +347,26 @@ export function openMapDetailDrawer(
         });
     }
 
+    // Lifecycle state machine transition actions
+    if (selected.lifecycleStatus) {
+        const lifecycleTransitions =
+            LIFECYCLE_DRAWER_TRANSITIONS[selected.lifecycleStatus] ?? [];
+        for (const { action, label } of lifecycleTransitions) {
+            actions.push({
+                action,
+                label,
+                ariaLabel: `${label} request "${selected.title}"`,
+            });
+        }
+    }
+
     return {
         open: true,
         selectedPostId: selected.id,
         title: selected.title,
         summary: selected.summary,
         status: selected.status,
+        lifecycleStatus: selected.lifecycleStatus,
         primaryCtaLabel: 'Contact helper',
         primaryCtaAriaLabel: `Contact helper for ${selected.title}`,
         actions,
