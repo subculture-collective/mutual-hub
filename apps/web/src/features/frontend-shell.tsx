@@ -70,10 +70,31 @@ import { TextLink } from '../components/TextLink';
 import {
     type ApiDataOrigin,
     createAidPostViaApi,
+    deactivateAccountViaApi,
+    exportDataViaApi,
     fetchDirectoryCardsFromApi,
     fetchFeedRecordsFromApi,
+    fetchSettingsAuditFromApi,
+    fetchSettingsFromApi,
     initiateChatViaApi,
+    updateSettingsViaApi,
 } from './api-client';
+import {
+    type SettingsPatch,
+    type SettingsSection,
+    applySettingsPatch,
+    defaultSettingsViewModel,
+    isSettingsDirty,
+    settingsSectionDescriptions,
+    settingsSectionLabels,
+    settingsSections,
+    validateSettings,
+} from '../settings-ux';
+import {
+    type UserSettings,
+    geoSharingPrecisions,
+    privacyLevels,
+} from '@patchwork/shared';
 import {
     defaultDiscoveryCenter,
     defaultVolunteerDraft,
@@ -90,6 +111,7 @@ const appRoutes = [
     '/volunteer',
     '/posting',
     '/chat',
+    '/settings',
 ] as const;
 
 type AppRoute = (typeof appRoutes)[number];
@@ -106,6 +128,7 @@ const routeLabels: Readonly<Record<AppRoute, string>> = {
     '/volunteer': 'Volunteer',
     '/posting': 'Posting',
     '/chat': 'Chat',
+    '/settings': 'Settings',
 };
 
 const resourceCategoryOptions: readonly DirectoryResourceCategory[] = [
@@ -2355,6 +2378,522 @@ const ChatRoute = ({
     );
 };
 
+interface SettingsRouteProps {
+    currentUserDid: string;
+}
+
+const SettingsRoute = ({ currentUserDid }: SettingsRouteProps) => {
+    const [settings, setSettings] = useState<UserSettings>(
+        defaultSettingsViewModel.settings,
+    );
+    const [savedSettings, setSavedSettings] = useState<UserSettings>(
+        defaultSettingsViewModel.settings,
+    );
+    const [activeSection, setActiveSection] =
+        useState<SettingsSection>('privacy');
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string>();
+    const [saveSuccess, setSaveSuccess] = useState<string>();
+    const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+    const [auditEntries, setAuditEntries] = useState<
+        readonly { field: string; oldValue: unknown; newValue: unknown; timestamp: string; actor: string }[]
+    >([]);
+    const [isLoadingAudit, setIsLoadingAudit] = useState(false);
+    const [accountActionResult, setAccountActionResult] = useState<string>();
+
+    const dirty = useMemo(
+        () => isSettingsDirty(settings, savedSettings),
+        [settings, savedSettings],
+    );
+
+    useEffect(() => {
+        const controller = new AbortController();
+        setIsLoadingSettings(true);
+
+        void fetchSettingsFromApi(currentUserDid, controller.signal)
+            .then(result => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+                if (result.ok) {
+                    setSettings(result.data.settings);
+                    setSavedSettings(result.data.settings);
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setIsLoadingSettings(false);
+                }
+            });
+
+        return () => {
+            controller.abort();
+        };
+    }, [currentUserDid]);
+
+    const handlePatch = (patch: SettingsPatch) => {
+        setSettings(current => applySettingsPatch(current, patch));
+        setSaveSuccess(undefined);
+        setSaveError(undefined);
+    };
+
+    const handleSave = async () => {
+        const validation = validateSettings(settings);
+        if (!validation.ok) {
+            setSaveError(validation.errors.join('; '));
+            return;
+        }
+
+        setIsSaving(true);
+        setSaveError(undefined);
+        setSaveSuccess(undefined);
+
+        const result = await updateSettingsViaApi(currentUserDid, settings);
+        setIsSaving(false);
+
+        if (!result.ok) {
+            setSaveError(result.error);
+            return;
+        }
+
+        setSavedSettings(result.data.settings);
+        setSettings(result.data.settings);
+        setSaveSuccess(
+            `Settings saved. ${result.data.changesRecorded} change(s) recorded.`,
+        );
+    };
+
+    const handleCancel = () => {
+        setSettings(savedSettings);
+        setSaveError(undefined);
+        setSaveSuccess(undefined);
+    };
+
+    const handleLoadAudit = async () => {
+        setIsLoadingAudit(true);
+        const result = await fetchSettingsAuditFromApi(currentUserDid);
+        setIsLoadingAudit(false);
+
+        if (result.ok) {
+            setAuditEntries(result.data.entries);
+        }
+    };
+
+    const handleDeactivate = async () => {
+        setAccountActionResult(undefined);
+        const result = await deactivateAccountViaApi(
+            currentUserDid,
+            'User-initiated deactivation',
+        );
+
+        if (result.ok) {
+            setAccountActionResult(result.data.message);
+        } else {
+            setAccountActionResult(`Error: ${result.error}`);
+        }
+    };
+
+    const handleExport = async () => {
+        setAccountActionResult(undefined);
+        const result = await exportDataViaApi(
+            currentUserDid,
+            'User-initiated export',
+        );
+
+        if (result.ok) {
+            setAccountActionResult(result.data.message);
+        } else {
+            setAccountActionResult(`Error: ${result.error}`);
+        }
+    };
+
+    return (
+        <section className='space-y-6'>
+            <header className='border-b-2 border-mh-border pb-4'>
+                <h1 className='font-heading text-3xl font-black uppercase tracking-tight sm:text-4xl'>
+                    Account settings
+                </h1>
+                <p className='mt-2 text-sm text-mh-textMuted'>
+                    Privacy controls, contact preferences, notifications, and
+                    account management.
+                </p>
+                {dirty ?
+                    <div className='mt-3'>
+                        <Badge tone='info'>Unsaved changes</Badge>
+                    </div>
+                :   null}
+            </header>
+
+            {/* Section tabs */}
+            <div className='flex flex-wrap gap-2'>
+                {settingsSections.map(section => (
+                    <Button
+                        key={section}
+                        variant={
+                            activeSection === section ? 'secondary' : 'neutral'
+                        }
+                        className='px-3 py-1 text-xs'
+                        onClick={() => setActiveSection(section)}
+                    >
+                        {settingsSectionLabels[section]}
+                    </Button>
+                ))}
+            </div>
+
+            <p className='text-sm text-mh-textMuted'>
+                {settingsSectionDescriptions[activeSection]}
+            </p>
+
+            {isLoadingSettings ?
+                <Panel title='Loading settings'>
+                    <div className='space-y-3'>
+                        <div className='mh-skeleton h-4 w-3/4' />
+                        <div className='mh-skeleton h-4 w-1/2' />
+                        <div className='mh-skeleton h-4 w-2/3' />
+                    </div>
+                </Panel>
+            :   null}
+
+            {/* Privacy section */}
+            {!isLoadingSettings && activeSection === 'privacy' ?
+                <Panel title='Privacy controls'>
+                    <div className='space-y-4'>
+                        <div>
+                            <p className='mb-2 text-xs font-bold uppercase tracking-[0.12em] text-mh-text'>
+                                Privacy level
+                            </p>
+                            <div className='flex flex-wrap gap-2'>
+                                {privacyLevels.map(level => (
+                                    <Button
+                                        key={level}
+                                        variant={
+                                            settings.privacyLevel === level ?
+                                                'secondary'
+                                            :   'neutral'
+                                        }
+                                        className='px-3 py-1 text-xs'
+                                        onClick={() =>
+                                            handlePatch({
+                                                section: 'privacy',
+                                                field: 'privacyLevel',
+                                                value: level,
+                                            })
+                                        }
+                                    >
+                                        {formatCategoryLabel(level)}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                                <input
+                                    type='checkbox'
+                                    className='h-4 w-4'
+                                    checked={settings.geoSharingEnabled}
+                                    onChange={event =>
+                                        handlePatch({
+                                            section: 'privacy',
+                                            field: 'geoSharingEnabled',
+                                            value: event.target.checked,
+                                        })
+                                    }
+                                />
+                                Enable geo-sharing
+                            </label>
+                        </div>
+
+                        <div>
+                            <p className='mb-2 text-xs font-bold uppercase tracking-[0.12em] text-mh-text'>
+                                Geo-sharing precision
+                            </p>
+                            <div className='flex flex-wrap gap-2'>
+                                {geoSharingPrecisions.map(precision => (
+                                    <Button
+                                        key={precision}
+                                        variant={
+                                            settings.geoSharingPrecision ===
+                                            precision ?
+                                                'secondary'
+                                            :   'neutral'
+                                        }
+                                        className='px-3 py-1 text-xs'
+                                        onClick={() =>
+                                            handlePatch({
+                                                section: 'privacy',
+                                                field: 'geoSharingPrecision',
+                                                value: precision,
+                                            })
+                                        }
+                                    >
+                                        {formatCategoryLabel(precision)}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </Panel>
+            :   null}
+
+            {/* Contact section */}
+            {!isLoadingSettings && activeSection === 'contact' ?
+                <Panel title='Contact preferences'>
+                    <div className='space-y-3'>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={
+                                    settings.contactPreferences
+                                        .allowDirectMessages
+                                }
+                                onChange={event =>
+                                    handlePatch({
+                                        section: 'contact',
+                                        field: 'allowDirectMessages',
+                                        value: event.target.checked,
+                                    })
+                                }
+                            />
+                            Allow direct messages
+                        </label>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={settings.contactPreferences.showEmail}
+                                onChange={event =>
+                                    handlePatch({
+                                        section: 'contact',
+                                        field: 'showEmail',
+                                        value: event.target.checked,
+                                    })
+                                }
+                            />
+                            Show email on profile
+                        </label>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={settings.contactPreferences.showPhone}
+                                onChange={event =>
+                                    handlePatch({
+                                        section: 'contact',
+                                        field: 'showPhone',
+                                        value: event.target.checked,
+                                    })
+                                }
+                            />
+                            Show phone on profile
+                        </label>
+                    </div>
+                </Panel>
+            :   null}
+
+            {/* Notifications section */}
+            {!isLoadingSettings && activeSection === 'notifications' ?
+                <Panel title='Notification preferences'>
+                    <div className='space-y-3'>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={
+                                    settings.notificationPreferences
+                                        .aidRequestUpdates
+                                }
+                                onChange={event =>
+                                    handlePatch({
+                                        section: 'notifications',
+                                        field: 'aidRequestUpdates',
+                                        value: event.target.checked,
+                                    })
+                                }
+                            />
+                            Aid request updates
+                        </label>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={
+                                    settings.notificationPreferences
+                                        .chatMessages
+                                }
+                                onChange={event =>
+                                    handlePatch({
+                                        section: 'notifications',
+                                        field: 'chatMessages',
+                                        value: event.target.checked,
+                                    })
+                                }
+                            />
+                            Chat messages
+                        </label>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={
+                                    settings.notificationPreferences
+                                        .volunteerMatches
+                                }
+                                onChange={event =>
+                                    handlePatch({
+                                        section: 'notifications',
+                                        field: 'volunteerMatches',
+                                        value: event.target.checked,
+                                    })
+                                }
+                            />
+                            Volunteer matches
+                        </label>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={
+                                    settings.notificationPreferences
+                                        .systemAnnouncements
+                                }
+                                onChange={event =>
+                                    handlePatch({
+                                        section: 'notifications',
+                                        field: 'systemAnnouncements',
+                                        value: event.target.checked,
+                                    })
+                                }
+                            />
+                            System announcements
+                        </label>
+                    </div>
+                </Panel>
+            :   null}
+
+            {/* Account section */}
+            {!isLoadingSettings && activeSection === 'account' ?
+                <Panel title='Account management'>
+                    <div className='space-y-4'>
+                        <Card title='Data export'>
+                            <p className='text-sm text-mh-textMuted'>
+                                Request a full export of your account data
+                                including aid posts, conversations, and profile
+                                information.
+                            </p>
+                            <div className='mt-3'>
+                                <Button
+                                    variant='secondary'
+                                    className='px-3 py-1 text-xs'
+                                    onClick={handleExport}
+                                >
+                                    Request data export
+                                </Button>
+                            </div>
+                        </Card>
+
+                        <Card title='Account deactivation'>
+                            <p className='text-sm text-mh-textMuted'>
+                                Deactivating your account will hide your profile
+                                and all posts. This can be reversed within 30
+                                days.
+                            </p>
+                            <div className='mt-3'>
+                                <Button
+                                    variant='neutral'
+                                    className='px-3 py-1 text-xs'
+                                    onClick={handleDeactivate}
+                                >
+                                    Deactivate account
+                                </Button>
+                            </div>
+                        </Card>
+
+                        {accountActionResult ?
+                            <p className='rounded-none border-2 border-mh-border bg-mh-surfaceElev px-3 py-2 text-xs font-bold text-mh-success'>
+                                {accountActionResult}
+                            </p>
+                        :   null}
+
+                        <Card title='Audit trail'>
+                            <p className='text-sm text-mh-textMuted'>
+                                View a log of all settings changes made to your
+                                account.
+                            </p>
+                            <div className='mt-3'>
+                                <Button
+                                    variant='neutral'
+                                    className='px-3 py-1 text-xs'
+                                    onClick={handleLoadAudit}
+                                    disabled={isLoadingAudit}
+                                >
+                                    {isLoadingAudit ?
+                                        'Loading...'
+                                    :   'Load audit trail'}
+                                </Button>
+                            </div>
+
+                            {auditEntries.length > 0 ?
+                                <ul className='mt-3 space-y-2'>
+                                    {auditEntries.map((entry, index) => (
+                                        <li
+                                            key={`audit-${index}-${entry.field}`}
+                                            className='rounded-none border-2 border-mh-borderSoft bg-mh-surfaceElev p-2 text-xs'
+                                        >
+                                            <p className='font-bold text-mh-text'>
+                                                {entry.field}
+                                            </p>
+                                            <p className='text-mh-textSoft'>
+                                                {String(entry.oldValue)} →{' '}
+                                                {String(entry.newValue)}
+                                            </p>
+                                            <p className='text-mh-textSoft'>
+                                                {new Date(
+                                                    entry.timestamp,
+                                                ).toLocaleString()}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            :   null}
+                        </Card>
+                    </div>
+                </Panel>
+            :   null}
+
+            {/* Save / Cancel bar */}
+            {!isLoadingSettings && activeSection !== 'account' ?
+                <div className='flex flex-wrap items-center gap-3'>
+                    <Button
+                        onClick={handleSave}
+                        disabled={!dirty || isSaving}
+                    >
+                        {isSaving ? 'Saving...' : 'Save settings'}
+                    </Button>
+                    <Button
+                        variant='neutral'
+                        onClick={handleCancel}
+                        disabled={!dirty}
+                    >
+                        Cancel
+                    </Button>
+                    {saveError ?
+                        <p className='mh-alert text-xs font-bold'>
+                            {saveError}
+                        </p>
+                    :   null}
+                    {saveSuccess ?
+                        <p className='text-xs font-bold text-mh-success'>
+                            {saveSuccess}
+                        </p>
+                    :   null}
+                </div>
+            :   null}
+        </section>
+    );
+};
+
 export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
     const [currentRoute, setCurrentRoute] = useState<AppRoute>(() =>
         readCurrentRoute(),
@@ -2728,6 +3267,8 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
                 onLaunch={launchChat}
                 onReset={resetChat}
             />
+        : currentRoute === '/settings' ?
+            <SettingsRoute currentUserDid={currentUserDid} />
         :   <DashboardRoute
                 appTitle={appTitle}
                 onNavigate={navigate}
