@@ -16,9 +16,6 @@ services:
             - patchwork-postgres-data:/var/lib/postgresql/data
         networks:
             internal:
-            web:
-                aliases:
-                    - patchwork-postgres
 
     patchwork-api:
         build:
