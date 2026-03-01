@@ -66,8 +66,61 @@ export interface ModerationPolicyAuditEntry {
     action: ModerationPolicyAction;
     reason: string;
     occurredAt: string;
+    idempotencyKey: string;
     previousState: ModerationAuditStateSnapshot;
     nextState: ModerationAuditStateSnapshot;
+}
+
+/** Durable queue store interface for moderation queue items. */
+export interface ModerationQueueStore {
+    /** Persist or update a queue item (upsert by subjectUri). */
+    enqueue(item: ModerationQueueItem): void;
+    /** Retrieve a queue item by subjectUri, or null if not found. */
+    dequeue(subjectUri: string): ModerationQueueItem | null;
+    /** Peek at a queue item without removing it. */
+    peek(subjectUri: string): ModerationQueueItem | null;
+    /** Acknowledge processing of a queue item (mark resolved). */
+    ack(subjectUri: string): void;
+    /** Negative-acknowledge: re-queue a previously dequeued item. */
+    nack(subjectUri: string): void;
+    /** List all pending (queued) items. */
+    listPending(): ModerationQueueItem[];
+    /** List items matching optional filters. */
+    listAll(filters?: {
+        queueStatus?: ModerationQueueStatus;
+        visibility?: ModerationVisibilityState;
+        appealState?: ModerationAppealState;
+    }): ModerationQueueItem[];
+}
+
+/** Audit record stored by the durable audit store. */
+export interface ModerationAuditRecord {
+    actionId: string;
+    queueId: string;
+    subjectUri: string;
+    actorDid: string;
+    action: ModerationPolicyAction;
+    reason: string;
+    occurredAt: string;
+    idempotencyKey: string;
+    previousState: ModerationAuditStateSnapshot;
+    nextState: ModerationAuditStateSnapshot;
+}
+
+/** Durable audit store interface for moderation audit trail. */
+export interface ModerationAuditStore {
+    /** Record a policy action with idempotency enforcement. */
+    recordAction(record: ModerationAuditRecord): void;
+    /** Get the full audit trail for a given subjectUri. */
+    getAuditTrail(subjectUri: string): ModerationAuditRecord[];
+    /** Get all audit records, optionally filtered. */
+    getActions(filter?: {
+        subjectUri?: string;
+        action?: ModerationPolicyAction;
+        actorDid?: string;
+    }): ModerationAuditRecord[];
+    /** Check if an action with the given idempotency key already exists. */
+    findByIdempotencyKey(key: string): ModerationAuditRecord | null;
 }
 
 export interface EnqueueModerationReviewInput {
@@ -83,6 +136,7 @@ export interface ApplyModerationPolicyActionInput {
     action: ModerationPolicyAction;
     reason: string;
     occurredAt?: string;
+    idempotencyKey?: string;
 }
 
 export class ModerationPolicyError extends Error {
@@ -90,7 +144,8 @@ export class ModerationPolicyError extends Error {
         readonly code:
             | 'QUEUE_ITEM_NOT_FOUND'
             | 'INVALID_APPEAL_TRANSITION'
-            | 'INVALID_POLICY_INPUT',
+            | 'INVALID_POLICY_INPUT'
+            | 'IDEMPOTENT_ACTION_EXISTS',
         message: string,
         readonly details?: Record<string, unknown>,
     ) {
@@ -243,9 +298,33 @@ const applyTransition = (
     return next;
 };
 
+export const toIdempotencyKey = (
+    queueId: string,
+    action: ModerationPolicyAction,
+    occurredAt: string,
+    actorDid: string,
+): string => {
+    return createHash('sha256')
+        .update(`idem|${queueId}|${action}|${occurredAt}|${actorDid}`)
+        .digest('hex')
+        .slice(0, 32);
+};
+
+export interface ModerationReviewQueueOptions {
+    queueStore?: ModerationQueueStore;
+    auditStore?: ModerationAuditStore;
+}
+
 export class ModerationReviewQueue {
     private readonly queueBySubject = new Map<string, ModerationQueueItem>();
     private readonly auditTrail: ModerationPolicyAuditEntry[] = [];
+    private readonly queueStore: ModerationQueueStore | null;
+    private readonly auditStore: ModerationAuditStore | null;
+
+    constructor(options?: ModerationReviewQueueOptions) {
+        this.queueStore = options?.queueStore ?? null;
+        this.auditStore = options?.auditStore ?? null;
+    }
 
     enqueueReview(input: EnqueueModerationReviewInput): ModerationQueueItem {
         const subjectUri = atUriSchema.parse(input.subjectUri);
@@ -262,7 +341,10 @@ export class ModerationReviewQueue {
             input.requestedAt ?? new Date().toISOString(),
         );
 
-        const existing = this.queueBySubject.get(subjectUri);
+        const existing =
+            this.queueStore?.peek(subjectUri) ??
+            this.queueBySubject.get(subjectUri) ??
+            null;
         if (existing) {
             const next: ModerationQueueItem = {
                 ...existing,
@@ -278,6 +360,7 @@ export class ModerationReviewQueue {
                 context: mergeContext(existing.context, input.context ?? {}),
             };
             this.queueBySubject.set(subjectUri, next);
+            this.queueStore?.enqueue(next);
             return deepClone(next);
         }
 
@@ -298,6 +381,7 @@ export class ModerationReviewQueue {
         };
 
         this.queueBySubject.set(subjectUri, created);
+        this.queueStore?.enqueue(created);
         return deepClone(created);
     }
 
@@ -328,7 +412,10 @@ export class ModerationReviewQueue {
             );
         }
 
-        const current = this.queueBySubject.get(subjectUri);
+        const current =
+            this.queueStore?.peek(subjectUri) ??
+            this.queueBySubject.get(subjectUri) ??
+            null;
         if (!current) {
             throw new ModerationPolicyError(
                 'QUEUE_ITEM_NOT_FOUND',
@@ -340,6 +427,29 @@ export class ModerationReviewQueue {
         const occurredAt = isoDateTimeSchema.parse(
             input.occurredAt ?? new Date().toISOString(),
         );
+
+        const idempotencyKey =
+            input.idempotencyKey ??
+            toIdempotencyKey(current.queueId, input.action, occurredAt, actorDid);
+
+        // Idempotency check: if an action with this key already exists, return current state
+        if (this.auditStore) {
+            const existing = this.auditStore.findByIdempotencyKey(idempotencyKey);
+            if (existing) {
+                const currentItem =
+                    this.queueStore?.peek(subjectUri) ??
+                    this.queueBySubject.get(subjectUri) ??
+                    null;
+                return deepClone(currentItem ?? current);
+            }
+        } else {
+            const existing = this.auditTrail.find(
+                entry => entry.idempotencyKey === idempotencyKey,
+            );
+            if (existing) {
+                return deepClone(current);
+            }
+        }
 
         const previousState: ModerationAuditStateSnapshot = {
             queueStatus: current.queueStatus,
@@ -356,7 +466,9 @@ export class ModerationReviewQueue {
         };
 
         this.queueBySubject.set(subjectUri, updated);
-        this.auditTrail.push({
+        this.queueStore?.enqueue(updated);
+
+        const auditEntry: ModerationPolicyAuditEntry = {
             actionId: toAuditId(
                 updated.queueId,
                 input.action,
@@ -369,8 +481,23 @@ export class ModerationReviewQueue {
             action: input.action,
             reason,
             occurredAt,
+            idempotencyKey,
             previousState,
             nextState,
+        };
+
+        this.auditTrail.push(auditEntry);
+        this.auditStore?.recordAction({
+            actionId: auditEntry.actionId,
+            queueId: auditEntry.queueId,
+            subjectUri: auditEntry.subjectUri,
+            actorDid: auditEntry.actorDid,
+            action: auditEntry.action,
+            reason: auditEntry.reason,
+            occurredAt: auditEntry.occurredAt,
+            idempotencyKey: auditEntry.idempotencyKey,
+            previousState: auditEntry.previousState,
+            nextState: auditEntry.nextState,
         });
 
         return deepClone(updated);
@@ -378,7 +505,10 @@ export class ModerationReviewQueue {
 
     getState(subjectUri: string): ModerationQueueItem | null {
         const normalizedSubjectUri = atUriSchema.parse(subjectUri);
-        const found = this.queueBySubject.get(normalizedSubjectUri);
+        const found =
+            this.queueStore?.peek(normalizedSubjectUri) ??
+            this.queueBySubject.get(normalizedSubjectUri) ??
+            null;
         return found ? deepClone(found) : null;
     }
 
@@ -387,7 +517,12 @@ export class ModerationReviewQueue {
         visibility?: ModerationVisibilityState;
         appealState?: ModerationAppealState;
     }): ModerationQueueItem[] {
-        return [...this.queueBySubject.values()]
+        const items =
+            this.queueStore ?
+                this.queueStore.listAll(filters)
+            :   [...this.queueBySubject.values()];
+
+        return items
             .filter(item => {
                 if (
                     filters?.queueStatus &&
@@ -424,7 +559,14 @@ export class ModerationReviewQueue {
         const normalizedSubjectUri =
             subjectUri ? atUriSchema.parse(subjectUri) : undefined;
 
-        return this.auditTrail
+        const entries =
+            this.auditStore && normalizedSubjectUri ?
+                this.auditStore.getAuditTrail(normalizedSubjectUri)
+            : this.auditStore ?
+                this.auditStore.getActions()
+            :   this.auditTrail;
+
+        return entries
             .filter(entry => {
                 if (!normalizedSubjectUri) {
                     return true;
