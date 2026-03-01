@@ -6,29 +6,52 @@ import {
     loadIndexerConfig,
     type ServiceHealth,
 } from '@patchwork/shared';
-import { createFixtureIndexerPipeline } from './pipeline.js';
+import { PostgresCheckpointStore } from './checkpoint.js';
+import { renderPrometheusRuntimeMetrics } from './metrics.js';
+import { createFixtureIndexerPipeline, IndexerPipeline } from './pipeline.js';
 
 const config = loadIndexerConfig();
-const pipeline = createFixtureIndexerPipeline();
+
+const DATABASE_URL = process.env['DATABASE_URL'] ?? process.env['INDEXER_DATABASE_URL'];
+
+const createPipeline = async (): Promise<IndexerPipeline> => {
+    if (!DATABASE_URL) {
+        console.log('[indexer] no DATABASE_URL — booting in fixture mode');
+        return createFixtureIndexerPipeline();
+    }
+
+    console.log('[indexer] DATABASE_URL detected — booting in persistent mode');
+
+    // Dynamic import of pg to avoid hard dependency in fixture mode
+    const { Pool } = await import('pg');
+    const pool = new Pool({
+        connectionString: DATABASE_URL,
+        max: 5,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 5_000,
+    });
+
+    const checkpointStore = new PostgresCheckpointStore(pool);
+    const pipeline = new IndexerPipeline({
+        checkpointStore,
+        checkpointInterval: 100,
+    });
+
+    const cursor = await pipeline.loadCheckpoint();
+    if (cursor !== null) {
+        console.log(`[indexer] resuming from checkpoint cursor=${cursor}`);
+    } else {
+        console.log('[indexer] no checkpoint found — starting from scratch');
+    }
+
+    return pipeline;
+};
 
 const healthPayload: ServiceHealth = {
     service: 'indexer',
     status: 'ok',
     contractVersion: CONTRACT_VERSION,
     did: config.ATPROTO_SERVICE_DID,
-};
-
-const renderPrometheusMetrics = (): string => {
-    const uptimeSeconds = Math.floor(process.uptime());
-
-    return [
-        '# HELP patchwork_service_up Service health status (1 = up).',
-        '# TYPE patchwork_service_up gauge',
-        'patchwork_service_up{project="patchwork",service="indexer",component="spool"} 1',
-        '# HELP patchwork_process_uptime_seconds Process uptime in seconds.',
-        '# TYPE patchwork_process_uptime_seconds counter',
-        `patchwork_process_uptime_seconds{project="patchwork",service="indexer",component="spool"} ${uptimeSeconds}`,
-    ].join('\n');
 };
 
 const writeJson = (
@@ -46,25 +69,36 @@ interface IndexerRouteResult {
     contentType?: string;
 }
 
-type IndexerRouteHandler = (requestUrl: URL) => IndexerRouteResult;
+type IndexerRouteHandler = (
+    requestUrl: URL,
+) => IndexerRouteResult | Promise<IndexerRouteResult>;
 
-const routeHandlers: Readonly<Record<string, IndexerRouteHandler>> = {
+const createRouteHandlers = (
+    pipeline: IndexerPipeline,
+): Readonly<Record<string, IndexerRouteHandler>> => ({
     '/health': () => ({
         statusCode: 200,
         body: healthPayload,
     }),
-    '/metrics': () => ({
-        statusCode: 200,
-        body: renderPrometheusMetrics(),
-        contentType: 'text/plain; version=0.0.4',
-    }),
-    '/ingestion/metrics': () => ({
-        statusCode: 200,
-        body: {
-            metrics: pipeline.getMetrics(),
-            checkpointSeq: pipeline.getCheckpointSeq(),
-        },
-    }),
+    '/metrics': async () => {
+        const runtimeMetrics = await pipeline.getRuntimeMetrics();
+        return {
+            statusCode: 200,
+            body: renderPrometheusRuntimeMetrics(runtimeMetrics),
+            contentType: 'text/plain; version=0.0.4',
+        };
+    },
+    '/ingestion/metrics': async () => {
+        const runtimeMetrics = await pipeline.getRuntimeMetrics();
+        return {
+            statusCode: 200,
+            body: {
+                metrics: pipeline.getMetrics(),
+                checkpointSeq: pipeline.getCheckpointSeq(),
+                runtime: runtimeMetrics,
+            },
+        };
+    },
     '/ingestion/logs': () => ({
         statusCode: 200,
         body: {
@@ -90,25 +124,32 @@ const routeHandlers: Readonly<Record<string, IndexerRouteHandler>> = {
             }),
         },
     }),
-};
+});
 
-export const createIndexerServer = () => {
-    return createServer((request, response) => {
+export const createIndexerServer = (pipeline: IndexerPipeline) => {
+    const routeHandlers = createRouteHandlers(pipeline);
+
+    return createServer(async (request, response) => {
         const requestUrl = new URL(request.url ?? '/', 'http://localhost');
 
         const handler = routeHandlers[requestUrl.pathname];
         if (handler) {
-            const result = handler(requestUrl);
+            try {
+                const result = await handler(requestUrl);
 
-            if (result.contentType) {
-                response.writeHead(result.statusCode, {
-                    'content-type': result.contentType,
-                });
-                response.end(String(result.body));
-                return;
+                if (result.contentType) {
+                    response.writeHead(result.statusCode, {
+                        'content-type': result.contentType,
+                    });
+                    response.end(String(result.body));
+                    return;
+                }
+
+                writeJson(response, result.statusCode, result.body);
+            } catch (error) {
+                console.error('[indexer] route error:', error);
+                writeJson(response, 500, { error: 'Internal Server Error' });
             }
-
-            writeJson(response, result.statusCode, result.body);
             return;
         }
 
@@ -116,11 +157,12 @@ export const createIndexerServer = () => {
     });
 };
 
-export const startIndexerServer = () => {
-    const server = createIndexerServer();
+export const startIndexerServer = async () => {
+    const pipeline = await createPipeline();
+    const server = createIndexerServer(pipeline);
     server.listen(config.INDEXER_PORT, '0.0.0.0', () => {
         console.log(
-            `[indexer] listening on http://0.0.0.0:${config.INDEXER_PORT} (firehose=${config.INDEXER_FIREHOSE_URL}, contracts=${CONTRACT_VERSION})`,
+            `[indexer] listening on http://0.0.0.0:${config.INDEXER_PORT} (firehose=${config.INDEXER_FIREHOSE_URL}, contracts=${CONTRACT_VERSION}, mode=${DATABASE_URL ? 'persistent' : 'fixture'})`,
         );
     });
     return server;
