@@ -5,14 +5,23 @@ import {
     readQueryString,
     requireQueryString,
     type ModerationAppealState,
+    type ModerationAuditStore,
     type ModerationPolicyAction,
     type ModerationQueueStatus,
+    type ModerationQueueStore,
     type ModerationVisibilityState,
 } from '@patchwork/shared';
+import { ModerationMetrics } from './metrics.js';
 
 export interface ModerationServiceResult {
     statusCode: number;
     body: unknown;
+}
+
+export interface ModerationWorkerServiceOptions {
+    queueStore?: ModerationQueueStore;
+    auditStore?: ModerationAuditStore;
+    metrics?: ModerationMetrics;
 }
 
 const requireString = (params: URLSearchParams, key: string): string => {
@@ -120,12 +129,22 @@ const parseTags = (value: string | undefined): string[] | undefined => {
 };
 
 export class ModerationWorkerService {
-    private readonly queue = new ModerationReviewQueue();
+    private readonly queue: ModerationReviewQueue;
+    readonly metrics: ModerationMetrics;
+
+    constructor(options?: ModerationWorkerServiceOptions) {
+        this.queue = new ModerationReviewQueue({
+            queueStore: options?.queueStore,
+            auditStore: options?.auditStore,
+        });
+        this.metrics = options?.metrics ?? new ModerationMetrics();
+    }
 
     enqueueFromParams(params: URLSearchParams): ModerationServiceResult {
         try {
+            const subjectUri = requireString(params, 'subjectUri');
             const item = this.queue.enqueueReview({
-                subjectUri: requireString(params, 'subjectUri'),
+                subjectUri,
                 reason: requireString(params, 'reason'),
                 requestedAt: readString(params, 'requestedAt'),
                 context: {
@@ -135,6 +154,8 @@ export class ModerationWorkerService {
                 },
             });
 
+            this.metrics.recordEnqueue(subjectUri);
+
             return {
                 statusCode: 200,
                 body: {
@@ -142,6 +163,7 @@ export class ModerationWorkerService {
                 },
             };
         } catch (error) {
+            this.metrics.recordError();
             return toErrorResult(error, 'Failed to enqueue moderation review.');
         }
     }
@@ -164,19 +186,26 @@ export class ModerationWorkerService {
                 },
             };
         } catch (error) {
+            this.metrics.recordError();
             return toErrorResult(error, 'Failed to list moderation queue.');
         }
     }
 
     applyPolicyFromParams(params: URLSearchParams): ModerationServiceResult {
         try {
+            const action = parsePolicyAction(readString(params, 'action'));
+            const subjectUri = requireString(params, 'subjectUri');
             const item = this.queue.applyPolicyAction({
-                subjectUri: requireString(params, 'subjectUri'),
+                subjectUri,
                 actorDid: requireString(params, 'actorDid'),
-                action: parsePolicyAction(readString(params, 'action')),
+                action,
                 reason: requireString(params, 'reason'),
                 occurredAt: readString(params, 'occurredAt'),
+                idempotencyKey: readString(params, 'idempotencyKey'),
             });
+
+            this.metrics.recordAction(action);
+            this.metrics.recordDequeue(subjectUri);
 
             return {
                 statusCode: 200,
@@ -185,6 +214,7 @@ export class ModerationWorkerService {
                 },
             };
         } catch (error) {
+            this.metrics.recordError();
             return toErrorResult(
                 error,
                 'Failed to apply moderation policy action.',
@@ -211,6 +241,7 @@ export class ModerationWorkerService {
                         },
             };
         } catch (error) {
+            this.metrics.recordError();
             return toErrorResult(error, 'Failed to fetch moderation state.');
         }
     }
@@ -228,6 +259,7 @@ export class ModerationWorkerService {
                 },
             };
         } catch (error) {
+            this.metrics.recordError();
             return toErrorResult(
                 error,
                 'Failed to list moderation audit trail.',
@@ -236,7 +268,8 @@ export class ModerationWorkerService {
     }
 }
 
-export const createFixtureModerationWorkerService =
-    (): ModerationWorkerService => {
-        return new ModerationWorkerService();
-    };
+export const createFixtureModerationWorkerService = (
+    options?: ModerationWorkerServiceOptions,
+): ModerationWorkerService => {
+    return new ModerationWorkerService(options);
+};

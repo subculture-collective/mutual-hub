@@ -5,10 +5,36 @@ import {
     type ModerationDecisionEvent,
     type ServiceHealth,
 } from '@patchwork/shared';
-import { createFixtureModerationWorkerService } from './moderation-service.js';
+import {
+    createFixtureModerationWorkerService,
+    type ModerationWorkerServiceOptions,
+} from './moderation-service.js';
+import { InMemoryQueueStore } from './queue-store.js';
+import { InMemoryAuditStore } from './audit-store.js';
+import { ModerationMetrics } from './metrics.js';
 
 const config = loadModerationWorkerConfig();
-const moderationService = createFixtureModerationWorkerService();
+
+const databaseUrl = process.env.DATABASE_URL;
+
+const metrics = new ModerationMetrics();
+
+const serviceOptions: ModerationWorkerServiceOptions = (() => {
+    if (databaseUrl) {
+        // Production mode: would use Postgres-backed stores.
+        // For now, fall back to in-memory stores that persist within process lifetime.
+        console.log(
+            '[moderation-worker] DATABASE_URL detected; using in-memory stores (Postgres stores planned).',
+        );
+    }
+
+    // Dev/test mode (and current prod fallback): in-memory stores with metrics.
+    const queueStore = new InMemoryQueueStore();
+    const auditStore = new InMemoryAuditStore();
+    return { queueStore, auditStore, metrics };
+})();
+
+const moderationService = createFixtureModerationWorkerService(serviceOptions);
 
 const healthPayload: ServiceHealth = {
     service: 'moderation-worker',
@@ -20,7 +46,7 @@ const healthPayload: ServiceHealth = {
 const renderPrometheusMetrics = (): string => {
     const uptimeSeconds = Math.floor(process.uptime());
 
-    return [
+    const baseMetrics = [
         '# HELP patchwork_service_up Service health status (1 = up).',
         '# TYPE patchwork_service_up gauge',
         'patchwork_service_up{project="patchwork",service="moderation-worker",component="thimble"} 1',
@@ -28,6 +54,10 @@ const renderPrometheusMetrics = (): string => {
         '# TYPE patchwork_process_uptime_seconds counter',
         `patchwork_process_uptime_seconds{project="patchwork",service="moderation-worker",component="thimble"} ${uptimeSeconds}`,
     ].join('\n');
+
+    const moderationMetricsText = metrics.renderPrometheus();
+
+    return `${baseMetrics}\n${moderationMetricsText}`;
 };
 
 const sampleDecision: ModerationDecisionEvent = {
