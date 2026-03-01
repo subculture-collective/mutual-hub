@@ -8,6 +8,7 @@ export const Input = ({
     className = '',
     errorMessage,
     id,
+    required,
     ...props
 }: InputProps) => {
     const errorId = errorMessage && id ? `${id}-error` : undefined;
@@ -20,13 +21,16 @@ export const Input = ({
             <input
                 id={id}
                 aria-invalid={errorMessage ? true : props['aria-invalid']}
+                aria-required={required || props['aria-required'] || undefined}
                 aria-describedby={
                     describedBy.length > 0 ? describedBy : undefined
                 }
                 className={[
-                    'mh-input w-full px-3 py-2 text-base',
+                    'mh-input w-full px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mh-accent',
+                    errorMessage ? 'border-mh-danger' : '',
                     className,
                 ].join(' ')}
+                required={required}
                 {...props}
             />
             {errorMessage ?

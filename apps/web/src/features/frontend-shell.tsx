@@ -1,10 +1,12 @@
 import {
     useEffect,
     useMemo,
+    useRef,
     useState,
     type FormEvent,
     type MouseEvent,
 } from 'react';
+import { ariaLive } from '../a11y';
 import { shellSections } from '../app-shell';
 import {
     aidCategories,
@@ -718,6 +720,21 @@ const MapRoute = ({
     onTriageAction,
     onOpenChat,
 }: MapRouteProps) => {
+    useEffect(() => {
+        if (!selectedPostId) {
+            return undefined;
+        }
+        const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onSelectPost(undefined);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedPostId, onSelectPost]);
+
     const mapCards = useMemo(
         () => feedRecords.map(toMapAidCard),
         [feedRecords],
@@ -885,7 +902,7 @@ const MapRoute = ({
             </div>
 
             {drawer.open && selectedRecord ?
-                <Panel title='Map detail drawer'>
+                <Panel title='Map detail drawer' aria-label={`Details for ${drawer.title ?? 'selected request'}`}>
                     <p className='text-lg font-bold text-mh-text'>
                         {drawer.title}
                     </p>
@@ -910,6 +927,7 @@ const MapRoute = ({
                                     :   'neutral'
                                 }
                                 className='px-3 py-1 text-xs'
+                                aria-label={action.ariaLabel}
                                 onClick={() => {
                                     if (action.action === 'contact_helper') {
                                         onOpenChat(selectedRecord, 'map');
@@ -1537,6 +1555,21 @@ const ResourceRoute = ({
     const [activeCategory, setActiveCategory] =
         useState<DirectoryResourceCategory>();
     const [selectedUri, setSelectedUri] = useState<string>();
+
+    useEffect(() => {
+        if (!selectedUri) {
+            return undefined;
+        }
+        const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setSelectedUri(undefined);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedUri]);
 
     const viewModel = useMemo(
         () =>
@@ -2356,6 +2389,7 @@ const ChatRoute = ({
 };
 
 export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
+    const mainContentRef = useRef<HTMLDivElement>(null);
     const [currentRoute, setCurrentRoute] = useState<AppRoute>(() =>
         readCurrentRoute(),
     );
@@ -2510,6 +2544,7 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
         }
 
         setCurrentRoute(route);
+        ariaLive.routeChange(routeLabels[route]);
     };
 
     const handleRouteClick = (
@@ -2737,7 +2772,10 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
 
     return (
         <main className='mh-grain min-h-screen overflow-x-clip bg-mh-bg text-mh-text'>
-            <a href='#main-content' className='mh-skip-link'>
+            <a
+                href='#main-content'
+                className='mh-skip-link sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-mh-accent focus:px-4 focus:py-2 focus:text-white focus:outline-2 focus:outline-offset-2'
+            >
                 Skip to main content
             </a>
             <div className='mh-grid-pattern mx-auto min-h-screen max-w-6xl border-x border-mh-border px-3 pb-12 pt-6 sm:border-x-2 sm:px-6 lg:px-8'>
@@ -2749,7 +2787,7 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
                         <a
                             key={route}
                             href={route}
-                            className='mh-nav-chip'
+                            className='mh-nav-chip focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mh-accent'
                             aria-current={
                                 currentRoute === route ? 'page' : undefined
                             }
@@ -2760,7 +2798,9 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
                     ))}
                 </nav>
 
-                <div id='main-content'>{content}</div>
+                <div id='main-content' ref={mainContentRef} tabIndex={-1} className='outline-none'>
+                    {content}
+                </div>
             </div>
         </main>
     );
