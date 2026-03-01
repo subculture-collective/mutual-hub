@@ -13,6 +13,7 @@ import {
     createFixtureQueryService,
     createPostgresQueryService,
 } from './query-service.js';
+import { createFixtureVerificationService } from './verification-service.js';
 import { createFixtureVolunteerService } from './volunteer-service.js';
 
 const config = loadApiConfig();
@@ -31,6 +32,7 @@ const resolveQueryService = async () => {
 const queryService = await resolveQueryService();
 
 const chatService = createFixtureChatService();
+const verificationService = createFixtureVerificationService();
 const volunteerService = createFixtureVolunteerService();
 
 const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
@@ -116,6 +118,12 @@ const contractRoutes = [
     '/chat/route/preference-aware',
     '/volunteer/profile/upsert',
     '/volunteer/profiles',
+    '/verification/status',
+    '/verification/grant',
+    '/verification/revoke',
+    '/verification/renew',
+    '/verification/appeal',
+    '/verification/audit',
     '/health',
     '/metrics',
 ] as const;
@@ -165,6 +173,18 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
     '/volunteer/profile/upsert': requestUrl =>
         volunteerService.upsertFromParams(requestUrl.searchParams),
     '/volunteer/profiles': () => volunteerService.listFromParams(),
+    '/verification/status': requestUrl =>
+        verificationService.getStatus(requestUrl.searchParams),
+    '/verification/grant': requestUrl =>
+        verificationService.grant(requestUrl.searchParams),
+    '/verification/revoke': requestUrl =>
+        verificationService.revoke(requestUrl.searchParams),
+    '/verification/renew': requestUrl =>
+        verificationService.renew(requestUrl.searchParams),
+    '/verification/appeal': requestUrl =>
+        verificationService.appeal(requestUrl.searchParams),
+    '/verification/audit': requestUrl =>
+        verificationService.getAuditTrail(requestUrl.searchParams),
     '/aid/post/create': requestUrl =>
         aidPostService.createFromParams(requestUrl.searchParams),
 };

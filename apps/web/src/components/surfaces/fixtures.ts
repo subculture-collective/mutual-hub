@@ -122,6 +122,9 @@ export const resourceSurfaceDetail = openResourceDetailPanel(
 export const volunteerSurfacePreview = {
     profileComplete: true,
     fullyVerified: false,
+    verificationTier: 'basic' as const,
+    verificationExpired: false,
+    renewalNeeded: true,
     summary: {
         approved: 2,
         pending: 1,
