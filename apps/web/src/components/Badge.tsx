@@ -2,6 +2,8 @@ import type { PropsWithChildren } from 'react';
 
 interface BadgeProps {
     tone?: 'default' | 'neutral' | 'info' | 'danger' | 'success';
+    /** Accessible label for screen readers when badge text alone is insufficient */
+    'aria-label'?: string;
 }
 
 const toneMap: Record<NonNullable<BadgeProps['tone']>, string> = {
@@ -15,9 +17,12 @@ const toneMap: Record<NonNullable<BadgeProps['tone']>, string> = {
 export const Badge = ({
     children,
     tone = 'default',
+    'aria-label': ariaLabel,
 }: PropsWithChildren<BadgeProps>) => {
     return (
         <span
+            role='status'
+            aria-label={ariaLabel}
             className={[
                 'inline-flex min-w-0 max-w-full break-all whitespace-normal rounded-full border border-mh-border px-2.5 py-1 text-xs font-semibold tracking-[0.01em]',
                 toneMap[tone],

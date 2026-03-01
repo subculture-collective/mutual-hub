@@ -17,16 +17,22 @@ export const Button = ({
     className = '',
     variant = 'primary',
     type = 'button',
+    disabled,
+    'aria-label': ariaLabel,
     ...props
 }: PropsWithChildren<ButtonProps>) => {
     return (
         <button
             type={type}
             className={[
-                'mh-button inline-flex items-center justify-center px-4 py-2 text-sm font-semibold tracking-[0.01em] transition',
+                'mh-button inline-flex items-center justify-center px-4 py-2 text-sm font-semibold tracking-[0.01em] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mh-accent',
                 variantClassMap[variant],
+                disabled ? 'opacity-50 cursor-not-allowed' : '',
                 className,
             ].join(' ')}
+            disabled={disabled}
+            aria-disabled={disabled || undefined}
+            aria-label={ariaLabel}
             {...props}
         >
             {children}
