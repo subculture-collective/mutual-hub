@@ -99,7 +99,7 @@ describe('P8.1 indexer contract test matrix', () => {
 
     describe('contract version', () => {
         it('CONTRACT_VERSION matches the expected phase tag', () => {
-            expect(CONTRACT_VERSION).toBe('0.8.0-phase8');
+            expect(CONTRACT_VERSION).toBe('0.9.0-phase9');
         });
     });
 });

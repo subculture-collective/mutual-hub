@@ -15,6 +15,11 @@ import {
     type RequestTimeline,
     type StatusTransition,
 } from '@patchwork/shared';
+import {
+    type AuthorizationContext,
+    AuthorizationError,
+    requireCapability,
+} from './authorization-guard.js';
 
 /**
  * In-memory store for request statuses and timelines.
@@ -200,9 +205,13 @@ export class LifecycleService {
 
     /**
      * Process a status transition request from a JSON body.
+     *
+     * When `authCtx` is provided, force transitions (to 'archived' from
+     * any state) require 'moderate:content' capability.
      */
     async transitionFromBody(
         body: unknown,
+        authCtx?: AuthorizationContext,
     ): Promise<LifecycleTransitionResult> {
         let input: TransitionInput;
 
@@ -216,6 +225,26 @@ export class LifecycleService {
                 };
             }
             throw error;
+        }
+
+        // Optional authorization: force-archival requires moderation capability
+        if (authCtx && input.targetStatus === 'archived') {
+            try {
+                requireCapability(authCtx, 'moderate:content');
+            } catch (err) {
+                if (err instanceof AuthorizationError) {
+                    return {
+                        statusCode: err.statusCode,
+                        body: {
+                            error: {
+                                code: err.code,
+                                message: err.message,
+                            },
+                        },
+                    };
+                }
+                throw err;
+            }
         }
 
         return this.executeTransition(input);
@@ -396,8 +425,32 @@ export class LifecycleService {
 
     /**
      * Volunteer accepts an assignment. Transitions to 'in_progress'.
+     *
+     * When `authCtx` is provided, requires 'accept:assignment' capability.
      */
-    async acceptAssignment(body: unknown): Promise<AssignmentResult> {
+    async acceptAssignment(
+        body: unknown,
+        authCtx?: AuthorizationContext,
+    ): Promise<AssignmentResult> {
+        if (authCtx) {
+            try {
+                requireCapability(authCtx, 'accept:assignment');
+            } catch (err) {
+                if (err instanceof AuthorizationError) {
+                    return {
+                        statusCode: err.statusCode,
+                        body: {
+                            error: {
+                                code: err.code,
+                                message: err.message,
+                            },
+                        },
+                    };
+                }
+                throw err;
+            }
+        }
+
         let input: z.infer<typeof assignmentResponseSchema>;
         try {
             input = assignmentResponseSchema.parse(body);
@@ -639,8 +692,32 @@ export class LifecycleService {
     /**
      * Complete a handoff (fulfillment) for an in-progress request.
      * Transitions to 'resolved' and captures handoff metadata.
+     *
+     * When `authCtx` is provided, requires 'complete:handoff' capability.
      */
-    async completeHandoff(body: unknown): Promise<HandoffResult> {
+    async completeHandoff(
+        body: unknown,
+        authCtx?: AuthorizationContext,
+    ): Promise<HandoffResult> {
+        if (authCtx) {
+            try {
+                requireCapability(authCtx, 'complete:handoff');
+            } catch (err) {
+                if (err instanceof AuthorizationError) {
+                    return {
+                        statusCode: err.statusCode,
+                        body: {
+                            error: {
+                                code: err.code,
+                                message: err.message,
+                            },
+                        },
+                    };
+                }
+                throw err;
+            }
+        }
+
         let input: z.infer<typeof handoffInputSchema>;
         try {
             input = handoffInputSchema.parse(body);

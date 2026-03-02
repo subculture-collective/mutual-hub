@@ -1,3 +1,8 @@
+import {
+    meetsRoleLevel,
+    type PlatformRole,
+} from '@patchwork/shared';
+
 export const publicRoutes = [
     '/map',
     '/feed',
@@ -15,7 +20,11 @@ export interface ShellSection {
     route: PublicRoute;
     title: string;
     description: string;
-    requiresRole?: string;
+    /**
+     * Optional minimum PlatformRole required to see this section.
+     * When omitted, the route is visible to all roles including anonymous.
+     */
+    requiresRole?: PlatformRole;
 }
 
 export const shellSections: readonly ShellSection[] = [
@@ -38,11 +47,13 @@ export const shellSections: readonly ShellSection[] = [
         route: '/volunteer',
         title: 'Volunteer',
         description: 'Volunteer onboarding and profile management.',
+        requiresRole: 'user',
     },
     {
         route: '/settings',
         title: 'Settings',
         description: 'Account settings, privacy controls, and data management.',
+        requiresRole: 'user',
     },
     {
         route: '/moderation',
@@ -54,14 +65,29 @@ export const shellSections: readonly ShellSection[] = [
         route: '/inbox',
         title: 'Inbox',
         description: 'Unified inbox for requests, assignments, messages, and alerts.',
+        requiresRole: 'user',
     },
     {
         route: '/feedback',
         title: 'Feedback',
         description: 'Post-handoff outcome feedback and reporting.',
+        requiresRole: 'user',
     },
 ];
 
 export const isPublicRoute = (value: string): value is PublicRoute => {
     return publicRoutes.includes(value as PublicRoute);
 };
+
+/**
+ * Return only the shell sections visible to the given platform role.
+ * Sections with no `requiresRole` are visible to everyone.
+ */
+export function getVisibleRoutes(role: PlatformRole): readonly ShellSection[] {
+    return shellSections.filter((section) => {
+        if (!section.requiresRole) {
+            return true;
+        }
+        return meetsRoleLevel(role, section.requiresRole);
+    });
+}
