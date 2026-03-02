@@ -14,6 +14,7 @@ export const publicRoutes = [
     '/notifications',
     '/scheduling',
     '/feedback',
+    '/groups',
     '/legal/terms',
     '/legal/privacy',
     '/legal/community-guidelines',
@@ -88,6 +89,12 @@ export const shellSections: readonly ShellSection[] = [
         route: '/feedback',
         title: 'Feedback',
         description: 'Post-handoff outcome feedback and reporting.',
+        requiresRole: 'user',
+    },
+    {
+        route: '/groups',
+        title: 'Groups',
+        description: 'Public and private group coordination spaces for neighborhoods and request teams.',
         requiresRole: 'user',
     },
     {
