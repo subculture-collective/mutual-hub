@@ -6,6 +6,12 @@ import {
     type SettingsChangeAudit,
     type UserSettings,
 } from '@patchwork/shared';
+import {
+    type AuthorizationContext,
+    AuthorizationError,
+    requireCapability,
+    requireOwnerOrRole,
+} from './authorization-guard.js';
 
 export interface ApiSettingsRouteResult {
     statusCode: number;
@@ -29,9 +35,15 @@ export class ApiSettingsService {
 
     // -----------------------------------------------------------------
     // GET /account/settings?did=...
+    //
+    // When authCtx is provided, users can only read their own settings
+    // unless they have admin role or above.
     // -----------------------------------------------------------------
 
-    getSettings(params: URLSearchParams): ApiSettingsRouteResult {
+    getSettings(
+        params: URLSearchParams,
+        authCtx?: AuthorizationContext,
+    ): ApiSettingsRouteResult {
         const did = params.get('did')?.trim();
         if (!did) {
             return {
@@ -45,6 +57,26 @@ export class ApiSettingsService {
             };
         }
 
+        if (authCtx) {
+            try {
+                requireCapability(authCtx, 'read:own_profile');
+                requireOwnerOrRole(authCtx, did, 'admin');
+            } catch (err) {
+                if (err instanceof AuthorizationError) {
+                    return {
+                        statusCode: err.statusCode,
+                        body: {
+                            error: {
+                                code: err.code,
+                                message: err.message,
+                            },
+                        },
+                    };
+                }
+                throw err;
+            }
+        }
+
         const settings = this.settingsByDid.get(did) ?? { ...defaultUserSettings };
 
         return {
@@ -55,9 +87,15 @@ export class ApiSettingsService {
 
     // -----------------------------------------------------------------
     // PUT /account/settings  (body: { did, settings })
+    //
+    // When authCtx is provided, users can only update their own settings
+    // unless they have admin role or above.
     // -----------------------------------------------------------------
 
-    updateSettings(body: unknown): ApiSettingsRouteResult {
+    updateSettings(
+        body: unknown,
+        authCtx?: AuthorizationContext,
+    ): ApiSettingsRouteResult {
         if (typeof body !== 'object' || body === null) {
             return {
                 statusCode: 400,
@@ -83,6 +121,26 @@ export class ApiSettingsService {
                     },
                 },
             };
+        }
+
+        if (authCtx) {
+            try {
+                requireCapability(authCtx, 'edit:own_profile');
+                requireOwnerOrRole(authCtx, did, 'admin');
+            } catch (err) {
+                if (err instanceof AuthorizationError) {
+                    return {
+                        statusCode: err.statusCode,
+                        body: {
+                            error: {
+                                code: err.code,
+                                message: err.message,
+                            },
+                        },
+                    };
+                }
+                throw err;
+            }
         }
 
         const parseResult = userSettingsSchema.safeParse(record['settings']);
