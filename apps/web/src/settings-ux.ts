@@ -17,13 +17,15 @@ export type SettingsSection =
     | 'privacy'
     | 'contact'
     | 'notifications'
-    | 'account';
+    | 'account'
+    | 'legal';
 
 export const settingsSections: readonly SettingsSection[] = [
     'privacy',
     'contact',
     'notifications',
     'account',
+    'legal',
 ];
 
 export const settingsSectionLabels: Readonly<Record<SettingsSection, string>> = {
@@ -31,6 +33,7 @@ export const settingsSectionLabels: Readonly<Record<SettingsSection, string>> = 
     contact: 'Contact',
     notifications: 'Notifications',
     account: 'Account',
+    legal: 'Legal & Policies',
 };
 
 export const settingsSectionDescriptions: Readonly<
@@ -44,7 +47,37 @@ export const settingsSectionDescriptions: Readonly<
         'Choose which events trigger notifications.',
     account:
         'Export your data or deactivate your account.',
+    legal:
+        'Terms of Service, Privacy Policy, and Community Guidelines.',
 };
+
+// ---------------------------------------------------------------------------
+// Legal & Policies links
+// ---------------------------------------------------------------------------
+
+export interface LegalPolicyLink {
+    label: string;
+    route: string;
+    description: string;
+}
+
+export const legalPolicyLinks: readonly LegalPolicyLink[] = [
+    {
+        label: 'Terms of Service',
+        route: '/legal/terms',
+        description: 'Platform terms of service and user agreement.',
+    },
+    {
+        label: 'Privacy Policy',
+        route: '/legal/privacy',
+        description: 'How we collect, use, and protect your data.',
+    },
+    {
+        label: 'Community Guidelines',
+        route: '/legal/community-guidelines',
+        description: 'Expected behaviour, prohibited content, and enforcement.',
+    },
+];
 
 // ---------------------------------------------------------------------------
 // View model

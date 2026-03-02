@@ -180,12 +180,52 @@ If an IC needs to hand off (fatigue, timezone, expertise mismatch):
 
 ---
 
-## 7. Review and Updates
+## 7. Governance RACI -- Policy and Compliance Activities
+
+The following matrix covers governance, policy, and compliance activities
+using role aliases relevant to platform governance. These complement the
+operational RACI in Section 2.
+
+### 7.1 Governance Roles
+
+| Alias           | Role                | Maps To (Section 1)        |
+|-----------------|---------------------|----------------------------|
+| **Admin**       | Platform Admin      | INFRA + ENG-BE (admin ops) |
+| **Mod-Lead**    | Moderator Lead      | T-S lead / lead_mod        |
+| **Moderator**   | Moderator           | ENG-MOD / senior_mod       |
+| **Developer**   | Developer           | ENG-FE / ENG-BE / ENG-IDX  |
+| **Community**   | Community Rep       | PM (stakeholder liaison)   |
+
+### 7.2 Governance RACI Matrix
+
+Legend: **R** = Responsible, **A** = Accountable, **C** = Consulted, **I** = Informed
+
+| # | Activity                       | Admin | Mod-Lead | Moderator | Developer | Community |
+|---|--------------------------------|-------|----------|-----------|-----------|-----------|
+| 1 | Incident response coordination | A     | C        | R         | R         | I         |
+| 2 | Moderation decisions (standard)| I     | A        | R         | I         | I         |
+| 3 | Moderation decisions (escalated)| C    | R/A      | C         | I         | I         |
+| 4 | Policy document updates        | A     | R        | C         | C         | C         |
+| 5 | Data deletion requests         | A     | C        | I         | R         | I         |
+| 6 | Backup and restore operations  | R/A   | I        | I         | C         | I         |
+| 7 | Production deployments         | A     | I        | I         | R         | I         |
+| 8 | User appeals (first level)     | I     | A        | R         | I         | I         |
+| 9 | User appeals (escalation)      | C     | R/A      | I         | I         | C         |
+| 10| Community guidelines review    | A     | R        | C         | I         | C         |
+| 11| Privacy policy review          | A     | C        | I         | C         | C         |
+| 12| Legal/compliance audit         | R/A   | C        | I         | C         | I         |
+
+---
+
+## 8. Review and Updates
 
 - This RACI matrix is reviewed at the start of each milestone (M0--M5).
 - Any role or responsibility change requires a PR updating this document.
 - On-call rotation schedule is maintained in the team calendar and referenced from this document.
+- Governance RACI (Section 7) is reviewed alongside policy document updates
+  (see [policy changelog](../legal/changelog.md)).
 
 ---
 
-*Created as part of Wave 0 governance lane. Tracked by #94, #71, #68.*
+*Created as part of Wave 0 governance lane. Updated for Wave 3 legal and
+policy readiness (#113). Tracked by #94, #71, #68, #113.*

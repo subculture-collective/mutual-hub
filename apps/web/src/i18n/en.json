@@ -177,6 +177,18 @@
         "volunteer": {
             "title": "Volunteer",
             "description": "Volunteer onboarding and profile management."
+        },
+        "legalTerms": {
+            "title": "Terms of Service",
+            "description": "Platform terms of service and user agreement."
+        },
+        "legalPrivacy": {
+            "title": "Privacy Policy",
+            "description": "How we collect, use, and protect your data."
+        },
+        "legalCommunityGuidelines": {
+            "title": "Community Guidelines",
+            "description": "Expected behaviour, prohibited content, and enforcement."
         }
     },
     "categories": {

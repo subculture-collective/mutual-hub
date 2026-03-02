@@ -177,6 +177,18 @@
         "volunteer": {
             "title": "Voluntario",
             "description": "Incorporaci\u00f3n y gesti\u00f3n de perfiles de voluntarios."
+        },
+        "legalTerms": {
+            "title": "T\u00e9rminos de servicio",
+            "description": "T\u00e9rminos de servicio y acuerdo de usuario de la plataforma."
+        },
+        "legalPrivacy": {
+            "title": "Pol\u00edtica de privacidad",
+            "description": "C\u00f3mo recopilamos, usamos y protegemos tus datos."
+        },
+        "legalCommunityGuidelines": {
+            "title": "Normas de la comunidad",
+            "description": "Comportamiento esperado, contenido prohibido y aplicaci\u00f3n."
         }
     },
     "categories": {

@@ -120,6 +120,9 @@ const appRoutes = [
     '/moderation',
     '/inbox',
     '/feedback',
+    '/legal/terms',
+    '/legal/privacy',
+    '/legal/community-guidelines',
 ] as const;
 
 type AppRoute = (typeof appRoutes)[number];
@@ -140,6 +143,9 @@ const routeLabels: Readonly<Record<AppRoute, string>> = {
     '/moderation': 'Moderation',
     '/inbox': 'Inbox',
     '/feedback': 'Feedback',
+    '/legal/terms': 'Terms of Service',
+    '/legal/privacy': 'Privacy Policy',
+    '/legal/community-guidelines': 'Community Guidelines',
 };
 
 const resourceCategoryOptions: readonly DirectoryResourceCategory[] = [

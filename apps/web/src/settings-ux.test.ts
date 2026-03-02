@@ -4,6 +4,7 @@ import {
     applySettingsPatch,
     defaultSettingsViewModel,
     isSettingsDirty,
+    legalPolicyLinks,
     settingsSectionLabels,
     settingsSections,
     validateSettings,
@@ -138,12 +139,13 @@ describe('settings UX module', () => {
     });
 
     describe('settingsSections', () => {
-        it('contains all four sections', () => {
+        it('contains all five sections including legal', () => {
             expect(settingsSections).toEqual([
                 'privacy',
                 'contact',
                 'notifications',
                 'account',
+                'legal',
             ]);
         });
 
@@ -151,6 +153,24 @@ describe('settings UX module', () => {
             for (const section of settingsSections) {
                 expect(settingsSectionLabels[section]).toBeDefined();
                 expect(settingsSectionLabels[section].length).toBeGreaterThan(0);
+            }
+        });
+    });
+
+    describe('legalPolicyLinks', () => {
+        it('contains links for terms, privacy, and community guidelines', () => {
+            expect(legalPolicyLinks).toHaveLength(3);
+            const routes = legalPolicyLinks.map(link => link.route);
+            expect(routes).toContain('/legal/terms');
+            expect(routes).toContain('/legal/privacy');
+            expect(routes).toContain('/legal/community-guidelines');
+        });
+
+        it('has label, route, and description for each link', () => {
+            for (const link of legalPolicyLinks) {
+                expect(link.label.length).toBeGreaterThan(0);
+                expect(link.route).toMatch(/^\/legal\//);
+                expect(link.description.length).toBeGreaterThan(0);
             }
         });
     });
