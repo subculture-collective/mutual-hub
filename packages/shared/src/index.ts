@@ -36,3 +36,5 @@ export * from './progressive-delivery.js';
 export * from './load-testing.js';
 export * from './notifications.js';
 export * from './scheduling.js';
+export * from './multi-region.js';
+export * from './integrations.js';
