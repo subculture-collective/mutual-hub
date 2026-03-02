@@ -30,3 +30,4 @@ export * from './feedback.js';
 export * from './offline-sync.js';
 export * from './authorization.js';
 export * from './reputation.js';
+export * from './load-testing.js';

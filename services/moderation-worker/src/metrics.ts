@@ -192,3 +192,47 @@ export class ModerationMetrics {
         this.enqueueTimestamps.clear();
     }
 }
+
+// ---------------------------------------------------------------------------
+// Performance tracking histogram for load testing / capacity validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Tracks per-action processing latency for capacity planning.
+ * Collects samples and computes percentile summaries on demand.
+ */
+export class ModerationPerformanceHistogram {
+    private readonly _samples: number[] = [];
+    private readonly _maxSamples: number;
+
+    constructor(maxSamples = 10_000) {
+        this._maxSamples = maxSamples;
+    }
+
+    /** Record a latency sample in milliseconds. */
+    record(latencyMs: number): void {
+        if (this._samples.length >= this._maxSamples) {
+            this._samples[this._samples.length % this._maxSamples] = latencyMs;
+        } else {
+            this._samples.push(latencyMs);
+        }
+    }
+
+    /** Compute a percentile (0-100) from collected samples. */
+    percentile(p: number): number {
+        if (this._samples.length === 0) return 0;
+        const sorted = [...this._samples].sort((a, b) => a - b);
+        const idx = Math.ceil((p / 100) * sorted.length) - 1;
+        return sorted[Math.max(0, idx)]!;
+    }
+
+    /** Get the number of recorded samples. */
+    get count(): number {
+        return this._samples.length;
+    }
+
+    /** Reset all samples. */
+    reset(): void {
+        this._samples.length = 0;
+    }
+}

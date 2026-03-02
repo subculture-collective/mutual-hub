@@ -15,7 +15,7 @@
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "test": "vitest run",
         "test:phase7": "vitest run src/phase5.test.ts src/phase7.test.ts",
-        "test:phase8": "vitest run src/phase8.test.ts",
+        "test:phase8": "vitest run src/phase8.test.ts src/capacity-service.test.ts src/performance.test.ts src/load-profile.test.ts",
         "test:phase8-e2e": "vitest run src/phase8-e2e.test.ts"
     },
     "dependencies": {
