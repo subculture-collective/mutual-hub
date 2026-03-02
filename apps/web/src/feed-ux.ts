@@ -6,6 +6,38 @@ import {
     type SharedAidDiscoveryQuery,
 } from './discovery-filters.js';
 import { haversineDistanceMeters } from './geo-utils.js';
+// ---------------------------------------------------------------------------
+// Local reputation types (avoids cross-workspace runtime import issues)
+// ---------------------------------------------------------------------------
+
+type TrustLevel = 'new' | 'emerging' | 'established' | 'trusted' | 'exemplary';
+
+interface ReputationScore {
+    overall: number;
+    reliability: number;
+    responsiveness: number;
+    communityRating: number;
+    trustLevel: TrustLevel;
+    computedAt: string;
+}
+
+const TRUST_LEVEL_LABELS: Readonly<Record<TrustLevel, string>> = {
+    new: 'New',
+    emerging: 'Emerging',
+    established: 'Established',
+    trusted: 'Trusted',
+    exemplary: 'Exemplary',
+};
+
+const TRUST_LEVEL_TONES: Readonly<
+    Record<TrustLevel, 'neutral' | 'info' | 'success'>
+> = {
+    new: 'neutral',
+    emerging: 'neutral',
+    established: 'info',
+    trusted: 'success',
+    exemplary: 'success',
+};
 
 /**
  * Canonical lifecycle statuses from the lifecycle state machine.
@@ -69,11 +101,52 @@ export interface FeedAidCard {
     timeline?: FeedStatusTransition[];
     assignment?: FeedAssignmentInfo;
     attachments?: FeedAttachmentPreview[];
+    volunteerReputation?: ReputationScore;
 }
 
 export interface FeedBadge {
     label: string;
     tone: 'neutral' | 'info' | 'success' | 'danger';
+}
+
+/**
+ * View model for displaying a volunteer's reputation badge on a feed card.
+ */
+export interface ReputationBadgeViewModel {
+    trustLevel: TrustLevel;
+    label: string;
+    tone: 'neutral' | 'info' | 'success';
+    overallScore: number | null;
+    showScore: boolean;
+    ariaLabel: string;
+}
+
+/**
+ * Transform a ReputationScore into a display-ready badge view model.
+ *
+ * Returns null when no reputation data is available.
+ */
+export function toReputationBadge(
+    score: ReputationScore | undefined,
+): ReputationBadgeViewModel | null {
+    if (!score) {
+        return null;
+    }
+
+    const label = TRUST_LEVEL_LABELS[score.trustLevel];
+    const tone = TRUST_LEVEL_TONES[score.trustLevel];
+    const showScore = score.trustLevel !== 'new' && score.overall > 0;
+
+    return {
+        trustLevel: score.trustLevel,
+        label,
+        tone,
+        overallScore: showScore ? score.overall : null,
+        showScore,
+        ariaLabel: showScore
+            ? `Reputation: ${label} (${score.overall}/100)`
+            : `Reputation: ${label}`,
+    };
 }
 
 export interface FeedTransitionAction {
@@ -88,6 +161,7 @@ export interface FeedCardPresentation {
     statusBadge: FeedBadge;
     lifecycleBadge?: FeedBadge;
     assignmentBadge?: FeedBadge;
+    reputationBadge: ReputationBadgeViewModel | null;
     canEdit: boolean;
     canClose: boolean;
     transitionActions: FeedTransitionAction[];
@@ -261,6 +335,7 @@ const toPresentation = (card: FeedAidCard): FeedCardPresentation => {
         statusBadge: toStatusBadge(card.status),
         lifecycleBadge: toLifecycleBadge(card.lifecycleStatus),
         assignmentBadge: toAssignmentBadge(card.assignment),
+        reputationBadge: toReputationBadge(card.volunteerReputation),
         canEdit: card.status !== 'closed' && card.lifecycleStatus !== 'archived',
         canClose: card.status !== 'closed' && card.lifecycleStatus !== 'archived',
         transitionActions: buildTransitionActions(card),

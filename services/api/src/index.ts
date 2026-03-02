@@ -26,6 +26,7 @@ import { createAttachmentService } from './aid-post-service.js';
 import { createOrgPortalService } from './org-portal-service.js';
 import { createInboxService } from './inbox-service.js';
 import { createFeedbackService } from './feedback-service.js';
+import { createReputationService } from './reputation-service.js';
 import { getCorsHeaders } from './cors.js';
 import { selectLimiter, extractClientIp } from './rate-limiter.js';
 
@@ -57,6 +58,7 @@ const authService = createFixtureAuthService();
 const orgPortalService = createOrgPortalService();
 const inboxService = createInboxService();
 const feedbackService = createFeedbackService();
+const reputationService = createReputationService();
 
 const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
 const postgresPool =
@@ -284,6 +286,8 @@ const contractRoutes = [
     '/feedback/request',
     '/feedback/user',
     '/feedback/summary',
+    '/reputation',
+    '/reputation/signals',
     '/health',
     '/health/ready',
     '/metrics',
@@ -402,6 +406,10 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
         feedbackService.getFeedbackByUserFromParams(requestUrl.searchParams),
     '/feedback/summary': requestUrl =>
         feedbackService.getSummaryFromParams(requestUrl.searchParams),
+    '/reputation': requestUrl =>
+        reputationService.getReputationFromParams(requestUrl.searchParams),
+    '/reputation/signals': requestUrl =>
+        reputationService.getSignalsFromParams(requestUrl.searchParams),
     '/aid/post/timeout-check': requestUrl => {
         const postUri = requestUrl.searchParams.get('postUri');
         if (!postUri) {
