@@ -30,3 +30,6 @@ export * from './feedback.js';
 export * from './offline-sync.js';
 export * from './authorization.js';
 export * from './reputation.js';
+export * from './staging.js';
+export * from './versioning.js';
+export * from './progressive-delivery.js';

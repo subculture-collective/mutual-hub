@@ -272,7 +272,23 @@ or **Red** (not started / blocking). Update at each milestone review.
 | Indexer checkpoint lag < 60 s (SLO target) | Yellow | Baseline measurement pending |
 | Moderation queue latency p95 < 30 s (SLO target) | Yellow | Baseline measurement pending |
 | Load testing executed | Red | Tracked by #111 |
-| Resource limits set on containers | Red | Tracked by #108 |
+| Resource limits set on containers | Yellow | Staging parity in place (#108) |
+
+### Release Engineering
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| Staging environment parity with production | Green | `docker-compose.staging.yml`, `staging.ts` (#108) |
+| Auto-deploy pipeline to staging | Green | `ci.yml` deploy-staging job (#108) |
+| Smoke checks block failed promotions | Green | `evaluatePromotionGate()` (#108) |
+| Staging ownership defined | Green | `docs/operations/staging-environment.md` (#108) |
+| Immutable image tagging | Green | OCI labels + `BUILD_VERSION-GIT_SHA` format (#109) |
+| One-command rollback path | Green | `make rollback SERVICE= ROLLBACK_TAG=` (#109) |
+| Migration rollback policy documented | Green | `docs/operations/rollback-policy.md` (#109) |
+| Progressive rollout strategy | Green | Canary 5%->25%->50%->100% (#110) |
+| Automated rollback triggers | Green | SLO burn-rate thresholds (#110) |
+| Rollout telemetry visible during deploy | Green | CI progressive-delivery-gate job (#110) |
+| Progressive delivery runbook | Green | `docs/operations/progressive-delivery-runbook.md` (#110) |
 
 ---
 
