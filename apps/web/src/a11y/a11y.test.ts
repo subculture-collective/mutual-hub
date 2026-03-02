@@ -220,7 +220,7 @@ describe('focus-management', () => {
                 key: 'Tab',
                 bubbles: true,
             });
-            const prevented = !container.dispatchEvent(event);
+            container.dispatchEvent(event);
 
             cleanup();
             // The trap handler should have been invoked

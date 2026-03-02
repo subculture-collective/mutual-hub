@@ -263,7 +263,7 @@ describe('lifecycle state machine', () => {
 
         describe('admin has all permissions that moderator has', () => {
             it('admin can do everything moderator can', () => {
-                for (const [key, roles] of Object.entries(
+                for (const [_key, roles] of Object.entries(
                     TRANSITION_PERMISSIONS,
                 )) {
                     if (roles.includes('moderator')) {
@@ -428,8 +428,9 @@ describe('lifecycle state machine', () => {
                 for (const to of targets) {
                     const key =
                         `${from}->${to}` as keyof typeof TRANSITION_PERMISSIONS;
-                    expect(TRANSITION_PERMISSIONS[key]).toBeDefined();
-                    expect(TRANSITION_PERMISSIONS[key].length).toBeGreaterThan(
+                    const perms = TRANSITION_PERMISSIONS[key];
+                    expect(perms).toBeDefined();
+                    expect(perms!.length).toBeGreaterThan(
                         0,
                     );
                 }

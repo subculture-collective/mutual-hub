@@ -60,9 +60,7 @@ export const TRANSITION_GRAPH: Readonly<
  */
 export type TransitionKey = `${RequestStatus}->${RequestStatus}`;
 
-export const TRANSITION_PERMISSIONS: Readonly<
-    Record<TransitionKey, readonly LifecycleRole[]>
-> = {
+export const TRANSITION_PERMISSIONS = {
     // From open
     'open->triaged': ['coordinator', 'moderator', 'admin'],
     'open->resolved': ['requester', 'coordinator', 'moderator', 'admin'],
@@ -96,7 +94,7 @@ export const TRANSITION_PERMISSIONS: Readonly<
 
     // From resolved
     'resolved->archived': ['coordinator', 'moderator', 'admin'],
-} as Record<TransitionKey, readonly LifecycleRole[]>;
+} satisfies Partial<Record<TransitionKey, readonly LifecycleRole[]>> as Partial<Record<TransitionKey, readonly LifecycleRole[]>>;
 
 /**
  * A single recorded status transition in the audit timeline.

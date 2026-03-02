@@ -19,7 +19,7 @@ export const buildAriaDescribedBy = (
     ...ids: (string | undefined | null)[]
 ): string | undefined => {
     const filtered = ids.filter(
-        (id): id is string => Boolean(id) && id.trim().length > 0,
+        (id): id is string => Boolean(id) && id!.trim().length > 0,
     );
     return filtered.length > 0 ? filtered.join(' ') : undefined;
 };
