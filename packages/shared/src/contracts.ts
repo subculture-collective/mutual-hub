@@ -265,6 +265,65 @@ export type ServiceEvent =
     | FirehoseNormalizedEvent
     | ModerationReviewRequestedEvent;
 
+/**
+ * Assignment workflow contract types.
+ */
+export interface AssignmentRequest {
+    postUri: string;
+    assigneeDid: string;
+    assignerDid: string;
+}
+
+export interface AcceptAssignmentRequest {
+    postUri: string;
+    assigneeDid: string;
+}
+
+export interface DeclineAssignmentRequest {
+    postUri: string;
+    assigneeDid: string;
+    reason?: string;
+}
+
+export interface HandoffCompletionRequest {
+    postUri: string;
+    assigneeDid: string;
+    notes?: string;
+    recipientConfirmed?: boolean;
+    deliveryMethod?: 'in_person' | 'shipped' | 'digital' | 'other';
+}
+
+export interface AssignmentResponse {
+    postUri: string;
+    assigneeDid: string;
+    status: 'pending' | 'accepted' | 'declined' | 'timed_out';
+    assignedAt: string;
+}
+
+/**
+ * Attachment contract types.
+ */
+export interface AddAttachmentRequest {
+    postUri: string;
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+    url: string;
+    uploadedBy: string;
+}
+
+export interface AttachmentResponse {
+    id: string;
+    postUri: string;
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+    url: string;
+    uploadedBy: string;
+    uploadedAt: string;
+    moderationStatus: 'pending' | 'approved' | 'rejected';
+}
+
 export const serviceContractStubs = {
     api: {
         request: {
