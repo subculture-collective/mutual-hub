@@ -20,6 +20,14 @@ It serves as the Phase 8 (P8.1) traceability artifact for the automated test mat
 | Privacy / geo redaction | P7.2 | `packages/shared/src/privacy.test.ts` · `services/api/src/phase8.test.ts` · `services/moderation-worker/src/phase8.test.ts` |
 | Anti-spam hardening | P7.3 | `services/api/src/phase7.test.ts` |
 | Service contracts | P8.1 | `packages/shared/src/contracts.test.ts` · `services/api/src/phase8.test.ts` · `services/indexer/src/phase8.test.ts` · `services/moderation-worker/src/phase8.test.ts` |
+| Runtime startup guards | W2 #98 | `packages/shared/src/config.test.ts` |
+| SLI metrics | W2 #104 | `packages/shared/src/alerting.test.ts` |
+| Rate limiting / CORS | W2 #103 | `services/api/src/rate-limiter.test.ts` · `services/api/src/cors.test.ts` |
+| Moderation console | W2 #112 | `services/api/src/lifecycle-service.test.ts` |
+| Unified inbox | W2 #118 | `services/api/src/inbox-service.test.ts` |
+| Feedback + reporting | W2 #130 | `services/api/src/feedback-service.test.ts` |
+| Offline sync | W2 #129 | `packages/shared/src/offline-sync.test.ts` |
+| E2E contract path | W3 #99 | `apps/web/e2e/request-lifecycle.test.ts` · `apps/web/e2e/accessibility.spec.ts` |
 
 ---
 
@@ -179,3 +187,83 @@ npm run test:phase8 -w @patchwork/moderation-worker
 ```
 
 All tests are deterministic and require no external services or environment variables.
+
+---
+
+## Wave 2 — Issue-to-Test Mapping
+
+| Issue | Title | Test files |
+|---|---|---|
+| #98 | Runtime startup guards | `packages/shared/src/config.test.ts` |
+| #103 | Rate limiting + CORS | `services/api/src/rate-limiter.test.ts` · `services/api/src/cors.test.ts` |
+| #104 | SLI metrics | `packages/shared/src/alerting.test.ts` |
+| #112 | Moderation console + SOPs | `services/api/src/lifecycle-service.test.ts` |
+| #118 | Unified inbox | `services/api/src/inbox-service.test.ts` |
+| #129 | Offline sync | `packages/shared/src/offline-sync.test.ts` |
+| #130 | Feedback + reporting | `services/api/src/feedback-service.test.ts` |
+
+---
+
+## Wave 3 (#99) — E2E Contract-Path Tests
+
+### Detailed Mapping
+
+| Requirement | Test | File |
+|---|---|---|
+| Full lifecycle happy path (open -> archived) | `walks open -> triaged -> assigned -> in_progress -> resolved -> archived` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Transition status pairs | `each transition produces correct previous and current status` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Assignment + accept + handoff | `assigns, accepts, and completes handoff with metadata` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Lifecycle query reflects metadata | `lifecycle query reflects assignment and handoff metadata` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Post-handoff feedback loop | `submits feedback after handoff and retrieves summary` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Transition guard — invalid skip | `rejects skip from open to in_progress` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Transition guard — role check | `rejects requester trying to triage` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Transition guard — archived terminal | `rejects all transitions out of archived` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Decline + reassignment | `decline reverts to triaged and allows reassignment` | `apps/web/e2e/request-lifecycle.test.ts` |
+| Route-level a11y (per route) | `<route> page has main landmark and skip-link target` | `apps/web/e2e/accessibility.spec.ts` |
+| Image alt attributes (per route) | `<route> page has no missing alt attributes on images` | `apps/web/e2e/accessibility.spec.ts` |
+| Keyboard tab order | `tab order on home page reaches main interactive elements` | `apps/web/e2e/accessibility.spec.ts` |
+| Escape key overlay dismiss | `Escape key dismisses any visible overlay on map route` | `apps/web/e2e/accessibility.spec.ts` |
+
+### E2E Test Matrix
+
+| Scenario | Lifecycle | Assignment | Feedback | a11y | CI job |
+|---|---|---|---|---|---|
+| Happy path: open -> archived | Y | Y | Y | — | `e2e-production` |
+| Transition guards (invalid paths) | Y | — | — | — | `e2e-production` |
+| Decline + reassignment | Y | Y | — | — | `e2e-production` |
+| Route a11y validation (7 routes) | — | — | — | Y | `quality-gates` |
+| Keyboard navigation | — | — | — | Y | `quality-gates` |
+
+### Running Production-Like Tests Locally
+
+```sh
+# 1. Start Postgres via docker-compose
+npm run db:up
+
+# 2. Run database migrations
+npm run db:migrate
+
+# 3. Run the E2E contract-path lifecycle tests
+npm run test:e2e:contract -w @patchwork/web
+
+# 4. Run the Phase 8.2 E2E tests (firehose + discovery + chat)
+npm run test:phase8-e2e
+
+# 5. Run the Playwright accessibility + browser E2E tests
+npx playwright install --with-deps chromium
+npm run test:e2e -w @patchwork/web
+
+# 6. Tear down Postgres
+npm run db:down
+```
+
+To simulate the full CI production-like environment:
+
+```sh
+export NODE_ENV=production
+export API_DATA_SOURCE=postgres
+export API_DATABASE_URL=postgresql://patchwork:patchwork@localhost:5432/patchwork
+npm run db:up && npm run db:migrate
+npm run test:e2e:contract -w @patchwork/web
+npm run test:phase8-e2e
+```

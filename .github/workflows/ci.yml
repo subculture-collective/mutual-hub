@@ -106,3 +106,55 @@ jobs:
                       trivy-api-report.txt
                       trivy-web-report.txt
                   retention-days: 30
+
+    # -----------------------------------------------------------------------
+    # Wave 3 (#99): Production-like E2E contract-path tests
+    # -----------------------------------------------------------------------
+    e2e-production:
+        runs-on: ubuntu-latest
+        needs: quality-gates
+        timeout-minutes: 15
+
+        services:
+            postgres:
+                image: postgres:16-alpine
+                env:
+                    POSTGRES_DB: patchwork
+                    POSTGRES_USER: patchwork
+                    POSTGRES_PASSWORD: patchwork_ci
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U patchwork -d patchwork"
+                    --health-interval 5s
+                    --health-timeout 3s
+                    --health-retries 20
+
+        env:
+            NODE_ENV: production
+            API_DATA_SOURCE: postgres
+            API_DATABASE_URL: postgresql://patchwork:patchwork_ci@localhost:5432/patchwork
+            ATPROTO_SERVICE_DID: did:example:patchwork-ci
+            ATPROTO_PDS_URL: https://bsky.social
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Run database migrations
+              run: npm run db:migrate -w @patchwork/api
+
+            - name: E2E contract-path lifecycle tests (#99)
+              run: npm run test:e2e:contract -w @patchwork/web
+
+            - name: E2E request-to-handoff flow (Phase 8.2)
+              run: npm run test:phase8-e2e

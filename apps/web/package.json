@@ -10,7 +10,8 @@
         "lint": "npm run typecheck",
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "test": "vitest run",
-        "test:e2e": "playwright test"
+        "test:e2e": "playwright test",
+        "test:e2e:contract": "vitest run --config vitest.e2e.config.ts"
     },
     "dependencies": {
         "@patchwork/at-lexicons": "file:../../packages/at-lexicons",
