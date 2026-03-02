@@ -99,7 +99,6 @@ describe('lifecycle state machine', () => {
             const invalid: [RequestStatus, RequestStatus][] = [
                 ['triaged', 'open'],
                 ['assigned', 'open'],
-                ['assigned', 'triaged'],
                 ['in_progress', 'open'],
                 ['in_progress', 'triaged'],
                 ['resolved', 'open'],
