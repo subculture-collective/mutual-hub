@@ -40,3 +40,4 @@ export * from './multi-region.js';
 export * from './integrations.js';
 export * from './group-coordination.js';
 export * from './matching.js';
+export * from './mobile.js';

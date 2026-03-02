@@ -5,6 +5,13 @@
 - Renders user-facing map/feed/posting surfaces.
 - Uses API contracts only; does not directly consume indexer/worker internals.
 
+## apps/mobile
+
+- Native iOS/Android client built with React Native.
+- Consumes shared API contracts from `packages/shared` via `@patchwork/shared`.
+- Mobile-specific contracts (device info, push notifications, offline sync) defined in shared package.
+- Navigation model maps core mobile flows to tab-based structure with deep link support.
+
 ## services/api
 
 - Responsible for synchronous request/response APIs.
