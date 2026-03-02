@@ -1,7 +1,39 @@
 import type { ModerationPolicyAction } from '@patchwork/shared';
 
-const SERVICE_LABELS =
-    'project="patchwork",service="moderation-worker",component="thimble"';
+// ---------------------------------------------------------------------------
+// Dashboard-ready label configuration
+// ---------------------------------------------------------------------------
+
+/**
+ * Runtime environment label applied to all metrics.
+ * Reads from PATCHWORK_ENV at startup; defaults to "development".
+ */
+const ENVIRONMENT =
+    (typeof process !== 'undefined' &&
+        process.env?.['PATCHWORK_ENV']) ||
+    'development';
+
+/**
+ * Build the standard Prometheus label set for the moderation worker.
+ * Includes project, service, component, and environment labels to
+ * support dashboard filtering and multi-environment aggregation.
+ */
+const buildServiceLabels = (extra?: Record<string, string>): string => {
+    const parts: string[] = [
+        'project="patchwork"',
+        'service="moderation-worker"',
+        'component="thimble"',
+        `environment="${ENVIRONMENT}"`,
+    ];
+    if (extra) {
+        for (const [key, value] of Object.entries(extra)) {
+            parts.push(`${key}="${value}"`);
+        }
+    }
+    return parts.join(',');
+};
+
+const SERVICE_LABELS = buildServiceLabels();
 
 /**
  * Simple Prometheus-compatible metrics collector for moderation operations.

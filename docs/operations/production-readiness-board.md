@@ -192,4 +192,245 @@ gh issue edit 131 --milestone "M5: Trust & Verification"
 
 ---
 
-*Created as part of Wave 0 governance lane. Tracked by #95, #71, #68.*
+## Service Health Endpoints
+
+Each service exposes liveness and readiness probes at standardized paths.
+See [SLI/SLO Definitions](sli-slo.md) for response schema details.
+
+| Service | Default Port | Liveness | Readiness | Metrics |
+|---------|-------------|----------|-----------|---------|
+| **API** (`service="api"`) | 4000 | `GET /health` | `GET /health/ready` | `GET /metrics` |
+| **Indexer** (`service="indexer"`) | 4100 | `GET /health` | `GET /health/ready` | `GET /metrics` |
+| **Moderation Worker** (`service="moderation-worker"`) | 4200 | `GET /health` | `GET /health/ready` | `GET /metrics` |
+
+---
+
+## SLI Ownership
+
+Each SLI metric has a designated owning team responsible for its definition,
+alerting thresholds, and dashboard maintenance. See [RACI](raci.md) for the
+full responsibility matrix and [Alerting Policy](alerting-policy.md) for
+threshold definitions.
+
+| SLI Metric | Service(s) | Owning Team | Alert Rule |
+|-----------|-----------|-------------|------------|
+| `patchwork_sli_request_total` | api, indexer, moderation-worker | INFRA + respective ENG-* | -- |
+| `patchwork_sli_error_total` | api, indexer, moderation-worker | INFRA + respective ENG-* | `error_rate_high` |
+| `patchwork_sli_request_duration_seconds` | api | ENG-BE + INFRA | `latency_p95_high` |
+| `patchwork_sli_saturation_ratio` | api, moderation-worker | INFRA | `disk_usage_high` |
+| `patchwork_service_up` | api, indexer, moderation-worker | INFRA | `service_down` |
+| `patchwork_checkpoint_lag_seconds` | indexer | ENG-IDX + INFRA | `checkpoint_stale` |
+| `moderation_queue_depth` | moderation-worker | ENG-MOD + INFRA | `queue_depth_high` |
+| `moderation_queue_latency_seconds` | moderation-worker | ENG-MOD | -- |
+
+---
+
+## Production Readiness Scorecard
+
+Rate each category **Green** (meets bar), **Yellow** (partial / in-progress),
+or **Red** (not started / blocking). Update at each milestone review.
+
+### Observability
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| All services expose `/metrics` in Prometheus format | Green | Implemented in Wave 2 |
+| SLI metrics use consistent `patchwork_sli_` prefix | Green | Enforced by `packages/shared/src/sli.ts` |
+| Dashboard-ready labels (project, service, component, environment) | Green | Added in Wave 3 |
+| Structured alert log lines emitted for all 6 alert rules | Green | `packages/shared/src/alerting.ts` |
+| Grafana dashboards provisioned (or queries documented) | Yellow | Query templates below; dashboard JSON pending |
+| Distributed tracing enabled | Red | Not yet implemented |
+
+### Security
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| Secrets stored outside source control | Green | `.env` on host; see `secrets-rotation.md` |
+| Secrets rotation procedure documented | Green | `docs/operations/secrets-rotation.md` |
+| Rate limiting on API endpoints | Green | Implemented in Wave 2 |
+| CORS policy configured | Green | Implemented in Wave 2 |
+| Container image scanning in CI | Yellow | Tracked by #101 |
+| Dependency vulnerability scanning | Yellow | Tracked by #101 |
+
+### Reliability
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| Health endpoints (liveness + readiness) on all services | Green | See table above |
+| SLOs defined with measurable thresholds | Green | `docs/operations/sli-slo.md` |
+| Alerting policy with escalation chain | Green | `docs/operations/alerting-policy.md` |
+| Incident response runbook | Green | `docs/operations/incident-response.md` |
+| Backup and restore procedures | Green | `scripts/backup-postgres.sh`, `docs/operations/disaster-recovery.md` |
+| Game day exercises executed | Yellow | Template in `docs/operations/game-day-log.md` |
+| DR drill completed | Yellow | Tracked by #107 |
+
+### Performance
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| API p95 latency < 500 ms (SLO target) | Yellow | Baseline measurement pending |
+| Indexer checkpoint lag < 60 s (SLO target) | Yellow | Baseline measurement pending |
+| Moderation queue latency p95 < 30 s (SLO target) | Yellow | Baseline measurement pending |
+| Load testing executed | Red | Tracked by #111 |
+| Resource limits set on containers | Red | Tracked by #108 |
+
+---
+
+## Grafana / Prometheus Dashboard Query Templates
+
+These PromQL queries can be imported into Grafana panels or used directly
+in the Prometheus expression browser. All queries support the `environment`
+label for filtering by deployment target.
+
+### Service Overview Panel
+
+```promql
+# Availability -- all services, current environment
+patchwork_service_up{project="patchwork",environment="$environment"}
+```
+
+### API Error Rate (5m rolling)
+
+```promql
+rate(patchwork_sli_error_total{service="api",environment="$environment"}[5m])
+/ rate(patchwork_sli_request_total{service="api",environment="$environment"}[5m])
+```
+
+### API Latency Budget Burn
+
+```promql
+# Cumulative duration / request count gives mean latency
+patchwork_sli_request_duration_seconds{service="api",environment="$environment"}
+/ patchwork_sli_request_total{service="api",environment="$environment"}
+```
+
+### Indexer Checkpoint Lag
+
+```promql
+patchwork_checkpoint_lag_seconds{service="indexer",environment="$environment"}
+```
+
+### Indexer Throughput (events/sec, 5m)
+
+```promql
+rate(patchwork_ingest_events_total{service="indexer",environment="$environment"}[5m])
+```
+
+### Moderation Queue Depth
+
+```promql
+moderation_queue_depth{service="moderation-worker",environment="$environment"}
+```
+
+### Moderation Queue Latency
+
+```promql
+moderation_queue_latency_seconds{service="moderation-worker",environment="$environment"}
+```
+
+### Moderation Queue Saturation
+
+```promql
+patchwork_sli_saturation_ratio{service="moderation-worker",environment="$environment"}
+```
+
+### Memory Saturation -- All Services
+
+```promql
+patchwork_sli_saturation_ratio{project="patchwork",environment="$environment"}
+```
+
+### Cross-Service Error Rate Comparison (5m)
+
+```promql
+rate(patchwork_sli_error_total{project="patchwork",environment="$environment"}[5m])
+/ rate(patchwork_sli_request_total{project="patchwork",environment="$environment"}[5m])
+```
+
+### Grafana Dashboard JSON Skeleton
+
+The following JSON can be imported into Grafana (Dashboards > Import) as a
+starting point. Replace `$PROMETHEUS_DS` with the UID of your Prometheus
+data source.
+
+```json
+{
+  "dashboard": {
+    "title": "Patchwork Platform Overview",
+    "uid": "patchwork-overview",
+    "tags": ["patchwork", "sli"],
+    "timezone": "utc",
+    "templating": {
+      "list": [
+        {
+          "name": "environment",
+          "type": "query",
+          "query": "label_values(patchwork_service_up, environment)",
+          "datasource": "$PROMETHEUS_DS"
+        }
+      ]
+    },
+    "panels": [
+      {
+        "title": "Service Health",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "patchwork_service_up{environment=\"$environment\"}",
+            "legendFormat": "{{service}}"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate (5m)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+        "targets": [
+          {
+            "expr": "rate(patchwork_sli_error_total{environment=\"$environment\"}[5m]) / rate(patchwork_sli_request_total{environment=\"$environment\"}[5m])",
+            "legendFormat": "{{service}}"
+          }
+        ]
+      },
+      {
+        "title": "Indexer Checkpoint Lag",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+        "targets": [
+          {
+            "expr": "patchwork_checkpoint_lag_seconds{environment=\"$environment\"}",
+            "legendFormat": "checkpoint lag"
+          }
+        ]
+      },
+      {
+        "title": "Moderation Queue Depth",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+        "targets": [
+          {
+            "expr": "moderation_queue_depth{environment=\"$environment\"}",
+            "legendFormat": "queue depth"
+          }
+        ]
+      },
+      {
+        "title": "Saturation",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+        "targets": [
+          {
+            "expr": "patchwork_sli_saturation_ratio{environment=\"$environment\"}",
+            "legendFormat": "{{service}}"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+*Created as part of Wave 0 governance lane. Updated in Wave 3 (#102). Tracked by #95, #71, #68.*

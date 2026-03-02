@@ -329,12 +329,12 @@ describe('renderPrometheusRuntimeMetrics', () => {
         expect(output).toContain('patchwork_ingest_errors_total');
 
         // Check actual values
-        expect(output).toContain('patchwork_checkpoint_lag_seconds{project="patchwork",service="indexer",component="spool"} 2.5');
-        expect(output).toContain('patchwork_checkpoint_sequence{project="patchwork",service="indexer",component="spool"} 10');
-        expect(output).toContain('patchwork_checkpoint_cursor{project="patchwork",service="indexer",component="spool"} 500');
-        expect(output).toContain('patchwork_checkpoint_healthy{project="patchwork",service="indexer",component="spool"} 1');
-        expect(output).toContain('patchwork_ingest_events_total{project="patchwork",service="indexer",component="spool"} 1000');
-        expect(output).toContain('patchwork_ingest_errors_total{project="patchwork",service="indexer",component="spool"} 5');
+        expect(output).toContain('patchwork_checkpoint_lag_seconds{project="patchwork",service="indexer",component="spool",environment="development"} 2.5');
+        expect(output).toContain('patchwork_checkpoint_sequence{project="patchwork",service="indexer",component="spool",environment="development"} 10');
+        expect(output).toContain('patchwork_checkpoint_cursor{project="patchwork",service="indexer",component="spool",environment="development"} 500');
+        expect(output).toContain('patchwork_checkpoint_healthy{project="patchwork",service="indexer",component="spool",environment="development"} 1');
+        expect(output).toContain('patchwork_ingest_events_total{project="patchwork",service="indexer",component="spool",environment="development"} 1000');
+        expect(output).toContain('patchwork_ingest_errors_total{project="patchwork",service="indexer",component="spool",environment="development"} 5');
     });
 
     it('renders -1 for null lag and cursor', () => {
@@ -348,9 +348,9 @@ describe('renderPrometheusRuntimeMetrics', () => {
             uptimeSeconds: 0,
         });
 
-        expect(output).toContain('patchwork_checkpoint_lag_seconds{project="patchwork",service="indexer",component="spool"} -1');
-        expect(output).toContain('patchwork_checkpoint_cursor{project="patchwork",service="indexer",component="spool"} -1');
-        expect(output).toContain('patchwork_checkpoint_sequence{project="patchwork",service="indexer",component="spool"} 0');
+        expect(output).toContain('patchwork_checkpoint_lag_seconds{project="patchwork",service="indexer",component="spool",environment="development"} -1');
+        expect(output).toContain('patchwork_checkpoint_cursor{project="patchwork",service="indexer",component="spool",environment="development"} -1');
+        expect(output).toContain('patchwork_checkpoint_sequence{project="patchwork",service="indexer",component="spool",environment="development"} 0');
     });
 
     it('renders 0 for unhealthy checkpoint', () => {
@@ -364,7 +364,7 @@ describe('renderPrometheusRuntimeMetrics', () => {
             uptimeSeconds: 0,
         });
 
-        expect(output).toContain('patchwork_checkpoint_healthy{project="patchwork",service="indexer",component="spool"} 0');
+        expect(output).toContain('patchwork_checkpoint_healthy{project="patchwork",service="indexer",component="spool",environment="development"} 0');
     });
 });
 

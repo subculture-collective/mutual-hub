@@ -38,6 +38,7 @@ export interface SliLabels {
     project?: string;
     service: PatchworkService;
     component?: PatchworkComponent;
+    environment?: string;
     endpoint?: string;
 }
 
@@ -45,14 +46,25 @@ export interface SliLabels {
 // Prometheus helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Default environment label.
+ * Reads from PATCHWORK_ENV at startup; defaults to "development".
+ */
+const DEFAULT_ENVIRONMENT =
+    (typeof process !== 'undefined' &&
+        process.env?.['PATCHWORK_ENV']) ||
+    'development';
+
 const formatLabels = (labels: SliLabels): string => {
     const project = labels.project ?? 'patchwork';
     const component =
         labels.component ?? SERVICE_COMPONENT_MAP[labels.service];
+    const environment = labels.environment ?? DEFAULT_ENVIRONMENT;
     const parts = [
         `project="${project}"`,
         `service="${labels.service}"`,
         `component="${component}"`,
+        `environment="${environment}"`,
     ];
     if (labels.endpoint) {
         parts.push(`endpoint="${labels.endpoint}"`);

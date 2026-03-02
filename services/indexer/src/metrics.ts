@@ -1,5 +1,45 @@
 import type { CheckpointHealth } from '@patchwork/shared';
 
+// ---------------------------------------------------------------------------
+// Dashboard-ready label configuration
+// ---------------------------------------------------------------------------
+
+/**
+ * Runtime environment label applied to all metrics.
+ * Reads from PATCHWORK_ENV at startup; defaults to "development".
+ */
+const ENVIRONMENT =
+    (typeof process !== 'undefined' &&
+        process.env?.['PATCHWORK_ENV']) ||
+    'development';
+
+/**
+ * Build the standard Prometheus label set for the indexer service.
+ * Includes project, service, component, and environment labels to
+ * support dashboard filtering and multi-environment aggregation.
+ */
+const buildLabels = (extra?: Record<string, string>): string => {
+    const parts: string[] = [
+        'project="patchwork"',
+        'service="indexer"',
+        'component="spool"',
+        `environment="${ENVIRONMENT}"`,
+    ];
+    if (extra) {
+        for (const [key, value] of Object.entries(extra)) {
+            parts.push(`${key}="${value}"`);
+        }
+    }
+    return `{${parts.join(',')}}`;
+};
+
+/** Default label set (no extras). */
+const PROMETHEUS_LABELS = buildLabels();
+
+// ---------------------------------------------------------------------------
+// Metric interfaces
+// ---------------------------------------------------------------------------
+
 /**
  * Ingestion runtime metrics for the indexer pipeline.
  * Tracks checkpoint health, event processing counts, and errors.
@@ -20,6 +60,10 @@ export interface IngestionRuntimeMetrics {
     /** Process uptime in seconds. */
     uptimeSeconds: number;
 }
+
+// ---------------------------------------------------------------------------
+// Metrics collector
+// ---------------------------------------------------------------------------
 
 /**
  * Mutable counters that the pipeline updates during ingestion.
@@ -67,11 +111,15 @@ export class MetricsCollector {
     }
 }
 
-const PROMETHEUS_LABELS =
-    '{project="patchwork",service="indexer",component="spool"}';
+// ---------------------------------------------------------------------------
+// Prometheus rendering
+// ---------------------------------------------------------------------------
 
 /**
  * Render ingestion runtime metrics in Prometheus exposition format.
+ *
+ * All metrics include the standard dashboard-ready labels:
+ *   project, service, component, environment
  */
 export const renderPrometheusRuntimeMetrics = (
     metrics: IngestionRuntimeMetrics,
