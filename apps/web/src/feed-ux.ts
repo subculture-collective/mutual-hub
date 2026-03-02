@@ -31,6 +31,26 @@ export interface FeedStatusTransition {
     reason?: string;
 }
 
+/**
+ * Assignment info displayed on feed cards.
+ */
+export interface FeedAssignmentInfo {
+    assigneeDid: string;
+    status: 'pending' | 'accepted' | 'declined' | 'timed_out';
+    assignedAt: string;
+}
+
+/**
+ * Attachment preview displayed on feed cards.
+ */
+export interface FeedAttachmentPreview {
+    id: string;
+    filename: string;
+    mimeType: string;
+    url: string;
+    moderationStatus: 'pending' | 'approved' | 'rejected';
+}
+
 export interface FeedAidCard {
     id: string;
     title: string;
@@ -47,6 +67,8 @@ export interface FeedAidCard {
         lng: number;
     };
     timeline?: FeedStatusTransition[];
+    assignment?: FeedAssignmentInfo;
+    attachments?: FeedAttachmentPreview[];
 }
 
 export interface FeedBadge {
@@ -65,10 +87,13 @@ export interface FeedCardPresentation {
     urgencyBadge: FeedBadge;
     statusBadge: FeedBadge;
     lifecycleBadge?: FeedBadge;
+    assignmentBadge?: FeedBadge;
     canEdit: boolean;
     canClose: boolean;
     transitionActions: FeedTransitionAction[];
     timelineEntryCount: number;
+    attachmentCount: number;
+    visibleAttachments: FeedAttachmentPreview[];
 }
 
 export interface FeedViewModel {
@@ -207,16 +232,41 @@ const byUpdatedAtDesc = (left: FeedAidCard, right: FeedAidCard): number => {
     return left.id.localeCompare(right.id);
 };
 
+const ASSIGNMENT_BADGE_MAP: Record<FeedAssignmentInfo['status'], FeedBadge> = {
+    pending: { label: 'Awaiting Response', tone: 'info' },
+    accepted: { label: 'Accepted', tone: 'success' },
+    declined: { label: 'Declined', tone: 'danger' },
+    timed_out: { label: 'Timed Out', tone: 'danger' },
+};
+
+const toAssignmentBadge = (
+    assignment: FeedAssignmentInfo | undefined,
+): FeedBadge | undefined => {
+    if (!assignment) {
+        return undefined;
+    }
+    return ASSIGNMENT_BADGE_MAP[assignment.status];
+};
+
 const toPresentation = (card: FeedAidCard): FeedCardPresentation => {
+    const allAttachments = card.attachments ?? [];
+    // Only show approved attachments in the visible list
+    const visibleAttachments = allAttachments.filter(
+        a => a.moderationStatus === 'approved',
+    );
+
     return {
         id: card.id,
         urgencyBadge: toUrgencyBadge(card.urgency),
         statusBadge: toStatusBadge(card.status),
         lifecycleBadge: toLifecycleBadge(card.lifecycleStatus),
+        assignmentBadge: toAssignmentBadge(card.assignment),
         canEdit: card.status !== 'closed' && card.lifecycleStatus !== 'archived',
         canClose: card.status !== 'closed' && card.lifecycleStatus !== 'archived',
         transitionActions: buildTransitionActions(card),
         timelineEntryCount: card.timeline?.length ?? 0,
+        attachmentCount: allAttachments.length,
+        visibleAttachments,
     };
 };
 

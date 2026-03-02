@@ -7,6 +7,9 @@ import {
     didSchema,
     isoDateTimeSchema,
     recordNsid,
+    atUriSchema,
+    type Attachment,
+    type AttachmentModerationStatus,
 } from '@patchwork/shared';
 import {
     appendDiscoveryEvents,
@@ -297,4 +300,193 @@ export const createAidPostService = (
     },
 ): ApiAidPostService => {
     return new ApiAidPostService(queryService, options);
+};
+
+/**
+ * Attachment service result types.
+ */
+export interface AttachmentRouteResult {
+    statusCode: number;
+    body: AttachmentSuccessResponse | AttachmentListResponse | AidPostErrorResponse;
+}
+
+export interface AttachmentSuccessResponse {
+    attachment: Attachment;
+}
+
+export interface AttachmentListResponse {
+    postUri: string;
+    attachments: Attachment[];
+    total: number;
+}
+
+/** 10 MB max file size for attachment validation. */
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+/** Maximum attachments per post. */
+const MAX_ATTACHMENTS_PER_POST = 5;
+
+const addAttachmentSchema = z.object({
+    postUri: atUriSchema,
+    filename: z.string().min(1).max(255),
+    mimeType: z.enum([
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/pdf',
+    ]),
+    sizeBytes: z.number().int().min(1).max(MAX_ATTACHMENT_BYTES),
+    url: z.string().url(),
+    uploadedBy: didSchema,
+    now: isoDateTimeSchema.optional(),
+});
+
+/**
+ * In-memory attachment store with moderation scanning integration.
+ */
+export class AttachmentService {
+    private readonly attachments = new Map<string, Attachment[]>();
+
+    /**
+     * Add an attachment to a post. Validates file type, size, and rate limits.
+     */
+    async addAttachment(body: unknown): Promise<AttachmentRouteResult> {
+        let input: z.infer<typeof addAttachmentSchema>;
+        try {
+            input = addAttachmentSchema.parse(body);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return {
+                    statusCode: 400,
+                    body: {
+                        error: {
+                            code: 'INVALID_QUERY',
+                            message: 'Attachment payload failed validation.',
+                            details: {
+                                issues: error.issues.map(issue => ({
+                                    path: issue.path.join('.'),
+                                    message: issue.message,
+                                })),
+                            },
+                        },
+                    },
+                };
+            }
+            throw error;
+        }
+
+        const existing = this.attachments.get(input.postUri) ?? [];
+        if (existing.length >= MAX_ATTACHMENTS_PER_POST) {
+            return {
+                statusCode: 400,
+                body: {
+                    error: {
+                        code: 'ATTACHMENT_LIMIT_EXCEEDED',
+                        message: `Maximum ${MAX_ATTACHMENTS_PER_POST} attachments per post.`,
+                    },
+                },
+            };
+        }
+
+        const now = input.now ?? new Date().toISOString();
+        const attachment: Attachment = {
+            id: `att-${randomUUID()}`,
+            postUri: input.postUri,
+            filename: input.filename,
+            mimeType: input.mimeType,
+            sizeBytes: input.sizeBytes,
+            url: input.url,
+            uploadedBy: input.uploadedBy,
+            uploadedAt: now,
+            moderationStatus: 'pending',
+        };
+
+        existing.push(attachment);
+        this.attachments.set(input.postUri, existing);
+
+        // Simulate async moderation scanning (auto-approve for fixture mode)
+        this.scheduleModerationScan(attachment);
+
+        return {
+            statusCode: 201,
+            body: { attachment },
+        };
+    }
+
+    /**
+     * List attachments for a post.
+     */
+    getAttachments(postUri: string): AttachmentRouteResult {
+        const attachments = this.attachments.get(postUri) ?? [];
+        return {
+            statusCode: 200,
+            body: {
+                postUri,
+                attachments: [...attachments],
+                total: attachments.length,
+            },
+        };
+    }
+
+    /**
+     * Query attachments from URL search params.
+     */
+    getAttachmentsFromParams(params: URLSearchParams): AttachmentRouteResult {
+        const postUri = params.get('postUri');
+        if (!postUri) {
+            return {
+                statusCode: 400,
+                body: {
+                    error: {
+                        code: 'INVALID_QUERY',
+                        message: 'postUri query parameter is required.',
+                    },
+                },
+            };
+        }
+        return this.getAttachments(postUri);
+    }
+
+    /**
+     * Update moderation status of an attachment (for testing/moderation flow).
+     */
+    updateModerationStatus(
+        attachmentId: string,
+        status: AttachmentModerationStatus,
+    ): AttachmentRouteResult | undefined {
+        for (const [, attachments] of this.attachments) {
+            const attachment = attachments.find(a => a.id === attachmentId);
+            if (attachment) {
+                attachment.moderationStatus = status;
+                return {
+                    statusCode: 200,
+                    body: { attachment: { ...attachment } },
+                };
+            }
+        }
+        return undefined;
+    }
+
+    /**
+     * Simulate moderation scanning. In fixture mode, auto-approves after
+     * a synchronous check. In production, this would be an async job.
+     */
+    private scheduleModerationScan(attachment: Attachment): void {
+        // Fixture-mode: auto-approve unless filename contains 'flagged'
+        if (attachment.filename.toLowerCase().includes('flagged')) {
+            attachment.moderationStatus = 'rejected';
+        } else {
+            attachment.moderationStatus = 'approved';
+        }
+    }
+
+    /** Get all attachments for testing. */
+    getAllAttachments(): Map<string, Attachment[]> {
+        return this.attachments;
+    }
+}
+
+export const createAttachmentService = (): AttachmentService => {
+    return new AttachmentService();
 };
