@@ -100,7 +100,7 @@ export class FeedbackService {
         return this.feedbackByUser.get(userDid) ?? [];
     }
 
-    getSummary(orgDid?: string): FeedbackSummary {
+    getSummary(_orgDid?: string): FeedbackSummary {
         // Collect all feedback (orgDid filtering would be implemented with org membership)
         const allFeedback: FeedbackSubmission[] = [];
         for (const items of this.feedbackByRequest.values()) {

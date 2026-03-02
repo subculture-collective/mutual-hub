@@ -139,9 +139,10 @@ export class InboxService {
         return { statusCode: 200, body: result };
     }
 
-    markReadFromParams(params: URLSearchParams): InboxRouteResult {
-        const userDid = params.get('userDid')?.trim();
-        const itemId = params.get('itemId')?.trim();
+    markReadFromParams(body: unknown): InboxRouteResult {
+        const obj = body as Record<string, unknown> | null;
+        const userDid = (typeof obj?.userDid === 'string' ? obj.userDid : '').trim();
+        const itemId = (typeof obj?.itemId === 'string' ? obj.itemId : '').trim();
 
         if (!userDid || !itemId) {
             return {
@@ -161,8 +162,9 @@ export class InboxService {
         return { statusCode: 200, body: { ok: true } };
     }
 
-    markAllReadFromParams(params: URLSearchParams): InboxRouteResult {
-        const userDid = params.get('userDid')?.trim();
+    markAllReadFromParams(body: unknown): InboxRouteResult {
+        const obj = body as Record<string, unknown> | null;
+        const userDid = (typeof obj?.userDid === 'string' ? obj.userDid : '').trim();
         if (!userDid) {
             return {
                 statusCode: 400,

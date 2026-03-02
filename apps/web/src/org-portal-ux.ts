@@ -1,5 +1,4 @@
 import {
-    type OrgAuditEntry,
     type OrgMember,
     type OrgPerformanceMetrics,
     type OrgProfile,
@@ -20,14 +19,6 @@ export type OrgAdminAction =
     | 'change_service_status'
     | 'view_audit'
     | 'view_metrics';
-
-const ADMIN_ACTIONS: ReadonlySet<OrgAdminAction> = new Set([
-    'invite_member',
-    'remove_member',
-    'change_role',
-    'upsert_service',
-    'change_service_status',
-]);
 
 const VIEWER_ACTIONS: ReadonlySet<OrgAdminAction> = new Set([
     'view_audit',

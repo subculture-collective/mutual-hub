@@ -13,6 +13,6 @@
         "src",
         "vite.config.ts",
         "tailwind.config.ts",
-        "../../packages/shared/src/category-policy.ts"
+        "../../packages/shared/src"
     ]
 }

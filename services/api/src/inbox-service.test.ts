@@ -228,20 +228,20 @@ describe('InboxService', () => {
             service.addItem(USER_DID, makeItem({ id: 'item-1' }));
 
             const result = service.markReadFromParams(
-                toParams({ userDid: USER_DID, itemId: 'item-1' }),
+                { userDid: USER_DID, itemId: 'item-1' },
             );
             expect(result.statusCode).toBe(200);
         });
 
         it('returns 404 for nonexistent item', () => {
             const result = service.markReadFromParams(
-                toParams({ userDid: USER_DID, itemId: 'nope' }),
+                { userDid: USER_DID, itemId: 'nope' },
             );
             expect(result.statusCode).toBe(404);
         });
 
         it('returns 400 without required fields', () => {
-            const result = service.markReadFromParams(toParams({}));
+            const result = service.markReadFromParams({});
             expect(result.statusCode).toBe(400);
         });
     });
@@ -251,14 +251,14 @@ describe('InboxService', () => {
             service.addItem(USER_DID, makeItem({ id: 'item-1', read: false }));
             service.addItem(USER_DID, makeItem({ id: 'item-2', read: false }));
 
-            const result = service.markAllReadFromParams(toParams({ userDid: USER_DID }));
+            const result = service.markAllReadFromParams({ userDid: USER_DID });
             expect(result.statusCode).toBe(200);
             const body = result.body as { markedRead: number };
             expect(body.markedRead).toBe(2);
         });
 
         it('returns 400 without userDid', () => {
-            const result = service.markAllReadFromParams(toParams({}));
+            const result = service.markAllReadFromParams({});
             expect(result.statusCode).toBe(400);
         });
     });
