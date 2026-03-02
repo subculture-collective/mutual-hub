@@ -39,3 +39,4 @@ export * from './scheduling.js';
 export * from './multi-region.js';
 export * from './integrations.js';
 export * from './group-coordination.js';
+export * from './matching.js';
