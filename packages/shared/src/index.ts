@@ -38,3 +38,4 @@ export * from './notifications.js';
 export * from './scheduling.js';
 export * from './multi-region.js';
 export * from './integrations.js';
+export * from './mobile.js';

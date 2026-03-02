@@ -290,6 +290,24 @@ or **Red** (not started / blocking). Update at each milestone review.
 | Rollout telemetry visible during deploy | Green | CI progressive-delivery-gate job (#110) |
 | Progressive delivery runbook | Green | `docs/operations/progressive-delivery-runbook.md` (#110) |
 
+### Mobile Readiness
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| Mobile shared contracts defined | Green | `packages/shared/src/mobile.ts` (#135) |
+| Mobile API client consuming shared contracts | Green | `apps/mobile/src/api-client.ts` (#135) |
+| Core flow parity tracking | Yellow | 8 flows defined; mobile pending implementation |
+| Mobile navigation model | Green | Tab-based with deep link support (#135) |
+| Push notification integration | Green | Shared NotificationType contracts (#135) |
+| Mobile offline sync | Green | Wraps shared SyncQueue with mobile concerns (#135) |
+| Device QA matrix defined | Green | `docs/operations/mobile-release-checklist.md` (#135) |
+| QA checks executed (iOS) | Red | Pending first release build |
+| QA checks executed (Android) | Red | Pending first release build |
+| Store metadata complete (App Store) | Red | Tracked by #135 |
+| Store metadata complete (Play Store) | Red | Tracked by #135 |
+| Privacy declarations reviewed | Yellow | Declarations drafted; legal review pending |
+| Mobile architecture ADR | Green | `docs/architecture/adr/0002-mobile-architecture.md` |
+
 ---
 
 ## Grafana / Prometheus Dashboard Query Templates
@@ -449,4 +467,4 @@ data source.
 
 ---
 
-*Created as part of Wave 0 governance lane. Updated in Wave 3 (#102). Tracked by #95, #71, #68.*
+*Created as part of Wave 0 governance lane. Updated in Wave 3 (#102), Wave 5 (#135). Tracked by #95, #71, #68.*
