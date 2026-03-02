@@ -6,11 +6,15 @@ import {
     getValidTargetsForRole,
     isValidLifecycleRole,
     STATUS_LABELS,
+    ASSIGNMENT_TIMEOUT_MS,
+    type AssignmentRecord,
+    type AssignmentStatus,
+    type HandoffMetadata,
     type LifecycleRole,
     type RequestStatus,
     type RequestTimeline,
     type StatusTransition,
-} from '../../../packages/shared/src/lifecycle.js';
+} from '@patchwork/shared';
 
 /**
  * In-memory store for request statuses and timelines.
@@ -21,6 +25,8 @@ interface RequestLifecycleRecord {
     currentStatus: RequestStatus;
     timeline: RequestTimeline;
     updatedAt: string;
+    assignment?: AssignmentRecord;
+    handoff?: HandoffMetadata;
 }
 
 export interface LifecycleTransitionResult {
@@ -61,6 +67,36 @@ export interface LifecycleQuerySuccessResponse {
     timeline: RequestTimeline;
     validTransitions: RequestStatus[];
     updatedAt: string;
+    assignment?: AssignmentRecord;
+    handoff?: HandoffMetadata;
+}
+
+export interface AssignmentResult {
+    statusCode: number;
+    body:
+        | AssignmentSuccessResponse
+        | LifecycleTransitionErrorResponse;
+}
+
+export interface AssignmentSuccessResponse {
+    postUri: string;
+    assignment: AssignmentRecord;
+    currentStatus: RequestStatus;
+    updatedAt: string;
+}
+
+export interface HandoffResult {
+    statusCode: number;
+    body:
+        | HandoffSuccessResponse
+        | LifecycleTransitionErrorResponse;
+}
+
+export interface HandoffSuccessResponse {
+    postUri: string;
+    handoff: HandoffMetadata;
+    currentStatus: RequestStatus;
+    updatedAt: string;
 }
 
 const transitionInputSchema = z.object({
@@ -89,6 +125,40 @@ const transitionInputSchema = z.object({
 });
 
 type TransitionInput = z.infer<typeof transitionInputSchema>;
+
+const assignmentInputSchema = z.object({
+    postUri: z
+        .string()
+        .min(1, 'postUri is required')
+        .regex(/^at:\/\//, 'postUri must be a valid at:// URI'),
+    assigneeDid: didSchema,
+    assignerDid: didSchema,
+    now: z.string().datetime({ offset: true }).optional(),
+});
+
+const assignmentResponseSchema = z.object({
+    postUri: z
+        .string()
+        .min(1)
+        .regex(/^at:\/\//),
+    assigneeDid: didSchema,
+    now: z.string().datetime({ offset: true }).optional(),
+    reason: z.string().max(500).optional(),
+});
+
+const handoffInputSchema = z.object({
+    postUri: z
+        .string()
+        .min(1)
+        .regex(/^at:\/\//),
+    assigneeDid: didSchema,
+    notes: z.string().max(2000).optional(),
+    recipientConfirmed: z.boolean().optional(),
+    deliveryMethod: z
+        .enum(['in_person', 'shipped', 'digital', 'other'])
+        .optional(),
+    now: z.string().datetime({ offset: true }).optional(),
+});
 
 const toValidationError = (
     error: ZodError,
@@ -207,6 +277,12 @@ export class LifecycleService {
                     role,
                 ),
                 updatedAt: record.updatedAt,
+                ...(record.assignment
+                    ? { assignment: { ...record.assignment } }
+                    : {}),
+                ...(record.handoff
+                    ? { handoff: { ...record.handoff } }
+                    : {}),
             },
         };
     }
@@ -233,6 +309,421 @@ export class LifecycleService {
             postUri,
             params.get('actorRole') ?? undefined,
         );
+    }
+
+    /**
+     * Assign a request to a volunteer. Transitions the post to 'assigned'
+     * if it is currently 'triaged' or re-assigns from 'assigned'/'in_progress'.
+     */
+    async assignRequest(body: unknown): Promise<AssignmentResult> {
+        let input: z.infer<typeof assignmentInputSchema>;
+        try {
+            input = assignmentInputSchema.parse(body);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return { statusCode: 400, body: toValidationError(error) };
+            }
+            throw error;
+        }
+
+        const record = this.records.get(input.postUri);
+        if (!record) {
+            return {
+                statusCode: 404,
+                body: {
+                    error: {
+                        code: 'NOT_FOUND',
+                        message: `No lifecycle record found for post: ${input.postUri}`,
+                    },
+                },
+            };
+        }
+
+        // Must be in a state that can transition to 'assigned', or already assigned
+        const canAssign =
+            record.currentStatus === 'triaged' ||
+            record.currentStatus === 'assigned' ||
+            record.currentStatus === 'in_progress';
+        if (!canAssign) {
+            return {
+                statusCode: 403,
+                body: {
+                    error: {
+                        code: 'TRANSITION_NOT_ALLOWED',
+                        message: `Cannot assign a request in '${record.currentStatus}' status.`,
+                    },
+                },
+            };
+        }
+
+        const now = input.now ?? new Date().toISOString();
+
+        // Transition to assigned if not already
+        if (record.currentStatus !== 'assigned') {
+            const transition = createStatusTransition({
+                from: record.currentStatus,
+                to: 'assigned',
+                actorDid: input.assignerDid,
+                actorRole: 'coordinator',
+                timestamp: now,
+                reason: `Assigned to ${input.assigneeDid}`,
+            });
+            record.currentStatus = 'assigned';
+            record.timeline.push(transition);
+        }
+
+        const assignment: AssignmentRecord = {
+            assigneeDid: input.assigneeDid,
+            assignerDid: input.assignerDid,
+            assignedAt: now,
+            status: 'pending',
+            timeoutMs: ASSIGNMENT_TIMEOUT_MS,
+        };
+
+        record.assignment = assignment;
+        record.updatedAt = now;
+
+        return {
+            statusCode: 200,
+            body: {
+                postUri: record.postUri,
+                assignment: { ...assignment },
+                currentStatus: record.currentStatus,
+                updatedAt: record.updatedAt,
+            },
+        };
+    }
+
+    /**
+     * Volunteer accepts an assignment. Transitions to 'in_progress'.
+     */
+    async acceptAssignment(body: unknown): Promise<AssignmentResult> {
+        let input: z.infer<typeof assignmentResponseSchema>;
+        try {
+            input = assignmentResponseSchema.parse(body);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return { statusCode: 400, body: toValidationError(error) };
+            }
+            throw error;
+        }
+
+        const record = this.records.get(input.postUri);
+        if (!record) {
+            return {
+                statusCode: 404,
+                body: {
+                    error: {
+                        code: 'NOT_FOUND',
+                        message: `No lifecycle record found for post: ${input.postUri}`,
+                    },
+                },
+            };
+        }
+
+        if (!record.assignment || record.assignment.assigneeDid !== input.assigneeDid) {
+            return {
+                statusCode: 403,
+                body: {
+                    error: {
+                        code: 'ASSIGNMENT_MISMATCH',
+                        message: 'This volunteer is not the current assignee.',
+                    },
+                },
+            };
+        }
+
+        if (record.assignment.status !== 'pending') {
+            return {
+                statusCode: 403,
+                body: {
+                    error: {
+                        code: 'ASSIGNMENT_ALREADY_RESPONDED',
+                        message: `Assignment already has status '${record.assignment.status}'.`,
+                    },
+                },
+            };
+        }
+
+        const now = input.now ?? new Date().toISOString();
+
+        record.assignment.status = 'accepted';
+        record.assignment.respondedAt = now;
+
+        // Transition to in_progress
+        const transition = createStatusTransition({
+            from: 'assigned',
+            to: 'in_progress',
+            actorDid: input.assigneeDid,
+            actorRole: 'volunteer',
+            timestamp: now,
+            reason: 'Assignment accepted',
+        });
+        record.currentStatus = 'in_progress';
+        record.timeline.push(transition);
+        record.updatedAt = now;
+
+        return {
+            statusCode: 200,
+            body: {
+                postUri: record.postUri,
+                assignment: { ...record.assignment },
+                currentStatus: record.currentStatus,
+                updatedAt: record.updatedAt,
+            },
+        };
+    }
+
+    /**
+     * Volunteer declines an assignment. Reverts to 'triaged' for reassignment.
+     */
+    async declineAssignment(body: unknown): Promise<AssignmentResult> {
+        let input: z.infer<typeof assignmentResponseSchema>;
+        try {
+            input = assignmentResponseSchema.parse(body);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return { statusCode: 400, body: toValidationError(error) };
+            }
+            throw error;
+        }
+
+        const record = this.records.get(input.postUri);
+        if (!record) {
+            return {
+                statusCode: 404,
+                body: {
+                    error: {
+                        code: 'NOT_FOUND',
+                        message: `No lifecycle record found for post: ${input.postUri}`,
+                    },
+                },
+            };
+        }
+
+        if (!record.assignment || record.assignment.assigneeDid !== input.assigneeDid) {
+            return {
+                statusCode: 403,
+                body: {
+                    error: {
+                        code: 'ASSIGNMENT_MISMATCH',
+                        message: 'This volunteer is not the current assignee.',
+                    },
+                },
+            };
+        }
+
+        if (record.assignment.status !== 'pending') {
+            return {
+                statusCode: 403,
+                body: {
+                    error: {
+                        code: 'ASSIGNMENT_ALREADY_RESPONDED',
+                        message: `Assignment already has status '${record.assignment.status}'.`,
+                    },
+                },
+            };
+        }
+
+        const now = input.now ?? new Date().toISOString();
+
+        record.assignment.status = 'declined';
+        record.assignment.respondedAt = now;
+        record.assignment.declineReason = input.reason;
+
+        // Transition back to triaged for reassignment
+        const transition = createStatusTransition({
+            from: 'assigned',
+            to: 'triaged',
+            actorDid: input.assigneeDid,
+            actorRole: 'volunteer',
+            timestamp: now,
+            reason: input.reason ?? 'Assignment declined',
+        });
+        record.currentStatus = 'triaged';
+        record.timeline.push(transition);
+        record.updatedAt = now;
+
+        return {
+            statusCode: 200,
+            body: {
+                postUri: record.postUri,
+                assignment: { ...record.assignment },
+                currentStatus: record.currentStatus,
+                updatedAt: record.updatedAt,
+            },
+        };
+    }
+
+    /**
+     * Check if the current assignment has timed out. If so, revert to 'triaged'.
+     */
+    checkAssignmentTimeout(postUri: string, now?: string): AssignmentResult {
+        const record = this.records.get(postUri);
+        if (!record) {
+            return {
+                statusCode: 404,
+                body: {
+                    error: {
+                        code: 'NOT_FOUND',
+                        message: `No lifecycle record found for post: ${postUri}`,
+                    },
+                },
+            };
+        }
+
+        if (!record.assignment || record.assignment.status !== 'pending') {
+            return {
+                statusCode: 200,
+                body: {
+                    postUri: record.postUri,
+                    assignment: record.assignment
+                        ? { ...record.assignment }
+                        : {
+                              assigneeDid: '',
+                              assignerDid: '',
+                              assignedAt: '',
+                              status: 'pending' as AssignmentStatus,
+                              timeoutMs: 0,
+                          },
+                    currentStatus: record.currentStatus,
+                    updatedAt: record.updatedAt,
+                },
+            };
+        }
+
+        const currentTime = now ? new Date(now).getTime() : Date.now();
+        const assignedTime = new Date(record.assignment.assignedAt).getTime();
+        const elapsed = currentTime - assignedTime;
+
+        if (elapsed < record.assignment.timeoutMs) {
+            return {
+                statusCode: 200,
+                body: {
+                    postUri: record.postUri,
+                    assignment: { ...record.assignment },
+                    currentStatus: record.currentStatus,
+                    updatedAt: record.updatedAt,
+                },
+            };
+        }
+
+        // Timed out - revert to triaged
+        const timestamp = now ?? new Date().toISOString();
+        record.assignment.status = 'timed_out';
+        record.assignment.respondedAt = timestamp;
+
+        const transition = createStatusTransition({
+            from: 'assigned',
+            to: 'triaged',
+            actorDid: record.assignment.assignerDid,
+            actorRole: 'coordinator',
+            timestamp,
+            reason: `Assignment to ${record.assignment.assigneeDid} timed out`,
+        });
+        record.currentStatus = 'triaged';
+        record.timeline.push(transition);
+        record.updatedAt = timestamp;
+
+        return {
+            statusCode: 200,
+            body: {
+                postUri: record.postUri,
+                assignment: { ...record.assignment },
+                currentStatus: record.currentStatus,
+                updatedAt: record.updatedAt,
+            },
+        };
+    }
+
+    /**
+     * Complete a handoff (fulfillment) for an in-progress request.
+     * Transitions to 'resolved' and captures handoff metadata.
+     */
+    async completeHandoff(body: unknown): Promise<HandoffResult> {
+        let input: z.infer<typeof handoffInputSchema>;
+        try {
+            input = handoffInputSchema.parse(body);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                return { statusCode: 400, body: toValidationError(error) };
+            }
+            throw error;
+        }
+
+        const record = this.records.get(input.postUri);
+        if (!record) {
+            return {
+                statusCode: 404,
+                body: {
+                    error: {
+                        code: 'NOT_FOUND',
+                        message: `No lifecycle record found for post: ${input.postUri}`,
+                    },
+                },
+            };
+        }
+
+        if (record.currentStatus !== 'in_progress') {
+            return {
+                statusCode: 403,
+                body: {
+                    error: {
+                        code: 'TRANSITION_NOT_ALLOWED',
+                        message: `Cannot complete handoff for a request in '${record.currentStatus}' status. Must be 'in_progress'.`,
+                    },
+                },
+            };
+        }
+
+        if (
+            !record.assignment ||
+            record.assignment.assigneeDid !== input.assigneeDid
+        ) {
+            return {
+                statusCode: 403,
+                body: {
+                    error: {
+                        code: 'ASSIGNMENT_MISMATCH',
+                        message: 'This volunteer is not the current assignee.',
+                    },
+                },
+            };
+        }
+
+        const now = input.now ?? new Date().toISOString();
+
+        const handoff: HandoffMetadata = {
+            completedBy: input.assigneeDid,
+            completedAt: now,
+            notes: input.notes,
+            recipientConfirmed: input.recipientConfirmed,
+            deliveryMethod: input.deliveryMethod,
+        };
+
+        record.handoff = handoff;
+
+        const transition = createStatusTransition({
+            from: 'in_progress',
+            to: 'resolved',
+            actorDid: input.assigneeDid,
+            actorRole: 'volunteer',
+            timestamp: now,
+            reason: 'Handoff completed',
+        });
+        record.currentStatus = 'resolved';
+        record.timeline.push(transition);
+        record.updatedAt = now;
+
+        return {
+            statusCode: 200,
+            body: {
+                postUri: record.postUri,
+                handoff: { ...handoff },
+                currentStatus: record.currentStatus,
+                updatedAt: record.updatedAt,
+            },
+        };
     }
 
     /**

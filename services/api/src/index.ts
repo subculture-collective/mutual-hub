@@ -15,8 +15,11 @@ import {
 } from './query-service.js';
 import { createFixtureVerificationService } from './verification-service.js';
 import { createFixtureSettingsService } from './settings-service.js';
+import { createFixtureAuthService } from './auth-service.js';
 import { createFixtureVolunteerService } from './volunteer-service.js';
 import { createLifecycleService } from './lifecycle-service.js';
+import { createAttachmentService } from './aid-post-service.js';
+import { createOrgPortalService } from './org-portal-service.js';
 
 const config = loadApiConfig();
 
@@ -38,6 +41,9 @@ const verificationService = createFixtureVerificationService();
 const settingsService = createFixtureSettingsService();
 const volunteerService = createFixtureVolunteerService();
 const lifecycleService = createLifecycleService();
+const attachmentService = createAttachmentService();
+const authService = createFixtureAuthService();
+const orgPortalService = createOrgPortalService();
 
 const databaseUrl = config.API_DATABASE_URL ?? config.DATABASE_URL;
 const postgresPool =
@@ -80,10 +86,21 @@ const writeJson = (
     response.end(JSON.stringify(body));
 };
 
+const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
+
 const readJsonBody = (request: IncomingMessage): Promise<unknown> => {
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
-        request.on('data', (chunk: Buffer) => chunks.push(chunk));
+        let totalSize = 0;
+        request.on('data', (chunk: Buffer) => {
+            totalSize += chunk.length;
+            if (totalSize > MAX_BODY_SIZE) {
+                request.destroy();
+                reject(new Error('Request body too large'));
+                return;
+            }
+            chunks.push(chunk);
+        });
         request.on('end', () => {
             try {
                 resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
@@ -119,6 +136,10 @@ const contractRoutes = [
     '/chat/safety/report',
     '/chat/safety/signals/drain',
     '/chat/safety/metrics',
+    '/chat/message/send',
+    '/chat/message/status',
+    '/chat/message/retry',
+    '/chat/messages',
     '/chat/route/preference-aware',
     '/volunteer/profile/upsert',
     '/volunteer/profiles',
@@ -134,6 +155,26 @@ const contractRoutes = [
     '/account/export',
     '/aid/post/transition',
     '/aid/post/lifecycle',
+    '/aid/post/assign',
+    '/aid/post/accept',
+    '/aid/post/decline',
+    '/aid/post/handoff',
+    '/aid/post/timeout-check',
+    '/aid/post/attachments',
+    '/aid/post/attachments/add',
+    '/auth/session',
+    '/auth/refresh',
+    '/org/profile',
+    '/org/create',
+    '/org/member/invite',
+    '/org/member/remove',
+    '/org/member/role',
+    '/org/members',
+    '/org/service/upsert',
+    '/org/service/status',
+    '/org/services',
+    '/org/audit',
+    '/org/metrics',
     '/health',
     '/metrics',
 ] as const;
@@ -174,6 +215,14 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
         chatService.muteFromParams(requestUrl.searchParams),
     '/chat/safety/report': requestUrl =>
         chatService.reportFromParams(requestUrl.searchParams),
+    '/chat/message/send': requestUrl =>
+        chatService.sendMessageFromParams(requestUrl.searchParams),
+    '/chat/message/status': requestUrl =>
+        chatService.updateMessageStatusFromParams(requestUrl.searchParams),
+    '/chat/message/retry': requestUrl =>
+        chatService.retryMessageFromParams(requestUrl.searchParams),
+    '/chat/messages': requestUrl =>
+        chatService.getConversationHistoryFromParams(requestUrl.searchParams),
     '/chat/safety/signals/drain': () => chatService.drainModerationSignals(),
     '/chat/safety/metrics': () => chatService.safetyMetrics(),
     '/chat/route/preference-aware': requestUrl =>
@@ -203,11 +252,90 @@ const routeHandlers: Readonly<Record<string, ApiRouteHandler>> = {
         lifecycleService.transitionFromParams(requestUrl.searchParams),
     '/aid/post/lifecycle': requestUrl =>
         lifecycleService.queryFromParams(requestUrl.searchParams),
+    '/auth/session': requestUrl =>
+        authService.validateSessionFromParams(requestUrl.searchParams),
+    '/auth/refresh': requestUrl =>
+        authService.refreshSessionFromParams(requestUrl.searchParams),
+    '/org/profile': requestUrl =>
+        orgPortalService.getOrg(requestUrl.searchParams),
+    '/org/create': requestUrl =>
+        orgPortalService.createOrg(requestUrl.searchParams),
+    '/org/member/invite': requestUrl =>
+        orgPortalService.inviteMember(requestUrl.searchParams),
+    '/org/member/remove': requestUrl =>
+        orgPortalService.removeMember(requestUrl.searchParams),
+    '/org/member/role': requestUrl =>
+        orgPortalService.updateMemberRole(requestUrl.searchParams),
+    '/org/members': requestUrl =>
+        orgPortalService.listMembers(requestUrl.searchParams),
+    '/org/service/upsert': requestUrl =>
+        orgPortalService.upsertServiceListing(requestUrl.searchParams),
+    '/org/service/status': requestUrl =>
+        orgPortalService.updateServiceStatus(requestUrl.searchParams),
+    '/org/services': requestUrl =>
+        orgPortalService.listServices(requestUrl.searchParams),
+    '/org/audit': requestUrl =>
+        orgPortalService.getAuditTrail(requestUrl.searchParams),
+    '/org/metrics': requestUrl =>
+        orgPortalService.getPerformanceMetrics(requestUrl.searchParams),
+    '/aid/post/timeout-check': requestUrl => {
+        const postUri = requestUrl.searchParams.get('postUri');
+        if (!postUri) {
+            return {
+                statusCode: 400,
+                body: { error: { code: 'INVALID_INPUT', message: 'postUri is required.' } },
+            };
+        }
+        return lifecycleService.checkAssignmentTimeout(
+            postUri,
+            requestUrl.searchParams.get('now') ?? undefined,
+        );
+    },
+    '/aid/post/attachments': requestUrl =>
+        attachmentService.getAttachmentsFromParams(requestUrl.searchParams),
 };
 
 export const createApiServer = () => {
     return createServer((request, response) => {
         const requestUrl = new URL(request.url ?? '/', 'http://localhost');
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/auth/session'
+        ) {
+            void Promise.resolve()
+                .then(() =>
+                    authService.createSessionFromParams(
+                        requestUrl.searchParams,
+                    ),
+                )
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'DELETE' &&
+            requestUrl.pathname === '/auth/session'
+        ) {
+            const result = authService.deleteSessionFromParams(
+                requestUrl.searchParams,
+            );
+            writeJson(response, result.statusCode, result.body);
+            return;
+        }
 
         if (
             request.method === 'POST' &&
@@ -330,6 +458,121 @@ export const createApiServer = () => {
         ) {
             void readJsonBody(request)
                 .then(body => lifecycleService.transitionFromBody(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/assign'
+        ) {
+            void readJsonBody(request)
+                .then(body => lifecycleService.assignRequest(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/accept'
+        ) {
+            void readJsonBody(request)
+                .then(body => lifecycleService.acceptAssignment(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/decline'
+        ) {
+            void readJsonBody(request)
+                .then(body => lifecycleService.declineAssignment(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/handoff'
+        ) {
+            void readJsonBody(request)
+                .then(body => lifecycleService.completeHandoff(body))
+                .then(result => {
+                    writeJson(response, result.statusCode, result.body);
+                })
+                .catch(error => {
+                    writeJson(response, 500, {
+                        error: {
+                            code: 'UNHANDLED_ROUTE_ERROR',
+                            message:
+                                error instanceof Error ?
+                                    error.message
+                                :   'Unhandled route error.',
+                        },
+                    });
+                });
+            return;
+        }
+
+        if (
+            request.method === 'POST' &&
+            requestUrl.pathname === '/aid/post/attachments/add'
+        ) {
+            void readJsonBody(request)
+                .then(body => attachmentService.addAttachment(body))
                 .then(result => {
                     writeJson(response, result.statusCode, result.body);
                 })

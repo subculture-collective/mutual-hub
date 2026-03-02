@@ -48,6 +48,32 @@ export interface PostingLocation {
     areaLabel?: string;
 }
 
+/**
+ * Pending file attachment in a posting draft.
+ */
+export interface DraftAttachment {
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+    /** Local object URL for preview, or the uploaded URL. */
+    previewUrl: string;
+}
+
+/** Allowed MIME types for draft attachments. */
+export const DRAFT_ATTACHMENT_ALLOWED_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'application/pdf',
+] as const;
+
+/** Maximum attachment size in bytes (10 MB). */
+export const DRAFT_ATTACHMENT_MAX_SIZE = 10 * 1024 * 1024;
+
+/** Maximum attachments per draft. */
+export const DRAFT_ATTACHMENT_MAX_COUNT = 5;
+
 export interface AidPostingDraft {
     title: string;
     description: string;
@@ -56,6 +82,7 @@ export interface AidPostingDraft {
     accessibilityTags: string[];
     location?: PostingLocation;
     timeWindow?: PostingTimeWindow;
+    attachments?: DraftAttachment[];
 }
 
 export interface NormalizedAidPostingDraft {
@@ -238,6 +265,35 @@ export function validatePostingDraft(draft: AidPostingDraft): PostingValidationR
             field: 'timeWindow',
             message: 'Time window start must be earlier than end.',
         });
+    }
+
+    // Validate attachments
+    if (draft.attachments && draft.attachments.length > 0) {
+        if (draft.attachments.length > DRAFT_ATTACHMENT_MAX_COUNT) {
+            errors.push({
+                field: 'attachments',
+                message: `Maximum ${DRAFT_ATTACHMENT_MAX_COUNT} attachments allowed.`,
+            });
+        }
+        for (let i = 0; i < draft.attachments.length; i++) {
+            const att = draft.attachments[i]!;
+            if (att.sizeBytes > DRAFT_ATTACHMENT_MAX_SIZE) {
+                errors.push({
+                    field: `attachments[${i}]`,
+                    message: `File "${att.filename}" exceeds 10 MB size limit.`,
+                });
+            }
+            if (
+                !(DRAFT_ATTACHMENT_ALLOWED_TYPES as readonly string[]).includes(
+                    att.mimeType,
+                )
+            ) {
+                errors.push({
+                    field: `attachments[${i}]`,
+                    message: `File type "${att.mimeType}" is not allowed. Allowed: images and PDF.`,
+                });
+            }
+        }
     }
 
     if (errors.length > 0 || !draft.category || !draft.urgency || !location) {

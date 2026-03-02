@@ -21,3 +21,5 @@ export * from './checkpoint.js';
 export * from './verification.js';
 export * from './settings.js';
 export * from './lifecycle.js';
+export * from './auth-session.js';
+export * from './org-portal.js';

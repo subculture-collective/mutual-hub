@@ -46,5 +46,63 @@ jobs:
             - name: Browser E2E tests (Phase 8.2)
               run: npm run test:e2e -w @patchwork/web
 
+            - name: Dependency vulnerability scan
+              run: npm audit --audit-level=high
+
+            - name: Hardcoded secrets check
+              run: |
+                  PATTERN='(POSTGRES_PASSWORD|password|secret_key|api_key|apikey)\s*[:=]\s*["\x27]?[a-zA-Z0-9]'
+                  # Scan compose and env files for hardcoded secrets, excluding
+                  # .env.example, docker-compose.postgres.yml (dev-only), and
+                  # documentation / CI workflow files.
+                  HITS=$(grep -riEn "$PATTERN" \
+                    --include='*.yml' --include='*.yaml' --include='*.env' \
+                    --exclude='.env.example' \
+                    --exclude='docker-compose.postgres.yml' \
+                    --exclude-dir='.github' \
+                    --exclude-dir='docs' \
+                    --exclude-dir='node_modules' \
+                    . || true)
+                  if [ -n "$HITS" ]; then
+                    echo "::error::Possible hardcoded secrets detected:"
+                    echo "$HITS"
+                    exit 1
+                  fi
+                  echo "No hardcoded secrets found."
+
             - name: Build
               run: npm run build
+
+            - name: Build Docker images
+              run: |
+                  docker build --target api-runtime -t patchwork-api:ci .
+                  docker build --target web-runtime -t patchwork-web:ci .
+
+            - name: Trivy container scan — API
+              uses: aquasecurity/trivy-action@0.28.0
+              with:
+                  image-ref: patchwork-api:ci
+                  format: table
+                  exit-code: '1'
+                  severity: HIGH,CRITICAL
+                  output: trivy-api-report.txt
+
+            - name: Trivy container scan — Web
+              uses: aquasecurity/trivy-action@0.28.0
+              if: success() || failure()
+              with:
+                  image-ref: patchwork-web:ci
+                  format: table
+                  exit-code: '1'
+                  severity: HIGH,CRITICAL
+                  output: trivy-web-report.txt
+
+            - name: Upload security scan reports
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: security-reports
+                  path: |
+                      trivy-api-report.txt
+                      trivy-web-report.txt
+                  retention-days: 30

@@ -9,6 +9,7 @@
  *   - open -> archived (spam/duplicate by moderator)
  *   - triaged -> resolved (resolved at triage)
  *   - assigned -> resolved (resolved before starting work)
+ *   - assigned -> triaged (decline/timeout fallback for reassignment)
  *   - in_progress -> assigned (reassign to different volunteer)
  *   - resolved -> archived (final archival)
  *
@@ -48,7 +49,7 @@ export const TRANSITION_GRAPH: Readonly<
 > = {
     open: ['triaged', 'resolved', 'archived'],
     triaged: ['assigned', 'resolved', 'archived'],
-    assigned: ['in_progress', 'resolved', 'archived'],
+    assigned: ['in_progress', 'resolved', 'archived', 'triaged'],
     in_progress: ['assigned', 'resolved', 'archived'],
     resolved: ['archived'],
     archived: [],
@@ -80,6 +81,7 @@ export const TRANSITION_PERMISSIONS = {
         'admin',
     ],
     'assigned->archived': ['moderator', 'admin'],
+    'assigned->triaged': ['volunteer', 'coordinator', 'moderator', 'admin'],
 
     // From in_progress
     'in_progress->assigned': ['coordinator', 'moderator', 'admin'],
@@ -309,3 +311,44 @@ export const STATUS_TONES: Readonly<
     resolved: 'success',
     archived: 'neutral',
 };
+
+/**
+ * Assignment sub-states within the 'assigned' lifecycle status.
+ * Tracks whether a volunteer has accepted, declined, or timed out.
+ */
+export const ASSIGNMENT_STATUSES = [
+    'pending',
+    'accepted',
+    'declined',
+    'timed_out',
+] as const;
+
+export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
+
+/** Default assignment timeout in milliseconds (30 minutes). */
+export const ASSIGNMENT_TIMEOUT_MS = 30 * 60 * 1000;
+
+/**
+ * Tracks the current assignment for a request, including the volunteer,
+ * acceptance state, and timeout tracking.
+ */
+export interface AssignmentRecord {
+    assigneeDid: string;
+    assignerDid: string;
+    assignedAt: string;
+    status: AssignmentStatus;
+    respondedAt?: string;
+    declineReason?: string;
+    timeoutMs: number;
+}
+
+/**
+ * Metadata captured when a handoff (fulfillment) is completed.
+ */
+export interface HandoffMetadata {
+    completedBy: string;
+    completedAt: string;
+    notes?: string;
+    recipientConfirmed?: boolean;
+    deliveryMethod?: 'in_person' | 'shipped' | 'digital' | 'other';
+}

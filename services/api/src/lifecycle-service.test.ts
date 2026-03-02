@@ -5,6 +5,8 @@ import {
     type LifecycleTransitionSuccessResponse,
     type LifecycleTransitionErrorResponse,
     type LifecycleQuerySuccessResponse,
+    type AssignmentSuccessResponse,
+    type HandoffSuccessResponse,
 } from './lifecycle-service.js';
 
 const testPostUri =
@@ -525,6 +527,462 @@ describe('LifecycleService', () => {
             expect(body.previousStatus).toBe('in_progress');
             expect(body.currentStatus).toBe('assigned');
             expect(body.timeline).toHaveLength(4);
+        });
+    });
+
+    describe('assignRequest', () => {
+        it('assigns a triaged request to a volunteer', async () => {
+            // Move to triaged
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+
+            const result = await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+
+            expect(result.statusCode).toBe(200);
+            const body = result.body as AssignmentSuccessResponse;
+            expect(body.currentStatus).toBe('assigned');
+            expect(body.assignment.assigneeDid).toBe(volunteerDid);
+            expect(body.assignment.status).toBe('pending');
+        });
+
+        it('rejects assignment from an invalid state', async () => {
+            // Post is still 'open'
+            const result = await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now,
+            });
+
+            expect(result.statusCode).toBe(403);
+        });
+
+        it('rejects assignment for an unknown post', async () => {
+            const result = await service.assignRequest({
+                postUri: 'at://did:example:unknown/app.patchwork.aid.post/nope',
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now,
+            });
+
+            expect(result.statusCode).toBe(404);
+        });
+
+        it('validates input schema', async () => {
+            const result = await service.assignRequest({
+                postUri: 'invalid',
+                assigneeDid: 'bad',
+                assignerDid: 'bad',
+            });
+
+            expect(result.statusCode).toBe(400);
+        });
+    });
+
+    describe('acceptAssignment', () => {
+        it('accepts an assignment and transitions to in_progress', async () => {
+            // Triage then assign
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+
+            const result = await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now: '2026-03-01T10:15:00.000Z',
+            });
+
+            expect(result.statusCode).toBe(200);
+            const body = result.body as AssignmentSuccessResponse;
+            expect(body.currentStatus).toBe('in_progress');
+            expect(body.assignment.status).toBe('accepted');
+            expect(body.assignment.respondedAt).toBe('2026-03-01T10:15:00.000Z');
+        });
+
+        it('rejects acceptance from wrong volunteer', async () => {
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now,
+            });
+
+            const result = await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: 'did:example:wrongperson',
+                now,
+            });
+
+            expect(result.statusCode).toBe(403);
+            const body = result.body as LifecycleTransitionErrorResponse;
+            expect(body.error.code).toBe('ASSIGNMENT_MISMATCH');
+        });
+
+        it('rejects double acceptance', async () => {
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now,
+            });
+            await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now: '2026-03-01T10:15:00.000Z',
+            });
+
+            const result = await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now: '2026-03-01T10:16:00.000Z',
+            });
+
+            expect(result.statusCode).toBe(403);
+            const body = result.body as LifecycleTransitionErrorResponse;
+            expect(body.error.code).toBe('ASSIGNMENT_ALREADY_RESPONDED');
+        });
+    });
+
+    describe('declineAssignment', () => {
+        it('declines an assignment and reverts to triaged', async () => {
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+
+            const result = await service.declineAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                reason: 'Not available this week',
+                now: '2026-03-01T10:20:00.000Z',
+            });
+
+            expect(result.statusCode).toBe(200);
+            const body = result.body as AssignmentSuccessResponse;
+            expect(body.currentStatus).toBe('triaged');
+            expect(body.assignment.status).toBe('declined');
+            expect(body.assignment.declineReason).toBe('Not available this week');
+        });
+
+        it('allows reassignment after decline', async () => {
+            const volunteer2Did = 'did:example:volunteer2';
+
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+            await service.declineAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now: '2026-03-01T10:20:00.000Z',
+            });
+
+            // Reassign to a different volunteer
+            const result = await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteer2Did,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:25:00.000Z',
+            });
+
+            expect(result.statusCode).toBe(200);
+            const body = result.body as AssignmentSuccessResponse;
+            expect(body.assignment.assigneeDid).toBe(volunteer2Did);
+            expect(body.assignment.status).toBe('pending');
+        });
+    });
+
+    describe('checkAssignmentTimeout', () => {
+        it('does not time out within the window', async () => {
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+
+            // Check 5 minutes later (within 30-minute timeout)
+            const result = service.checkAssignmentTimeout(
+                testPostUri,
+                '2026-03-01T10:15:00.000Z',
+            );
+
+            expect(result.statusCode).toBe(200);
+            const body = result.body as AssignmentSuccessResponse;
+            expect(body.assignment.status).toBe('pending');
+            expect(body.currentStatus).toBe('assigned');
+        });
+
+        it('times out and reverts to triaged after timeout window', async () => {
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+
+            // Check 31 minutes later (beyond 30-minute timeout)
+            const result = service.checkAssignmentTimeout(
+                testPostUri,
+                '2026-03-01T10:41:00.000Z',
+            );
+
+            expect(result.statusCode).toBe(200);
+            const body = result.body as AssignmentSuccessResponse;
+            expect(body.assignment.status).toBe('timed_out');
+            expect(body.currentStatus).toBe('triaged');
+        });
+
+        it('returns 404 for unknown post', () => {
+            const result = service.checkAssignmentTimeout(
+                'at://did:example:unknown/app.patchwork.aid.post/nope',
+            );
+            expect(result.statusCode).toBe(404);
+        });
+    });
+
+    describe('completeHandoff', () => {
+        it('completes handoff with metadata and transitions to resolved', async () => {
+            // Full path: triage -> assign -> accept -> handoff
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+            await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now: '2026-03-01T10:15:00.000Z',
+            });
+
+            const result = await service.completeHandoff({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                notes: 'Delivered groceries to front door',
+                recipientConfirmed: true,
+                deliveryMethod: 'in_person',
+                now: '2026-03-01T11:00:00.000Z',
+            });
+
+            expect(result.statusCode).toBe(200);
+            const body = result.body as HandoffSuccessResponse;
+            expect(body.currentStatus).toBe('resolved');
+            expect(body.handoff.completedBy).toBe(volunteerDid);
+            expect(body.handoff.notes).toBe('Delivered groceries to front door');
+            expect(body.handoff.recipientConfirmed).toBe(true);
+            expect(body.handoff.deliveryMethod).toBe('in_person');
+        });
+
+        it('rejects handoff when not in in_progress state', async () => {
+            // Post is still open
+            const result = await service.completeHandoff({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now,
+            });
+
+            expect(result.statusCode).toBe(403);
+        });
+
+        it('rejects handoff from wrong volunteer', async () => {
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now,
+            });
+            await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now,
+            });
+
+            const result = await service.completeHandoff({
+                postUri: testPostUri,
+                assigneeDid: 'did:example:impostor',
+                now,
+            });
+
+            expect(result.statusCode).toBe(403);
+            const body = result.body as LifecycleTransitionErrorResponse;
+            expect(body.error.code).toBe('ASSIGNMENT_MISMATCH');
+        });
+
+        it('includes assignment and handoff in lifecycle query', async () => {
+            await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now,
+            });
+            await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now,
+            });
+            await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now,
+            });
+            await service.completeHandoff({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                deliveryMethod: 'shipped',
+                now: '2026-03-01T12:00:00.000Z',
+            });
+
+            const query = service.queryPostLifecycle(testPostUri, 'coordinator');
+            const body = query.body as LifecycleQuerySuccessResponse;
+            expect(body.assignment).toBeDefined();
+            expect(body.assignment!.assigneeDid).toBe(volunteerDid);
+            expect(body.handoff).toBeDefined();
+            expect(body.handoff!.deliveryMethod).toBe('shipped');
+        });
+    });
+
+    describe('E2E: full assign/accept/handoff flow', () => {
+        it('completes the full lifecycle with assignment workflow', async () => {
+            // 1. Triage
+            const triageResult = await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'triaged',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now: '2026-03-01T10:00:00.000Z',
+            });
+            expect(triageResult.statusCode).toBe(200);
+
+            // 2. Assign
+            const assignResult = await service.assignRequest({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                assignerDid: coordinatorDid,
+                now: '2026-03-01T10:05:00.000Z',
+            });
+            expect(assignResult.statusCode).toBe(200);
+            expect((assignResult.body as AssignmentSuccessResponse).currentStatus).toBe('assigned');
+
+            // 3. Accept
+            const acceptResult = await service.acceptAssignment({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                now: '2026-03-01T10:10:00.000Z',
+            });
+            expect(acceptResult.statusCode).toBe(200);
+            expect((acceptResult.body as AssignmentSuccessResponse).currentStatus).toBe('in_progress');
+
+            // 4. Complete handoff
+            const handoffResult = await service.completeHandoff({
+                postUri: testPostUri,
+                assigneeDid: volunteerDid,
+                notes: 'Groceries delivered',
+                recipientConfirmed: true,
+                deliveryMethod: 'in_person',
+                now: '2026-03-01T11:00:00.000Z',
+            });
+            expect(handoffResult.statusCode).toBe(200);
+            expect((handoffResult.body as HandoffSuccessResponse).currentStatus).toBe('resolved');
+
+            // 5. Archive
+            const archiveResult = await service.transitionFromBody({
+                postUri: testPostUri,
+                targetStatus: 'archived',
+                actorDid: coordinatorDid,
+                actorRole: 'coordinator',
+                now: '2026-03-01T12:00:00.000Z',
+            });
+            expect(archiveResult.statusCode).toBe(200);
+
+            // Verify final state
+            const record = service.getRecord(testPostUri)!;
+            expect(record.currentStatus).toBe('archived');
+            expect(record.handoff).toBeDefined();
+            expect(record.handoff!.recipientConfirmed).toBe(true);
+            expect(record.timeline.length).toBeGreaterThanOrEqual(5);
         });
     });
 });
