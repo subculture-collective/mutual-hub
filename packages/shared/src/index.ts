@@ -33,3 +33,4 @@ export * from './reputation.js';
 export * from './staging.js';
 export * from './versioning.js';
 export * from './progressive-delivery.js';
+export * from './load-testing.js';

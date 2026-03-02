@@ -95,6 +95,49 @@ patchwork_sli_saturation_ratio{service="moderation-worker"}
 patchwork_sli_saturation_ratio{project="patchwork"}
 ```
 
+## Performance SLIs (Capacity Validation)
+
+In addition to the operational SLIs above, the platform tracks
+performance-specific indicators for capacity planning. These are
+defined in `packages/shared/src/load-testing.ts` and validated by the
+load test suite in `services/api/src/performance.test.ts`.
+
+### Per-Endpoint Latency SLIs
+
+| Endpoint | p50 Target (ms) | p95 Target (ms) | p99 Target (ms) |
+|---|---|---|---|
+| feed (`/query/feed`) | 100 | 300 | 800 |
+| map (`/query/map`) | 150 | 400 | 1000 |
+| chat (`/chat/initiate`) | 80 | 250 | 600 |
+| moderation (`/chat/safety/evaluate`) | 200 | 500 | 1200 |
+| directory (`/query/directory`) | 120 | 350 | 900 |
+| health (`/health`) | 10 | 30 | 80 |
+
+### Throughput SLOs
+
+| Endpoint | Minimum Sustained RPS |
+|---|---|
+| feed | 80 |
+| map | 60 |
+| chat | 40 |
+| moderation | 20 |
+| directory | 40 |
+| health | 50 |
+
+### Error Rate SLOs (per endpoint)
+
+| Endpoint | Max Error Rate |
+|---|---|
+| feed | 0.5% |
+| map | 0.5% |
+| chat | 0.2% |
+| moderation | 1.0% |
+| directory | 0.5% |
+| health | 0.0% |
+
+For full capacity envelope details, see
+[capacity-envelope.md](./capacity-envelope.md).
+
 ## Health Endpoints
 
 Each service exposes two health endpoints:
