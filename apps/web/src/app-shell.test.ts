@@ -53,6 +53,8 @@ describe('app-shell route visibility', () => {
             expect(routes).not.toContain('/settings');
             expect(routes).not.toContain('/moderation');
             expect(routes).not.toContain('/inbox');
+            expect(routes).not.toContain('/notifications');
+            expect(routes).not.toContain('/scheduling');
             expect(routes).not.toContain('/volunteer');
             expect(routes).not.toContain('/feedback');
         });
@@ -67,16 +69,20 @@ describe('app-shell route visibility', () => {
             expect(routes).toContain('/volunteer');
             expect(routes).toContain('/settings');
             expect(routes).toContain('/inbox');
+            expect(routes).toContain('/notifications');
             expect(routes).toContain('/feedback');
             expect(routes).not.toContain('/moderation');
+            expect(routes).not.toContain('/scheduling');
         });
 
-        it('volunteer sees the same as user (user-level routes but not moderation)', () => {
+        it('volunteer sees the same as user plus scheduling (but not moderation)', () => {
             const visible = getVisibleRoutes('volunteer');
             const routes = visible.map(s => s.route);
 
             expect(routes).toContain('/settings');
             expect(routes).toContain('/inbox');
+            expect(routes).toContain('/notifications');
+            expect(routes).toContain('/scheduling');
             expect(routes).not.toContain('/moderation');
         });
 
@@ -88,6 +94,8 @@ describe('app-shell route visibility', () => {
             expect(routes).toContain('/moderation');
             expect(routes).toContain('/settings');
             expect(routes).toContain('/inbox');
+            expect(routes).toContain('/notifications');
+            expect(routes).toContain('/scheduling');
         });
 
         it('admin sees all routes', () => {
@@ -136,12 +144,12 @@ describe('app-shell route visibility', () => {
         const legalRoutes = ['/legal/terms', '/legal/privacy', '/legal/community-guidelines'];
         const expectations: Record<PlatformRole, string[]> = {
             anonymous: ['/map', '/feed', '/resources', ...legalRoutes],
-            user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback', ...legalRoutes],
-            verified_user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback', ...legalRoutes],
-            volunteer: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback', ...legalRoutes],
-            moderator: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback', ...legalRoutes],
-            admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback', ...legalRoutes],
-            super_admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback', ...legalRoutes],
+            user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/notifications', '/feedback', ...legalRoutes],
+            verified_user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/notifications', '/feedback', ...legalRoutes],
+            volunteer: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/notifications', '/scheduling', '/feedback', ...legalRoutes],
+            moderator: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/notifications', '/scheduling', '/feedback', ...legalRoutes],
+            admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/notifications', '/scheduling', '/feedback', ...legalRoutes],
+            super_admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/notifications', '/scheduling', '/feedback', ...legalRoutes],
         };
 
         for (const [role, expectedRoutes] of Object.entries(expectations)) {
