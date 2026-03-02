@@ -3,6 +3,7 @@ import {
     ChatFlowError,
     ChatSafetyControls,
     ConversationMetadataStore,
+    ConversationMessageStore,
     DeterministicRoutingAssistant,
     buildPhase5RoutingFixtures,
     createPostLinkedChatContext,
@@ -11,6 +12,7 @@ import {
     requireQueryString,
     type AidPostRecord,
     type ChatInitiationSurface,
+    type MessageStatus,
     type RecipientTransportCapability,
 } from '@patchwork/shared';
 
@@ -141,10 +143,19 @@ const fixtureCapabilities = new Map<string, RecipientTransportCapability>([
     ],
 ]);
 
+const validMessageStatuses = new Set<string>([
+    'sending',
+    'sent',
+    'delivered',
+    'read',
+    'failed',
+]);
+
 export class ApiChatService {
     private readonly routingAssistant = new DeterministicRoutingAssistant();
     private readonly metadataStore = new ConversationMetadataStore();
     private readonly safetyControls = new ChatSafetyControls();
+    private readonly messageStore = new ConversationMessageStore();
 
     initiateFromParams(params: URLSearchParams): ApiChatRouteResult {
         try {
@@ -364,6 +375,150 @@ export class ApiChatService {
                 metrics: this.safetyControls.getMetrics(),
             },
         };
+    }
+
+    // -----------------------------------------------------------------
+    // POST /chat/message/send - send a message in a conversation
+    // -----------------------------------------------------------------
+
+    sendMessageFromParams(params: URLSearchParams): ApiChatRouteResult {
+        try {
+            const conversationUri = requireString(params, 'conversationUri');
+            const senderDid = requireString(params, 'senderDid');
+            const text = requireString(params, 'text');
+            const messageId = readString(params, 'messageId');
+            const createdAt = readString(params, 'createdAt');
+
+            const message = this.messageStore.addMessage({
+                conversationUri,
+                senderDid,
+                text,
+                messageId: messageId ?? undefined,
+                createdAt: createdAt ?? undefined,
+            });
+
+            return {
+                statusCode: 200,
+                body: { message },
+            };
+        } catch (error) {
+            return toErrorResult(error, 'Failed to send message.');
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // PUT /chat/message/status - update message delivery/read status
+    // -----------------------------------------------------------------
+
+    updateMessageStatusFromParams(
+        params: URLSearchParams,
+    ): ApiChatRouteResult {
+        try {
+            const messageId = requireString(params, 'messageId');
+            const statusValue = requireString(params, 'status');
+            const failureReason = readString(params, 'failureReason');
+
+            if (!validMessageStatuses.has(statusValue)) {
+                return toErrorHttpResult(
+                    400,
+                    'INVALID_QUERY',
+                    `Invalid message status: ${statusValue}. Must be one of: sending, sent, delivered, read, failed.`,
+                );
+            }
+
+            const updated = this.messageStore.updateMessageStatus(
+                messageId,
+                statusValue as MessageStatus,
+                failureReason ?? undefined,
+            );
+
+            if (!updated) {
+                return toErrorHttpResult(
+                    404,
+                    'INVALID_QUERY',
+                    `Message not found: ${messageId}`,
+                );
+            }
+
+            return {
+                statusCode: 200,
+                body: { message: updated },
+            };
+        } catch (error) {
+            return toErrorResult(error, 'Failed to update message status.');
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // GET /chat/messages - paginated conversation history
+    // -----------------------------------------------------------------
+
+    getConversationHistoryFromParams(
+        params: URLSearchParams,
+    ): ApiChatRouteResult {
+        try {
+            const conversationUri = requireString(params, 'conversationUri');
+            const cursor = readString(params, 'cursor');
+            const limitStr = readString(params, 'limit');
+            const limit = limitStr ? Number.parseInt(limitStr, 10) : 20;
+
+            if (Number.isNaN(limit) || limit < 1) {
+                return toErrorHttpResult(
+                    400,
+                    'INVALID_QUERY',
+                    'Limit must be a positive integer.',
+                );
+            }
+
+            const result = this.messageStore.getConversationHistory(
+                conversationUri,
+                { cursor, limit },
+            );
+
+            return {
+                statusCode: 200,
+                body: result,
+            };
+        } catch (error) {
+            return toErrorResult(
+                error,
+                'Failed to retrieve conversation history.',
+            );
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // POST /chat/message/retry - retry a failed message
+    // -----------------------------------------------------------------
+
+    retryMessageFromParams(params: URLSearchParams): ApiChatRouteResult {
+        try {
+            const messageId = requireString(params, 'messageId');
+
+            const retried = this.messageStore.retryMessage(messageId);
+            if (!retried) {
+                return toErrorHttpResult(
+                    400,
+                    'INVALID_QUERY',
+                    `Message not found or not in failed state: ${messageId}`,
+                );
+            }
+
+            return {
+                statusCode: 200,
+                body: { message: retried, retried: true },
+            };
+        } catch (error) {
+            return toErrorResult(error, 'Failed to retry message.');
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Test-only: message store accessor
+    // -----------------------------------------------------------------
+
+    getMessageStoreForTesting(): ConversationMessageStore {
+        return this.messageStore;
     }
 
     private resolveCapability(

@@ -592,6 +592,178 @@ export class ConversationMetadataStore {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Message status (Issue #122 - conversation UX)
+// ---------------------------------------------------------------------------
+
+export const messageStatuses = [
+    'sending',
+    'sent',
+    'delivered',
+    'read',
+    'failed',
+] as const;
+export type MessageStatus = (typeof messageStatuses)[number];
+
+export interface ConversationMessage {
+    messageId: string;
+    conversationUri: string;
+    senderDid: string;
+    text: string;
+    status: MessageStatus;
+    sequenceNumber: number;
+    createdAt: string;
+    updatedAt: string;
+    retryCount: number;
+    failureReason?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Cursor-based pagination
+// ---------------------------------------------------------------------------
+
+export interface PaginationCursor {
+    cursor?: string;
+    limit: number;
+}
+
+export interface PaginatedMessages {
+    messages: ConversationMessage[];
+    nextCursor?: string;
+    hasMore: boolean;
+    total: number;
+}
+
+// ---------------------------------------------------------------------------
+// In-memory conversation message store
+// ---------------------------------------------------------------------------
+
+export class ConversationMessageStore {
+    private readonly messages = new Map<string, ConversationMessage>();
+    private sequenceCounter = 0;
+
+    addMessage(input: {
+        conversationUri: string;
+        senderDid: string;
+        text: string;
+        messageId?: string;
+        createdAt?: string;
+    }): ConversationMessage {
+        const conversationUri = atUriSchema.parse(input.conversationUri);
+        const senderDid = didSchema.parse(input.senderDid);
+        const now = isoDateTimeSchema.parse(
+            input.createdAt ?? new Date().toISOString(),
+        );
+        this.sequenceCounter += 1;
+
+        const messageId =
+            input.messageId ?? `msg-${this.sequenceCounter}-${Date.now()}`;
+
+        const message: ConversationMessage = {
+            messageId,
+            conversationUri,
+            senderDid,
+            text: input.text,
+            status: 'sent',
+            sequenceNumber: this.sequenceCounter,
+            createdAt: now,
+            updatedAt: now,
+            retryCount: 0,
+        };
+
+        this.messages.set(messageId, message);
+        return deepClone(message);
+    }
+
+    updateMessageStatus(
+        messageId: string,
+        status: MessageStatus,
+        failureReason?: string,
+    ): ConversationMessage | null {
+        const message = this.messages.get(messageId);
+        if (!message) {
+            return null;
+        }
+
+        message.status = status;
+        message.updatedAt = new Date().toISOString();
+        if (failureReason !== undefined) {
+            message.failureReason = failureReason;
+        }
+
+        return deepClone(message);
+    }
+
+    retryMessage(messageId: string): ConversationMessage | null {
+        const message = this.messages.get(messageId);
+        if (!message || message.status !== 'failed') {
+            return null;
+        }
+
+        message.status = 'sending';
+        message.retryCount += 1;
+        message.updatedAt = new Date().toISOString();
+        message.failureReason = undefined;
+
+        // Simulate immediate success after retry
+        message.status = 'sent';
+
+        return deepClone(message);
+    }
+
+    getConversationHistory(
+        conversationUri: string,
+        pagination: PaginationCursor,
+    ): PaginatedMessages {
+        const parsedUri = atUriSchema.parse(conversationUri);
+        const allMessages = [...this.messages.values()]
+            .filter(message => message.conversationUri === parsedUri)
+            .sort((left, right) => {
+                if (left.sequenceNumber !== right.sequenceNumber) {
+                    return left.sequenceNumber - right.sequenceNumber;
+                }
+                return left.createdAt.localeCompare(right.createdAt);
+            });
+
+        const total = allMessages.length;
+        let startIndex = 0;
+
+        if (pagination.cursor) {
+            const cursorSeq = Number.parseInt(pagination.cursor, 10);
+            startIndex = allMessages.findIndex(
+                message => message.sequenceNumber > cursorSeq,
+            );
+            if (startIndex === -1) {
+                return {
+                    messages: [],
+                    hasMore: false,
+                    total,
+                };
+            }
+        }
+
+        const limit = Math.min(pagination.limit, 100);
+        const page = allMessages.slice(startIndex, startIndex + limit);
+        const hasMore = startIndex + limit < total;
+        const nextCursor =
+            hasMore && page.length > 0
+                ? String(page[page.length - 1]!.sequenceNumber)
+                : undefined;
+
+        return {
+            messages: page.map(message => deepClone(message)),
+            nextCursor,
+            hasMore,
+            total,
+        };
+    }
+
+    getMessage(messageId: string): ConversationMessage | null {
+        const found = this.messages.get(messageId);
+        return found ? deepClone(found) : null;
+    }
+}
+
 export {
     ChatSafetyControls,
     type ChatSafetyConfig,
