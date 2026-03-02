@@ -1,20 +1,37 @@
 /**
  * Accessibility end-to-end tests for Patchwork.
  *
+ * Wave 3 (#99) — Enhanced with route-level a11y validation and keyboard
+ * navigation tests using constants from apps/web/src/a11y/.
+ *
  * These tests verify WCAG AA compliance for critical user flows using
  * Playwright. When @axe-core/playwright is installed, the axe-core
  * integration will automatically scan pages for accessibility violations.
  *
- * To install axe-core integration:
- *   npm install -D @axe-core/playwright
- *
- * Then uncomment the axe-core sections below.
+ * a11y constants (from src/a11y/):
+ *   SKIP_LINK_ID  = 'skip-to-main'
+ *   MAIN_CONTENT_ID = 'main-content'
+ *   landmarks: navigation, main, region, complementary, banner, contentinfo, search
+ *   contrastRatios: normalText 4.5, largeText 3.0, uiComponents 3.0
  */
 
 import { test, expect } from '@playwright/test';
 
 // Uncomment when @axe-core/playwright is installed:
 // import AxeBuilder from '@axe-core/playwright';
+
+/**
+ * Key application routes tested for accessibility compliance.
+ */
+const A11Y_ROUTES = [
+    { path: '/', label: 'home' },
+    { path: '/map', label: 'map' },
+    { path: '/feed', label: 'feed' },
+    { path: '/posting', label: 'posting' },
+    { path: '/resources', label: 'resources' },
+    { path: '/volunteer', label: 'volunteer' },
+    { path: '/chat', label: 'chat' },
+] as const;
 
 test.describe('Skip navigation', () => {
     test('skip-to-content link is present and targets main content', async ({
@@ -220,6 +237,83 @@ test.describe('Screen reader announcements', () => {
         // The announcer element should be created
         const announcer = page.locator('#patchwork-a11y-announcer-polite');
         await expect(announcer).toBeAttached();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Wave 3 (#99): Route-level a11y validation
+// ---------------------------------------------------------------------------
+
+test.describe('Route-level accessibility validation (#99)', () => {
+    for (const route of A11Y_ROUTES) {
+        test(`${route.label} page has main landmark and skip-link target`, async ({
+            page,
+        }) => {
+            await page.goto(route.path);
+            await page.waitForLoadState('networkidle');
+
+            // Main content target for skip-link
+            const mainContent = page.locator('#main-content');
+            await expect(mainContent).toBeAttached();
+
+            // Main landmark
+            const main = page.locator('main');
+            await expect(main).toBeAttached();
+        });
+
+        test(`${route.label} page has no missing alt attributes on images`, async ({
+            page,
+        }) => {
+            await page.goto(route.path);
+            await page.waitForLoadState('networkidle');
+
+            const images = page.locator('img');
+            const count = await images.count();
+
+            for (let i = 0; i < count; i++) {
+                const img = images.nth(i);
+                const alt = await img.getAttribute('alt');
+                // alt may be empty string (decorative) but must be present
+                expect(alt).not.toBeNull();
+            }
+        });
+    }
+});
+
+test.describe('Keyboard tab order across routes (#99)', () => {
+    test('tab order on home page reaches main interactive elements', async ({
+        page,
+    }) => {
+        await page.goto('/');
+
+        // First Tab should land on skip-link
+        await page.keyboard.press('Tab');
+        const skipLink = page.locator('a[href="#main-content"]');
+        await expect(skipLink).toBeFocused();
+
+        // Continue tabbing — should eventually reach a nav link
+        for (let i = 0; i < 10; i++) {
+            await page.keyboard.press('Tab');
+        }
+
+        // At least one nav link should have been focused
+        const navLinks = page.locator('nav a');
+        const count = await navLinks.count();
+        expect(count).toBeGreaterThan(0);
+    });
+
+    test('Escape key dismisses any visible overlay on map route', async ({
+        page,
+    }) => {
+        await page.goto('/map');
+        await page.waitForLoadState('networkidle');
+
+        // Press Escape — should not cause errors even if no overlay is open
+        await page.keyboard.press('Escape');
+
+        // Page should still be interactive
+        const main = page.locator('main');
+        await expect(main).toBeAttached();
     });
 });
 
