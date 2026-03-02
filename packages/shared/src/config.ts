@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { loadWorkspaceEnvFiles } from './env-file.js';
 import { DID_PATTERN } from './schemas.js';
 
 const nodeEnvSchema = z
@@ -84,11 +83,28 @@ const formatZodErrors = (error: z.ZodError): string => {
         .join('; ');
 };
 
+/**
+ * Dynamically load workspace .env files in Node.js environments only.
+ * Uses createRequire so the static import graph stays browser-safe for Vite/Rollup.
+ */
+const loadEnvFiles = (): void => {
+    if (typeof globalThis.process?.versions?.node !== 'string') return;
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { createRequire } = globalThis.process.getBuiltinModule?.('node:module')
+            ?? { createRequire: undefined };
+        if (createRequire) {
+            const req = createRequire(import.meta.url);
+            req('./env-file.js').loadWorkspaceEnvFiles();
+        }
+    } catch { /* not available in this runtime */ }
+};
+
 const parseEnv = <T extends AnySchema>(
     scope: string,
     schema: T,
 ): z.infer<T> => {
-    loadWorkspaceEnvFiles();
+    loadEnvFiles();
     const result = schema.safeParse(process.env);
 
     if (!result.success) {

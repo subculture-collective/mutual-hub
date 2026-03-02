@@ -1,4 +1,22 @@
-import { createHash } from 'node:crypto';
+/**
+ * Simple synchronous string hash (djb2 + hex) for deterministic ID generation.
+ * Browser-safe replacement for node:crypto createHash('sha256').
+ */
+const simpleHash = (input: string, length: number): string => {
+    let h1 = 0xdeadbeef;
+    let h2 = 0x41c6ce57;
+    for (let i = 0; i < input.length; i++) {
+        const ch = input.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    const n = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+    return n.toString(16).padStart(length, '0').slice(0, length);
+};
 import { recordNsid } from '@patchwork/at-lexicons';
 import type { ModerationReviewRequestedEvent } from './contracts.js';
 import { deepClone } from './clone.js';
@@ -176,7 +194,7 @@ const subjectTypeFromUri = (subjectUri: string): ModerationSubjectType => {
 };
 
 const toQueueId = (subjectUri: string): string => {
-    return createHash('sha256').update(subjectUri).digest('hex').slice(0, 20);
+    return simpleHash(subjectUri, 20);
 };
 
 const toAuditId = (
@@ -185,10 +203,7 @@ const toAuditId = (
     occurredAt: string,
     actorDid: string,
 ): string => {
-    return createHash('sha256')
-        .update(`${queueId}|${action}|${occurredAt}|${actorDid}`)
-        .digest('hex')
-        .slice(0, 20);
+    return simpleHash(`${queueId}|${action}|${occurredAt}|${actorDid}`, 20);
 };
 
 const mergeContext = (
@@ -304,10 +319,7 @@ export const toIdempotencyKey = (
     occurredAt: string,
     actorDid: string,
 ): string => {
-    return createHash('sha256')
-        .update(`idem|${queueId}|${action}|${occurredAt}|${actorDid}`)
-        .digest('hex')
-        .slice(0, 32);
+    return simpleHash(`idem|${queueId}|${action}|${occurredAt}|${actorDid}`, 32);
 };
 
 export interface ModerationReviewQueueOptions {

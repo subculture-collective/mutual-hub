@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+const randomUUID = (): string => globalThis.crypto.randomUUID();
 import { z } from 'zod';
 import {
     type AidPostRecord,
