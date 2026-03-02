@@ -7,6 +7,9 @@ export const publicRoutes = [
     '/moderation',
     '/inbox',
     '/feedback',
+    '/legal/terms',
+    '/legal/privacy',
+    '/legal/community-guidelines',
 ] as const;
 
 export type PublicRoute = (typeof publicRoutes)[number];
@@ -59,6 +62,21 @@ export const shellSections: readonly ShellSection[] = [
         route: '/feedback',
         title: 'Feedback',
         description: 'Post-handoff outcome feedback and reporting.',
+    },
+    {
+        route: '/legal/terms',
+        title: 'Terms of Service',
+        description: 'Platform terms of service and user agreement.',
+    },
+    {
+        route: '/legal/privacy',
+        title: 'Privacy Policy',
+        description: 'How we collect, use, and protect your data.',
+    },
+    {
+        route: '/legal/community-guidelines',
+        title: 'Community Guidelines',
+        description: 'Expected behaviour, prohibited content, and enforcement.',
     },
 ];
 
