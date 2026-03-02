@@ -133,14 +133,15 @@ describe('app-shell route visibility', () => {
     // -----------------------------------------------------------------
 
     describe('role-visibility matrix', () => {
+        const legalRoutes = ['/legal/terms', '/legal/privacy', '/legal/community-guidelines'];
         const expectations: Record<PlatformRole, string[]> = {
-            anonymous: ['/map', '/feed', '/resources'],
-            user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback'],
-            verified_user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback'],
-            volunteer: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback'],
-            moderator: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback'],
-            admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback'],
-            super_admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback'],
+            anonymous: ['/map', '/feed', '/resources', ...legalRoutes],
+            user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback', ...legalRoutes],
+            verified_user: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback', ...legalRoutes],
+            volunteer: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/inbox', '/feedback', ...legalRoutes],
+            moderator: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback', ...legalRoutes],
+            admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback', ...legalRoutes],
+            super_admin: ['/map', '/feed', '/resources', '/volunteer', '/settings', '/moderation', '/inbox', '/feedback', ...legalRoutes],
         };
 
         for (const [role, expectedRoutes] of Object.entries(expectations)) {
