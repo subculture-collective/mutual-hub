@@ -2,8 +2,12 @@ import { createServer, type ServerResponse } from 'node:http';
 import {
     CONTRACT_VERSION,
     loadModerationWorkerConfig,
+    validateProductionServiceConfig,
+    checkServiceHealth,
     type ModerationDecisionEvent,
     type ServiceHealth,
+    type HealthCheck,
+    SliCollector,
 } from '@patchwork/shared';
 import {
     createFixtureModerationWorkerService,
@@ -14,6 +18,9 @@ import { InMemoryAuditStore } from './audit-store.js';
 import { ModerationMetrics } from './metrics.js';
 
 const config = loadModerationWorkerConfig();
+
+// Production startup guard
+validateProductionServiceConfig(config);
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -36,11 +43,38 @@ const serviceOptions: ModerationWorkerServiceOptions = (() => {
 
 const moderationService = createFixtureModerationWorkerService(serviceOptions);
 
-const healthPayload: ServiceHealth = {
-    service: 'moderation-worker',
-    status: 'ok',
-    contractVersion: CONTRACT_VERSION,
-    did: config.ATPROTO_SERVICE_DID,
+const sliCollector = new SliCollector();
+
+const buildModerationHealthChecks = (): HealthCheck[] => {
+    const store = serviceOptions.queueStore;
+    if (!store) {
+        return [
+            {
+                name: 'queue_store',
+                check: () => ({
+                    status: 'degraded' as const,
+                    message: 'No queue store configured',
+                }),
+            },
+        ];
+    }
+    return [
+        {
+            name: 'queue_store',
+            check: () => {
+                try {
+                    // Verify queue store is operational by listing pending items
+                    store.listPending();
+                    return { status: 'ok' as const };
+                } catch {
+                    return {
+                        status: 'degraded' as const,
+                        message: 'Queue store unreachable',
+                    };
+                }
+            },
+        },
+    ];
 };
 
 const renderPrometheusMetrics = (): string => {
@@ -56,8 +90,9 @@ const renderPrometheusMetrics = (): string => {
     ].join('\n');
 
     const moderationMetricsText = metrics.renderPrometheus();
+    const sliMetricsText = sliCollector.renderPrometheus('moderation-worker');
 
-    return `${baseMetrics}\n${moderationMetricsText}`;
+    return `${baseMetrics}\n${moderationMetricsText}\n${sliMetricsText}`;
 };
 
 const sampleDecision: ModerationDecisionEvent = {
@@ -74,13 +109,40 @@ interface ModerationRouteResult {
     contentType?: string;
 }
 
-type ModerationRouteHandler = (requestUrl: URL) => ModerationRouteResult;
+type ModerationRouteHandler = (
+    requestUrl: URL,
+) => ModerationRouteResult | Promise<ModerationRouteResult>;
 
 const routeHandlers: Readonly<Record<string, ModerationRouteHandler>> = {
-    '/health': () => ({
-        statusCode: 200,
-        body: healthPayload,
-    }),
+    '/health': async () => {
+        const result = await checkServiceHealth(
+            buildModerationHealthChecks(),
+        );
+        const payload: ServiceHealth = {
+            service: 'moderation-worker',
+            status: result.status,
+            contractVersion: CONTRACT_VERSION,
+            did: config.ATPROTO_SERVICE_DID,
+            checks: result.checks,
+        };
+        return { statusCode: 200, body: payload };
+    },
+    '/health/ready': async () => {
+        const result = await checkServiceHealth(
+            buildModerationHealthChecks(),
+        );
+        const payload: ServiceHealth = {
+            service: 'moderation-worker',
+            status: result.status,
+            contractVersion: CONTRACT_VERSION,
+            did: config.ATPROTO_SERVICE_DID,
+            checks: result.checks,
+        };
+        return {
+            statusCode: result.status === 'not_ready' ? 503 : 200,
+            body: payload,
+        };
+    },
     '/metrics': () => ({
         statusCode: 200,
         body: renderPrometheusMetrics(),
@@ -116,17 +178,37 @@ const server = createServer((request, response) => {
 
     const handler = routeHandlers[requestUrl.pathname];
     if (handler) {
-        const result = handler(requestUrl);
+        const startTime = Date.now();
+        void Promise.resolve()
+            .then(() => handler(requestUrl))
+            .then(result => {
+                sliCollector.recordRequest(
+                    requestUrl.pathname,
+                    Date.now() - startTime,
+                );
+                if (result.statusCode >= 500) {
+                    sliCollector.recordError(requestUrl.pathname);
+                }
 
-        if (result.contentType) {
-            response.writeHead(result.statusCode, {
-                'content-type': result.contentType,
+                if (result.contentType) {
+                    response.writeHead(result.statusCode, {
+                        'content-type': result.contentType,
+                    });
+                    response.end(String(result.body));
+                    return;
+                }
+
+                writeJson(response, result.statusCode, result.body);
+            })
+            .catch(error => {
+                sliCollector.recordRequest(
+                    requestUrl.pathname,
+                    Date.now() - startTime,
+                );
+                sliCollector.recordError(requestUrl.pathname);
+                console.error('[moderation-worker] route error:', error);
+                writeJson(response, 500, { error: 'Internal Server Error' });
             });
-            response.end(String(result.body));
-            return;
-        }
-
-        writeJson(response, result.statusCode, result.body);
         return;
     }
 

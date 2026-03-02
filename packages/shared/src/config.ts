@@ -112,3 +112,127 @@ export const loadIndexerConfig = (): IndexerConfig =>
     parseEnv('indexer', indexerSchema);
 export const loadModerationWorkerConfig = (): ModerationWorkerConfig =>
     parseEnv('moderation-worker', moderationWorkerSchema);
+
+// ---------------------------------------------------------------------------
+// Production startup guards
+// ---------------------------------------------------------------------------
+
+export interface ProductionConfigBase {
+    NODE_ENV: string;
+    ATPROTO_SERVICE_DID: string;
+}
+
+export interface ProductionApiConfig extends ProductionConfigBase {
+    API_DATA_SOURCE?: string;
+    API_DATABASE_URL?: string;
+    DATABASE_URL?: string;
+}
+
+/**
+ * Validate that a config is safe for production use.
+ * Throws with an actionable message if any guard fails.
+ */
+export const validateProductionConfig = (
+    config: ProductionApiConfig,
+): void => {
+    if (config.NODE_ENV !== 'production') {
+        return; // Guards only apply in production
+    }
+
+    if (config.API_DATA_SOURCE === 'fixture') {
+        throw new Error(
+            'FATAL: API_DATA_SOURCE=fixture is not allowed in production. ' +
+                'Set API_DATA_SOURCE=postgres and provide a DATABASE_URL.',
+        );
+    }
+
+    if (!config.API_DATABASE_URL && !config.DATABASE_URL) {
+        throw new Error(
+            'FATAL: DATABASE_URL or API_DATABASE_URL must be set in production. ' +
+                'Provide a valid PostgreSQL connection string.',
+        );
+    }
+
+    if (
+        config.ATPROTO_SERVICE_DID === 'did:example:test-service' ||
+        config.ATPROTO_SERVICE_DID.startsWith('did:example:')
+    ) {
+        throw new Error(
+            'FATAL: ATPROTO_SERVICE_DID must not use a did:example: value in production. ' +
+                'Set it to your real service DID (e.g. did:web:your-domain.com).',
+        );
+    }
+};
+
+/**
+ * Validate production config for services that lack API_DATA_SOURCE
+ * (indexer, moderation-worker).
+ */
+export const validateProductionServiceConfig = (
+    config: ProductionConfigBase,
+): void => {
+    if (config.NODE_ENV !== 'production') {
+        return;
+    }
+
+    if (
+        config.ATPROTO_SERVICE_DID === 'did:example:test-service' ||
+        config.ATPROTO_SERVICE_DID.startsWith('did:example:')
+    ) {
+        throw new Error(
+            'FATAL: ATPROTO_SERVICE_DID must not use a did:example: value in production. ' +
+                'Set it to your real service DID (e.g. did:web:your-domain.com).',
+        );
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Health-check utilities
+// ---------------------------------------------------------------------------
+
+import type { HealthStatus } from './contracts.js';
+
+export interface HealthCheck {
+    name: string;
+    check: () => Promise<{ status: HealthStatus; message?: string }> | { status: HealthStatus; message?: string };
+}
+
+/**
+ * Run all health checks and compute an aggregate status.
+ * Returns 'ok' if all pass, 'degraded' if any are degraded, 'not_ready' if any are not_ready.
+ */
+export const checkServiceHealth = async (
+    checks: HealthCheck[],
+): Promise<{
+    status: HealthStatus;
+    checks: Record<string, { status: HealthStatus; message?: string }>;
+}> => {
+    const results: Record<string, { status: HealthStatus; message?: string }> =
+        {};
+    let aggregate: HealthStatus = 'ok';
+
+    for (const { name, check } of checks) {
+        try {
+            const result = await check();
+            results[name] = result;
+            if (result.status === 'not_ready') {
+                aggregate = 'not_ready';
+            } else if (result.status === 'degraded' && aggregate !== 'not_ready') {
+                aggregate = 'degraded';
+            }
+        } catch (error) {
+            results[name] = {
+                status: 'degraded',
+                message:
+                    error instanceof Error ?
+                        error.message
+                    :   'Health check failed',
+            };
+            if (aggregate !== 'not_ready') {
+                aggregate = 'degraded';
+            }
+        }
+    }
+
+    return { status: aggregate, checks: results };
+};

@@ -12,11 +12,14 @@ export type DomainName =
     | 'anti-spam'
     | 'privacy';
 
+export type HealthStatus = 'ok' | 'degraded' | 'not_ready';
+
 export interface ServiceHealth {
     service: 'api' | 'indexer' | 'moderation-worker';
-    status: 'ok';
+    status: HealthStatus;
     contractVersion: string;
     did: string;
+    checks?: Record<string, { status: HealthStatus; message?: string }>;
 }
 
 export interface ApiQueryAidRequest {

@@ -4,13 +4,20 @@ import { fileURLToPath } from 'node:url';
 import {
     CONTRACT_VERSION,
     loadIndexerConfig,
+    validateProductionServiceConfig,
+    checkServiceHealth,
     type ServiceHealth,
+    type HealthCheck,
+    SliCollector,
 } from '@patchwork/shared';
 import { PostgresCheckpointStore } from './checkpoint.js';
 import { renderPrometheusRuntimeMetrics } from './metrics.js';
 import { createFixtureIndexerPipeline, IndexerPipeline } from './pipeline.js';
 
 const config = loadIndexerConfig();
+
+// Production startup guard
+validateProductionServiceConfig(config);
 
 const DATABASE_URL = process.env['DATABASE_URL'] ?? process.env['INDEXER_DATABASE_URL'];
 
@@ -47,12 +54,7 @@ const createPipeline = async (): Promise<IndexerPipeline> => {
     return pipeline;
 };
 
-const healthPayload: ServiceHealth = {
-    service: 'indexer',
-    status: 'ok',
-    contractVersion: CONTRACT_VERSION,
-    did: config.ATPROTO_SERVICE_DID,
-};
+const sliCollector = new SliCollector();
 
 const writeJson = (
     response: ServerResponse,
@@ -76,15 +78,68 @@ type IndexerRouteHandler = (
 const createRouteHandlers = (
     pipeline: IndexerPipeline,
 ): Readonly<Record<string, IndexerRouteHandler>> => ({
-    '/health': () => ({
-        statusCode: 200,
-        body: healthPayload,
-    }),
+    '/health': async () => {
+        const healthChecks: HealthCheck[] = [
+            {
+                name: 'checkpoint',
+                check: async () => {
+                    const runtimeMetrics = await pipeline.getRuntimeMetrics();
+                    if (!runtimeMetrics.checkpointHealthy) {
+                        return {
+                            status: 'degraded' as const,
+                            message: 'Checkpoint store unhealthy',
+                        };
+                    }
+                    return { status: 'ok' as const };
+                },
+            },
+        ];
+        const result = await checkServiceHealth(healthChecks);
+        const payload: ServiceHealth = {
+            service: 'indexer',
+            status: result.status,
+            contractVersion: CONTRACT_VERSION,
+            did: config.ATPROTO_SERVICE_DID,
+            checks: result.checks,
+        };
+        return { statusCode: 200, body: payload };
+    },
+    '/health/ready': async () => {
+        const healthChecks: HealthCheck[] = [
+            {
+                name: 'checkpoint',
+                check: async () => {
+                    const runtimeMetrics = await pipeline.getRuntimeMetrics();
+                    if (!runtimeMetrics.checkpointHealthy) {
+                        return {
+                            status: 'not_ready' as const,
+                            message: 'Checkpoint store not ready',
+                        };
+                    }
+                    return { status: 'ok' as const };
+                },
+            },
+        ];
+        const result = await checkServiceHealth(healthChecks);
+        const payload: ServiceHealth = {
+            service: 'indexer',
+            status: result.status,
+            contractVersion: CONTRACT_VERSION,
+            did: config.ATPROTO_SERVICE_DID,
+            checks: result.checks,
+        };
+        return {
+            statusCode: result.status === 'not_ready' ? 503 : 200,
+            body: payload,
+        };
+    },
     '/metrics': async () => {
         const runtimeMetrics = await pipeline.getRuntimeMetrics();
+        const base = renderPrometheusRuntimeMetrics(runtimeMetrics);
+        const sli = sliCollector.renderPrometheus('indexer');
         return {
             statusCode: 200,
-            body: renderPrometheusRuntimeMetrics(runtimeMetrics),
+            body: `${base}\n${sli}`,
             contentType: 'text/plain; version=0.0.4',
         };
     },
@@ -134,8 +189,16 @@ export const createIndexerServer = (pipeline: IndexerPipeline) => {
 
         const handler = routeHandlers[requestUrl.pathname];
         if (handler) {
+            const startTime = Date.now();
             try {
                 const result = await handler(requestUrl);
+                sliCollector.recordRequest(
+                    requestUrl.pathname,
+                    Date.now() - startTime,
+                );
+                if (result.statusCode >= 500) {
+                    sliCollector.recordError(requestUrl.pathname);
+                }
 
                 if (result.contentType) {
                     response.writeHead(result.statusCode, {
@@ -147,6 +210,11 @@ export const createIndexerServer = (pipeline: IndexerPipeline) => {
 
                 writeJson(response, result.statusCode, result.body);
             } catch (error) {
+                sliCollector.recordRequest(
+                    requestUrl.pathname,
+                    Date.now() - startTime,
+                );
+                sliCollector.recordError(requestUrl.pathname);
                 console.error('[indexer] route error:', error);
                 writeJson(response, 500, { error: 'Internal Server Error' });
             }
