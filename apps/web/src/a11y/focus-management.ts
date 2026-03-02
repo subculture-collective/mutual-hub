@@ -30,7 +30,7 @@ export const getFocusableElements = (
         element =>
             !element.hasAttribute('disabled') &&
             element.tabIndex !== -1 &&
-            element.offsetParent !== null,
+            !element.hidden,
     );
 };
 

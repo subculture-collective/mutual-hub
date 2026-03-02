@@ -22,6 +22,7 @@
         "zod": "3.25.76"
     },
     "devDependencies": {
-        "@playwright/test": "^1.58.2"
+        "@playwright/test": "^1.58.2",
+        "jsdom": "^28.1.0"
     }
 }

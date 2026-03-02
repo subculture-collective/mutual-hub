@@ -17,5 +17,7 @@ export * from './schemas.js';
 export * from './volunteer-onboarding.js';
 export * from './moderation.js';
 export * from './privacy.js';
+export * from './checkpoint.js';
+export * from './verification.js';
 export * from './settings.js';
 export * from './lifecycle.js';
