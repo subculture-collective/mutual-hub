@@ -266,6 +266,131 @@ export class ModerationWorkerService {
             );
         }
     }
+
+    getQueueStats(): ModerationServiceResult {
+        try {
+            const allItems = this.queue.listQueue();
+            const pendingItems = allItems.filter(
+                item => item.queueStatus === 'queued',
+            );
+
+            const now = Date.now();
+            let totalWaitMs = 0;
+            for (const item of pendingItems) {
+                totalWaitMs += now - Date.parse(item.requestedAt);
+            }
+
+            const avgWaitSeconds =
+                pendingItems.length > 0 ?
+                    totalWaitMs / pendingItems.length / 1000
+                :   0;
+
+            return {
+                statusCode: 200,
+                body: {
+                    queueDepth: allItems.length,
+                    pendingCount: pendingItems.length,
+                    avgWaitSeconds: Math.round(avgWaitSeconds * 100) / 100,
+                    errorCount: this.metrics.getErrorCount(),
+                },
+            };
+        } catch (error) {
+            this.metrics.recordError();
+            return toErrorResult(error, 'Failed to get queue stats.');
+        }
+    }
+
+    bulkTriage(
+        subjectUris: string[],
+        action: ModerationPolicyAction,
+        actorDid: string,
+        reason: string,
+    ): ModerationServiceResult {
+        try {
+            const results: Array<{ subjectUri: string; success: boolean; error?: string }> = [];
+
+            for (const subjectUri of subjectUris) {
+                try {
+                    const result = this.applyPolicyFromParams(
+                        new URLSearchParams({
+                            subjectUri,
+                            actorDid,
+                            action,
+                            reason,
+                        }),
+                    );
+                    results.push({
+                        subjectUri,
+                        success: result.statusCode === 200,
+                        error: result.statusCode !== 200 ? 'Action failed' : undefined,
+                    });
+                } catch {
+                    results.push({ subjectUri, success: false, error: 'Unexpected error' });
+                }
+            }
+
+            return {
+                statusCode: 200,
+                body: {
+                    processed: results.length,
+                    succeeded: results.filter(r => r.success).length,
+                    failed: results.filter(r => !r.success).length,
+                    results,
+                },
+            };
+        } catch (error) {
+            this.metrics.recordError();
+            return toErrorResult(error, 'Failed to perform bulk triage.');
+        }
+    }
+
+    escalateItem(
+        subjectUri: string,
+        actorDid: string,
+        reason: string,
+    ): ModerationServiceResult {
+        try {
+            // Verify the item exists by getting its state
+            const stateResult = this.getStateFromParams(
+                new URLSearchParams({ subjectUri }),
+            );
+            if (stateResult.statusCode === 404) {
+                return stateResult;
+            }
+
+            // Record escalation as an audit trail entry via open-appeal action
+            // if the item is not already in an appeal state, escalate to appeal
+            const item = (stateResult.body as { item: { appealState: string } }).item;
+
+            if (item.appealState === 'none') {
+                return this.applyPolicyFromParams(
+                    new URLSearchParams({
+                        subjectUri,
+                        actorDid,
+                        action: 'open-appeal',
+                        reason: `[ESCALATION] ${reason}`,
+                    }),
+                );
+            }
+
+            if (item.appealState === 'pending') {
+                return this.applyPolicyFromParams(
+                    new URLSearchParams({
+                        subjectUri,
+                        actorDid,
+                        action: 'start-appeal-review',
+                        reason: `[ESCALATION] ${reason}`,
+                    }),
+                );
+            }
+
+            // Already under review or resolved; return current state
+            return stateResult;
+        } catch (error) {
+            this.metrics.recordError();
+            return toErrorResult(error, 'Failed to escalate item.');
+        }
+    }
 }
 
 export const createFixtureModerationWorkerService = (

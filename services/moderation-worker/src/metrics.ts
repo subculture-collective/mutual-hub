@@ -129,6 +129,25 @@ export class ModerationMetrics {
             `moderation_errors_total{${SERVICE_LABELS}} ${this.errorCount}`,
         );
 
+        // SLI-aligned metrics for cross-service consistency
+        lines.push(
+            '# HELP patchwork_sli_request_total Total moderation actions (SLI-aligned).',
+            '# TYPE patchwork_sli_request_total counter',
+            `patchwork_sli_request_total{${SERVICE_LABELS}} ${this.getTotalActions()}`,
+        );
+
+        lines.push(
+            '# HELP patchwork_sli_error_total Total moderation errors (SLI-aligned).',
+            '# TYPE patchwork_sli_error_total counter',
+            `patchwork_sli_error_total{${SERVICE_LABELS}} ${this.errorCount}`,
+        );
+
+        lines.push(
+            '# HELP patchwork_sli_saturation_ratio Queue depth saturation (SLI-aligned).',
+            '# TYPE patchwork_sli_saturation_ratio gauge',
+            `patchwork_sli_saturation_ratio{${SERVICE_LABELS}} ${Math.min(this.queueDepth / 1000, 1)}`,
+        );
+
         return lines.join('\n');
     }
 

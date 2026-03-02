@@ -4,6 +4,9 @@ export const publicRoutes = [
     '/resources',
     '/volunteer',
     '/settings',
+    '/moderation',
+    '/inbox',
+    '/feedback',
 ] as const;
 
 export type PublicRoute = (typeof publicRoutes)[number];
@@ -12,6 +15,7 @@ export interface ShellSection {
     route: PublicRoute;
     title: string;
     description: string;
+    requiresRole?: string;
 }
 
 export const shellSections: readonly ShellSection[] = [
@@ -39,6 +43,22 @@ export const shellSections: readonly ShellSection[] = [
         route: '/settings',
         title: 'Settings',
         description: 'Account settings, privacy controls, and data management.',
+    },
+    {
+        route: '/moderation',
+        title: 'Moderation',
+        description: 'Moderator operations console for queue triage, policy actions, and audit review.',
+        requiresRole: 'moderator',
+    },
+    {
+        route: '/inbox',
+        title: 'Inbox',
+        description: 'Unified inbox for requests, assignments, messages, and alerts.',
+    },
+    {
+        route: '/feedback',
+        title: 'Feedback',
+        description: 'Post-handoff outcome feedback and reporting.',
     },
 ];
 

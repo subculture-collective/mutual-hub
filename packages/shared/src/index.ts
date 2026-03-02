@@ -23,3 +23,8 @@ export * from './settings.js';
 export * from './lifecycle.js';
 export * from './auth-session.js';
 export * from './org-portal.js';
+export * from './alerting.js';
+export * from './sli.js';
+export * from './inbox.js';
+export * from './feedback.js';
+export * from './offline-sync.js';

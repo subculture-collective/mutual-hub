@@ -117,6 +117,9 @@ const appRoutes = [
     '/posting',
     '/chat',
     '/settings',
+    '/moderation',
+    '/inbox',
+    '/feedback',
 ] as const;
 
 type AppRoute = (typeof appRoutes)[number];
@@ -134,6 +137,9 @@ const routeLabels: Readonly<Record<AppRoute, string>> = {
     '/posting': 'Posting',
     '/chat': 'Chat',
     '/settings': 'Settings',
+    '/moderation': 'Moderation',
+    '/inbox': 'Inbox',
+    '/feedback': 'Feedback',
 };
 
 const resourceCategoryOptions: readonly DirectoryResourceCategory[] = [

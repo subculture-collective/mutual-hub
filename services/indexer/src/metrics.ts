@@ -126,5 +126,18 @@ export const renderPrometheusRuntimeMetrics = (
         `patchwork_ingest_errors_total${PROMETHEUS_LABELS} ${metrics.ingestErrorsTotal}`,
     );
 
+    // SLI-aligned metrics for cross-service consistency
+    lines.push(
+        '# HELP patchwork_sli_request_total Total ingestion events (SLI-aligned).',
+        '# TYPE patchwork_sli_request_total counter',
+        `patchwork_sli_request_total${PROMETHEUS_LABELS} ${metrics.ingestEventsTotal}`,
+    );
+
+    lines.push(
+        '# HELP patchwork_sli_error_total Total ingestion errors (SLI-aligned).',
+        '# TYPE patchwork_sli_error_total counter',
+        `patchwork_sli_error_total${PROMETHEUS_LABELS} ${metrics.ingestErrorsTotal}`,
+    );
+
     return lines.join('\n');
 };
