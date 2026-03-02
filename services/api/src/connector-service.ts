@@ -8,7 +8,7 @@ import type {
     IntegrationAuditEntry,
     MarketplaceListing,
     MarketplaceListingStatus,
-    RetryPolicy,
+    ConnectorRetryPolicy,
     SyncFlowRecord,
 } from '@patchwork/shared';
 
@@ -420,7 +420,7 @@ export class ConnectorService {
 
     private async executeWithRetry(
         fn: () => Promise<SyncFlowRecord>,
-        retryPolicy: RetryPolicy,
+        retryPolicy: ConnectorRetryPolicy,
         syncRecord: SyncFlowRecord,
     ): Promise<SyncFlowRecord> {
         let lastError: Error | undefined;
@@ -493,7 +493,7 @@ export class ConnectorService {
     }
 
     /** Calculate retry delay based on strategy. */
-    calculateDelay(policy: RetryPolicy, attempt: number): number {
+    calculateDelay(policy: ConnectorRetryPolicy, attempt: number): number {
         switch (policy.strategy) {
             case 'fixed-delay':
                 return Math.min(policy.initialDelayMs, policy.maxDelayMs);

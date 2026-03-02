@@ -150,8 +150,8 @@ export class CrisisLineConnector implements ConnectorContract {
 
         const start = Date.now();
 
-        // In production, this would ping the crisis line health endpoint
-        const isHealthy = this.externalHealthy;
+        // In production, this would ping the crisis line health endpoint at this.config.endpoint
+        const isHealthy = this.externalHealthy && this.config.endpoint.length > 0;
         const latencyMs = Date.now() - start;
 
         return {

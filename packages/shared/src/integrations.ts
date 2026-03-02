@@ -85,7 +85,7 @@ export const retryPolicySchema = z.object({
     backoffMultiplier: z.number().min(1).max(10).default(2),
 });
 
-export type RetryPolicy = z.infer<typeof retryPolicySchema>;
+export type ConnectorRetryPolicy = z.infer<typeof retryPolicySchema>;
 
 // ---------------------------------------------------------------------------
 // Connector definition (marketplace registry entry)

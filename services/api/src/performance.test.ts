@@ -11,7 +11,6 @@ import { describe, expect, it } from 'vitest';
 import {
     computeLatencyHistogram,
     evaluateBudget,
-    DEFAULT_PERFORMANCE_BUDGETS,
     getBudgetForEndpoint,
     type LoadTestEndpoint,
 } from '../../../packages/shared/src/load-testing.js';
@@ -71,7 +70,7 @@ describe('feed endpoint performance', () => {
         const durationSeconds = samples.reduce((a, b) => a + b, 0) / 1000;
         const actualRps = requestCount / Math.max(durationSeconds, 0.001);
 
-        const { withinBudget } = evaluateBudget(
+        const { withinBudget: _withinBudget } = evaluateBudget(
             { latency: histogram, errorCount, totalRequests: requestCount, actualRps },
             budget,
         );

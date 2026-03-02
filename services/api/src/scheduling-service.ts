@@ -1,6 +1,5 @@
 import type {
     AvailabilityWindow,
-    DayOfWeek,
     FallbackAction,
     NoShowEvent,
     RecurrenceRule,

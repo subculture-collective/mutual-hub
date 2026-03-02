@@ -272,7 +272,7 @@ describe('SchedulingService', () => {
 
     describe('reminders', () => {
         it('creates reminders with correct scheduled times', () => {
-            const { shift, reminders } = service.assignShift({
+            const { reminders } = service.assignShift({
                 volunteerDid: VOL_DID,
                 requestPostUri: POST_URI,
                 startTime: '2026-03-02T10:00:00.000Z',

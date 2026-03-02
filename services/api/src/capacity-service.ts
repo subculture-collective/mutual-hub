@@ -14,7 +14,6 @@ import type {
     CapacityLimit,
     BottleneckRecord,
     PerformanceBudget,
-    LatencyHistogram,
 } from '../../../packages/shared/src/load-testing.js';
 
 // ---------------------------------------------------------------------------
@@ -118,7 +117,7 @@ export const detectBottlenecks = (
 export const computeEndpointCapacity = (
     results: readonly LoadTestResult[],
     snapshots: readonly ResourceSnapshot[],
-    budget: PerformanceBudget,
+    _budget: PerformanceBudget,
 ): CapacityLimit => {
     // Find the highest tier that is still within budget
     const passingResults = results.filter(r => r.withinBudget);

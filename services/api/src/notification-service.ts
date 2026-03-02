@@ -3,7 +3,6 @@ import type {
     DeliveryAttempt,
     DeliveryChannel,
     DeliveryReliabilityMetrics,
-    DeliveryStatus,
     Notification,
     NotificationFilter,
     NotificationPriority,

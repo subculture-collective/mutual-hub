@@ -20,8 +20,6 @@ import {
 } from '../../../packages/shared/src/load-testing.js';
 import {
     buildCapacityEnvelope,
-    detectBottlenecks,
-    computeEndpointCapacity,
     type ResourceSnapshot,
 } from './capacity-service.js';
 
