@@ -11,6 +11,8 @@ export const publicRoutes = [
     '/settings',
     '/moderation',
     '/inbox',
+    '/notifications',
+    '/scheduling',
     '/feedback',
     '/legal/terms',
     '/legal/privacy',
@@ -69,6 +71,18 @@ export const shellSections: readonly ShellSection[] = [
         title: 'Inbox',
         description: 'Unified inbox for requests, assignments, messages, and alerts.',
         requiresRole: 'user',
+    },
+    {
+        route: '/notifications',
+        title: 'Notifications',
+        description: 'Notification center with read/unread controls and channel preferences.',
+        requiresRole: 'user',
+    },
+    {
+        route: '/scheduling',
+        title: 'Scheduling',
+        description: 'Calendar, availability windows, and volunteer shift management.',
+        requiresRole: 'volunteer',
     },
     {
         route: '/feedback',
