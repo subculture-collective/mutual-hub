@@ -6,8 +6,8 @@ services:
     environment:
       POSTGRES_DB: patchwork
       POSTGRES_USER: patchwork
-      # NOTE: This password is for local development only and must never be used in production.
-      POSTGRES_PASSWORD: patchwork
+      # DEV ONLY — safe default for local development; never use in production.
+      POSTGRES_PASSWORD: ${PATCHWORK_POSTGRES_PASSWORD:-patchwork}
     ports:
       - '5432:5432'
     healthcheck:

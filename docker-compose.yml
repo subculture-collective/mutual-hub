@@ -6,7 +6,7 @@ services:
         environment:
             POSTGRES_DB: patchwork
             POSTGRES_USER: patchwork
-            POSTGRES_PASSWORD: ${PATCHWORK_POSTGRES_PASSWORD:-patchwork}
+            POSTGRES_PASSWORD: ${PATCHWORK_POSTGRES_PASSWORD:?Set PATCHWORK_POSTGRES_PASSWORD in .env}
         healthcheck:
             test: ['CMD-SHELL', 'pg_isready -U patchwork -d patchwork']
             interval: 5s
@@ -36,7 +36,7 @@ services:
             API_PORT: 4000
             API_PUBLIC_ORIGIN: ${PATCHWORK_PUBLIC_ORIGIN:-https://patchwork.subcult.tv}
             API_DATA_SOURCE: ${API_DATA_SOURCE:-postgres}
-            API_DATABASE_URL: postgresql://patchwork:${PATCHWORK_POSTGRES_PASSWORD:-patchwork}@patchwork-postgres:5432/patchwork
+            API_DATABASE_URL: postgresql://patchwork:${PATCHWORK_POSTGRES_PASSWORD:?Set PATCHWORK_POSTGRES_PASSWORD in .env}@patchwork-postgres:5432/patchwork
         networks:
             internal:
             web:
