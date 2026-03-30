@@ -1,25 +1,25 @@
 :root {
-    --mh-bg: #f3eee2;
-    --mh-surface: #fbf7ee;
-    --mh-surface-elev: #efe5d3;
-    --mh-panel: #e7d8c1;
-    --mh-text: #2f2a22;
-    --mh-text-muted: #5d5446;
-    --mh-text-soft: #7b705e;
-    --mh-accent: #5d7a47;
-    --mh-accent-2: #7f9b65;
-    --mh-accent-3: #b99361;
-    --mh-cta: #c96b3e;
-    --mh-organic-moss: #4c663b;
-    --mh-link: #4f6b3f;
-    --mh-link-visited: #6f5c45;
-    --mh-success: #3f7a48;
-    --mh-danger: #9e4a3d;
-    --mh-border: #8a765b;
-    --mh-border-subtle: #d8c9b1;
-    --mh-border-soft: #beab8f;
-    --mh-focus: #3e6a34;
-    --mh-focus-offset: #fffcf6;
+    --mh-bg: #1a1814;
+    --mh-surface: #242019;
+    --mh-surface-elev: #2e2920;
+    --mh-panel: #332e24;
+    --mh-text: #e8e0d4;
+    --mh-text-muted: #a69c8c;
+    --mh-text-soft: #8a7f6d;
+    --mh-accent: #7b9d5f;
+    --mh-accent-2: #92b476;
+    --mh-accent-3: #c9a371;
+    --mh-cta: #d97f54;
+    --mh-organic-moss: #6d8d56;
+    --mh-link: #7da063;
+    --mh-link-visited: #a08d72;
+    --mh-success: #5a9d62;
+    --mh-danger: #c45a4c;
+    --mh-border: #4a4036;
+    --mh-border-subtle: #3a332a;
+    --mh-border-soft: #423a2e;
+    --mh-focus: #5a9344;
+    --mh-focus-offset: #1a1814;
 
     --mh-font-heading:
         'Fraunces', 'Inter Tight', 'Iowan Old Style', 'Georgia', serif;
@@ -27,9 +27,9 @@
     --mh-font-mono:
         'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-    --mh-community-primary: #5d7a47;
-    --mh-community-secondary: #7f9b65;
-    --mh-community-cta: #c96b3e;
+    --mh-community-primary: #7b9d5f;
+    --mh-community-secondary: #92b476;
+    --mh-community-cta: #d97f54;
 
     --mh-space-1: 4px;
     --mh-space-2: 8px;
@@ -38,8 +38,8 @@
     --mh-space-6: 24px;
     --mh-space-8: 32px;
 
-    --mh-shadow-hard: 0 16px 30px -16px rgb(83 62 40 / 28%);
-    --mh-shadow-hard-hover: 0 22px 32px -16px rgb(83 62 40 / 34%);
+    --mh-shadow-hard: 0 16px 30px -16px rgb(0 0 0 / 40%);
+    --mh-shadow-hard-hover: 0 22px 32px -16px rgb(0 0 0 / 50%);
     --mh-transition-standard: 180ms ease-out;
 }
 
@@ -59,7 +59,7 @@
     border: 1px solid var(--mh-border-soft);
     border-radius: 20px;
     background: var(--mh-panel);
-    box-shadow: 0 10px 22px -14px rgb(83 62 40 / 20%);
+    box-shadow: 0 10px 22px -14px rgb(0 0 0 / 30%);
 }
 
 .mh-panel-titlebar {
@@ -73,7 +73,7 @@
 .mh-texture-dots {
     background-image: radial-gradient(
         circle at 1px 1px,
-        rgb(121 102 76 / 10%) 1px,
+        rgb(200 180 140 / 6%) 1px,
         transparent 0
     );
     background-size: 10px 10px;
@@ -81,16 +81,16 @@
 
 .mh-grid-pattern {
     background-image:
-        linear-gradient(to right, rgb(90 76 57 / 7%) 1px, transparent 1px),
-        linear-gradient(to bottom, rgb(90 76 57 / 7%) 1px, transparent 1px),
+        linear-gradient(to right, rgb(200 180 140 / 4%) 1px, transparent 1px),
+        linear-gradient(to bottom, rgb(200 180 140 / 4%) 1px, transparent 1px),
         radial-gradient(
             circle at 15% 18%,
-            rgb(120 103 74 / 6%) 0,
+            rgb(120 103 74 / 4%) 0,
             transparent 40%
         ),
         radial-gradient(
             circle at 85% 82%,
-            rgb(99 125 76 / 8%) 0,
+            rgb(99 125 76 / 5%) 0,
             transparent 45%
         );
     background-size:
@@ -105,15 +105,15 @@
     background-image:
         radial-gradient(
             circle at 20% 20%,
-            rgb(92 73 53 / 7%) 0.5px,
+            rgb(200 180 140 / 3%) 0.5px,
             transparent 0.5px
         ),
         radial-gradient(
             circle at 80% 35%,
-            rgb(70 99 56 / 6%) 0.5px,
+            rgb(120 160 100 / 3%) 0.5px,
             transparent 0.5px
         ),
-        linear-gradient(140deg, #f6f1e5 0%, #ede2ce 100%);
+        linear-gradient(140deg, #1a1814 0%, #1e1b15 100%);
     background-size:
         5px 5px,
         7px 7px,
@@ -125,7 +125,7 @@
     cursor: pointer;
     border: 1px solid var(--mh-border);
     border-radius: 9999px;
-    box-shadow: 0 8px 18px -12px rgb(83 62 40 / 45%);
+    box-shadow: 0 8px 18px -12px rgb(0 0 0 / 50%);
     transition:
         box-shadow var(--mh-transition-standard),
         background-color var(--mh-transition-standard),
@@ -137,7 +137,7 @@
 
 .mh-button--primary {
     background: var(--mh-organic-moss);
-    color: var(--mh-bg);
+    color: #f0ece4;
 }
 
 .mh-button--primary:hover {
@@ -146,7 +146,7 @@
 
 .mh-button--secondary {
     background: var(--mh-accent-3);
-    color: var(--mh-text);
+    color: #1a1814;
 }
 
 .mh-button--secondary:hover {
@@ -163,29 +163,29 @@
 }
 
 .mh-button:hover {
-    box-shadow: 0 12px 22px -12px rgb(83 62 40 / 42%);
-    filter: brightness(1.05);
+    box-shadow: 0 12px 22px -12px rgb(0 0 0 / 50%);
+    filter: brightness(1.1);
     transform: translateY(-1px);
 }
 
 .mh-button:active {
-    box-shadow: 0 8px 16px -12px rgb(83 62 40 / 45%);
+    box-shadow: 0 8px 16px -12px rgb(0 0 0 / 50%);
     transform: translateY(0);
-    filter: brightness(0.96);
+    filter: brightness(0.92);
 }
 
 .mh-button:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.5;
     filter: none;
     transform: none;
-    box-shadow: 0 6px 12px -10px rgb(83 62 40 / 35%);
+    box-shadow: 0 6px 12px -10px rgb(0 0 0 / 40%);
 }
 
 .mh-button:disabled:hover {
     transform: none;
     filter: none;
-    box-shadow: 0 6px 12px -10px rgb(83 62 40 / 35%);
+    box-shadow: 0 6px 12px -10px rgb(0 0 0 / 40%);
 }
 
 .mh-input {
@@ -202,10 +202,10 @@
 
 .mh-input:focus-visible {
     border-color: var(--mh-focus);
-    background: #fffcf6;
+    background: #2a2520;
     box-shadow:
         0 0 0 2px var(--mh-focus-offset),
-        0 0 0 4px rgb(62 106 52 / 28%);
+        0 0 0 4px rgb(90 147 68 / 28%);
 }
 
 .mh-input::placeholder {
@@ -216,7 +216,7 @@
     cursor: pointer;
     color: var(--mh-link);
     text-decoration: underline;
-    text-decoration-color: rgb(79 107 63 / 42%);
+    text-decoration-color: rgb(125 160 99 / 42%);
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
     transition:
@@ -231,16 +231,16 @@
 }
 
 .mh-link:hover {
-    color: var(--mh-organic-moss);
+    color: var(--mh-accent);
     text-decoration-thickness: 2px;
-    text-decoration-color: rgb(76 102 59 / 72%);
+    text-decoration-color: rgb(109 141 86 / 72%);
     text-underline-offset: 4px;
 }
 
 .mh-alert {
     border-left: 4px solid var(--mh-danger);
-    color: #7f2e22;
-    background: rgb(201 107 62 / 10%);
+    color: #e8a49c;
+    background: rgb(196 90 76 / 12%);
     padding-left: var(--mh-space-2);
 }
 
@@ -267,16 +267,16 @@
 
 .mh-nav-chip:hover {
     border-color: var(--mh-accent);
-    color: var(--mh-organic-moss);
-    background: #f8f3e8;
-    box-shadow: 0 10px 18px -14px rgb(83 62 40 / 45%);
+    color: var(--mh-accent);
+    background: #2a2520;
+    box-shadow: 0 10px 18px -14px rgb(0 0 0 / 50%);
 }
 
 .mh-nav-chip[aria-current='page'] {
     border-color: var(--mh-accent);
-    color: #244120;
-    background: #edf4e8;
-    box-shadow: 0 10px 18px -14px rgb(83 62 40 / 45%);
+    color: #b4d89e;
+    background: #2a3624;
+    box-shadow: 0 10px 18px -14px rgb(0 0 0 / 50%);
 }
 
 .mh-skip-link {
@@ -286,7 +286,7 @@
     z-index: 50;
     border: 1px solid var(--mh-border);
     border-radius: 12px;
-    background: #fffdf8;
+    background: #2e2920;
     color: var(--mh-text);
     padding: var(--mh-space-2) var(--mh-space-3);
     text-decoration: none;
@@ -302,9 +302,9 @@
     border-radius: 12px;
     background: linear-gradient(
         90deg,
-        rgb(191 173 141 / 18%) 0%,
-        rgb(191 173 141 / 32%) 50%,
-        rgb(191 173 141 / 18%) 100%
+        rgb(100 90 70 / 12%) 0%,
+        rgb(100 90 70 / 24%) 50%,
+        rgb(100 90 70 / 12%) 100%
     );
     background-size: 200% 100%;
     animation: mh-skeleton-pulse 1.4s ease-in-out infinite;
@@ -323,9 +323,9 @@
 .mh-stat-tile {
     border: 1px solid var(--mh-border-soft);
     border-radius: 16px;
-    background: #f8f2e7;
+    background: #2a2520;
     padding: var(--mh-space-3);
-    box-shadow: 0 10px 18px -16px rgb(83 62 40 / 35%);
+    box-shadow: 0 10px 18px -16px rgb(0 0 0 / 40%);
 }
 
 :where(a, button, input, textarea, select, [role='button']):focus-visible {

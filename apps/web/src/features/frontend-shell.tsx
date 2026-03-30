@@ -1,4 +1,5 @@
 import {
+    useCallback,
     useEffect,
     useMemo,
     useRef,
@@ -290,6 +291,227 @@ const readDiscoveryStateFromUrl = (
     return parseDiscoveryFilterState(window.location.search, fallback);
 };
 
+// ---------------------------------------------------------------------------
+// Search debounce hook (#141)
+// ---------------------------------------------------------------------------
+
+const useDebounce = (value: string, delayMs: number): string => {
+    const [debounced, setDebounced] = useState(value);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebounced(value), delayMs);
+        return () => clearTimeout(timer);
+    }, [value, delayMs]);
+
+    return debounced;
+};
+
+// ---------------------------------------------------------------------------
+// API health check indicator (#140)
+// ---------------------------------------------------------------------------
+
+const ApiHealthIndicator = () => {
+    const [status, setStatus] = useState<'checking' | 'online' | 'offline'>(
+        'checking',
+    );
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const checkHealth = () => {
+            fetch('http://localhost:4000/health', {
+                signal: controller.signal,
+            })
+                .then(response => {
+                    if (!controller.signal.aborted) {
+                        setStatus(response.ok ? 'online' : 'offline');
+                    }
+                })
+                .catch(() => {
+                    if (!controller.signal.aborted) {
+                        setStatus('offline');
+                    }
+                });
+        };
+
+        checkHealth();
+        const interval = setInterval(checkHealth, 30_000);
+        return () => {
+            controller.abort();
+            clearInterval(interval);
+        };
+    }, []);
+
+    const tone =
+        status === 'online' ? 'success'
+        : status === 'offline' ? 'danger'
+        : 'neutral';
+    const label =
+        status === 'online' ? 'API connected'
+        : status === 'offline' ? 'API offline — using fallback data'
+        : 'Checking API…';
+
+    return <Badge tone={tone}>{label}</Badge>;
+};
+
+// ---------------------------------------------------------------------------
+// Error boundary (#140)
+// ---------------------------------------------------------------------------
+
+import { Component, type ReactNode, type ErrorInfo } from 'react';
+
+interface ErrorBoundaryProps {
+    children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+    hasError: boolean;
+    errorMessage?: string;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+        return { hasError: true, errorMessage: error.message };
+    }
+
+    componentDidCatch(error: Error, info: ErrorInfo): void {
+        console.error('Patchwork error boundary caught:', error, info);
+    }
+
+    render(): ReactNode {
+        if (this.state.hasError) {
+            return (
+                <div className='mx-auto max-w-2xl px-6 py-16 text-center'>
+                    <h1 className='font-heading text-3xl font-black text-mh-danger'>
+                        Something went wrong
+                    </h1>
+                    <p className='mt-4 text-mh-textMuted'>
+                        {this.state.errorMessage ?? 'An unexpected error occurred.'}
+                    </p>
+                    <button
+                        type='button'
+                        className='mh-button mh-button--primary mt-6 px-6 py-2'
+                        onClick={() => this.setState({ hasError: false })}
+                    >
+                        Try again
+                    </button>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Placeholder pages for unimplemented routes (#143)
+// ---------------------------------------------------------------------------
+
+const PlaceholderRoute = ({
+    title,
+    description,
+}: {
+    title: string;
+    description: string;
+}) => (
+    <section className='space-y-6'>
+        <header className='border-b-2 border-mh-border pb-4'>
+            <h1 className='font-heading text-3xl font-black uppercase tracking-tight sm:text-4xl'>
+                {title}
+            </h1>
+            <p className='mt-2 text-sm text-mh-textMuted'>{description}</p>
+        </header>
+        <Card title='Coming soon'>
+            <p className='text-sm text-mh-textMuted'>
+                This feature is under active development and will be available in
+                an upcoming release.
+            </p>
+        </Card>
+    </section>
+);
+
+const NotFoundRoute = ({ onNavigate }: { onNavigate: (route: AppRoute) => void }) => (
+    <section className='space-y-6 text-center'>
+        <h1 className='font-heading text-5xl font-black text-mh-textMuted'>
+            404
+        </h1>
+        <p className='text-lg text-mh-textMuted'>
+            Page not found. The route you requested does not exist.
+        </p>
+        <Button onClick={() => onNavigate('/')}>Back to Home</Button>
+    </section>
+);
+
+const CommunityGuidelinesRoute = () => (
+    <section className='space-y-6'>
+        <header className='border-b-2 border-mh-border pb-4'>
+            <h1 className='font-heading text-3xl font-black uppercase tracking-tight sm:text-4xl'>
+                Community Guidelines
+            </h1>
+            <p className='mt-2 text-sm text-mh-textMuted'>
+                Standards for respectful, safe participation on Patchwork.
+            </p>
+        </header>
+        <Card title='Mutual respect'>
+            <p className='text-sm text-mh-textMuted'>
+                Treat every community member with dignity. Harassment,
+                discrimination, and hate speech are not tolerated. We are here to
+                help each other.
+            </p>
+        </Card>
+        <Card title='Honest communication'>
+            <p className='text-sm text-mh-textMuted'>
+                Represent your needs and capabilities truthfully. Do not
+                fabricate emergencies or misrepresent the scope of a request.
+                Fraudulent postings will be removed and may result in account
+                suspension.
+            </p>
+        </Card>
+        <Card title='Privacy and safety'>
+            <p className='text-sm text-mh-textMuted'>
+                Never share another person&apos;s personal information without
+                their explicit consent. Location data is privacy-protected by
+                default — do not attempt to circumvent geo-privacy controls.
+            </p>
+        </Card>
+        <Card title='Volunteer conduct'>
+            <p className='text-sm text-mh-textMuted'>
+                Volunteers must complete verification before engaging in
+                sensitive aid categories. Follow through on commitments — if you
+                accept an assignment, communicate promptly if circumstances
+                change.
+            </p>
+        </Card>
+        <Card title='Moderation and enforcement'>
+            <p className='text-sm text-mh-textMuted'>
+                Content and behavior that violates these guidelines will be
+                reviewed by moderators. Actions may include warnings, temporary
+                suspension, or permanent removal depending on severity. Appeals
+                can be submitted through the moderation console.
+            </p>
+        </Card>
+    </section>
+);
+
+const LegalRoute = ({ title, content }: { title: string; content: string }) => (
+    <section className='space-y-6'>
+        <header className='border-b-2 border-mh-border pb-4'>
+            <h1 className='font-heading text-3xl font-black uppercase tracking-tight sm:text-4xl'>
+                {title}
+            </h1>
+        </header>
+        <Card title={title}>
+            <p className='text-sm text-mh-textMuted whitespace-pre-line'>
+                {content}
+            </p>
+        </Card>
+    </section>
+);
+
 interface DiscoveryFiltersPanelProps {
     idPrefix: string;
     state: DiscoveryFilterState;
@@ -309,6 +531,18 @@ const DiscoveryFiltersPanel = ({
     const latValue = state.center?.lat ?? defaultDiscoveryCenter.lat;
     const lngValue = state.center?.lng ?? defaultDiscoveryCenter.lng;
 
+    const [localSearchText, setLocalSearchText] = useState(state.text ?? '');
+    const debouncedSearchText = useDebounce(localSearchText, 300);
+
+    useEffect(() => {
+        const nextValue = debouncedSearchText.trim();
+        onPatch({ text: nextValue.length > 0 ? nextValue : undefined });
+    }, [debouncedSearchText]);
+
+    useEffect(() => {
+        setLocalSearchText(state.text ?? '');
+    }, [state.text]);
+
     return (
         <Panel title='Discovery filters'>
             <label
@@ -320,13 +554,8 @@ const DiscoveryFiltersPanel = ({
             <Input
                 id={`${idPrefix}-search`}
                 placeholder='Search title, description, or area'
-                value={state.text ?? ''}
-                onChange={event => {
-                    const nextValue = event.target.value.trim();
-                    onPatch({
-                        text: nextValue.length > 0 ? nextValue : undefined,
-                    });
-                }}
+                value={localSearchText}
+                onChange={event => setLocalSearchText(event.target.value)}
             />
 
             <div className='mt-4 grid gap-4'>
@@ -633,32 +862,12 @@ const DashboardRoute = ({
 
             <div className='grid gap-6 lg:grid-cols-5'>
                 <section className='lg:col-span-3'>
-                    <Panel title='Discovery shell'>
-                        <p className='mb-3 text-sm text-mh-textMuted'>
-                            Search support requests by category and route to the
-                            safest nearby response path.
+                    <Panel title='Quick actions'>
+                        <p className='mb-4 text-sm text-mh-textMuted'>
+                            Jump into map triage or the live feed to search,
+                            filter, and respond to support requests.
                         </p>
-                        <label
-                            htmlFor='search-requests'
-                            className='mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-mh-text'
-                        >
-                            Search requests
-                        </label>
-                        <Input
-                            id='search-requests'
-                            placeholder='e.g. food, shelter, transport'
-                            value={discoveryState.text ?? ''}
-                            onChange={event => {
-                                const nextValue = event.target.value.trim();
-                                onPatchDiscovery({
-                                    text:
-                                        nextValue.length > 0 ?
-                                            nextValue
-                                        :   undefined,
-                                });
-                            }}
-                        />
-                        <div className='mt-4 flex flex-wrap gap-2'>
+                        <div className='flex flex-wrap gap-2'>
                             <Button
                                 onClick={() => {
                                     onPatchDiscovery(buildNearbyPatch());
@@ -2484,6 +2693,13 @@ const VolunteerRoute = () => {
     );
 };
 
+interface ChatMessage {
+    id: string;
+    senderDid: string;
+    text: string;
+    sentAt: string;
+}
+
 interface ChatRouteProps {
     currentUserDid: string;
     hasPermission: boolean;
@@ -2510,6 +2726,9 @@ const ChatRoute = ({
     onReset,
 }: ChatRouteProps) => {
     const notice = toChatStatusNotice(state);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [messageInput, setMessageInput] = useState('');
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const noticeTone =
         notice?.tone === 'danger' ? 'danger'
@@ -2517,91 +2736,202 @@ const ChatRoute = ({
         : notice?.tone === 'success' ? 'success'
         : 'neutral';
 
+    const isConversationActive = state.status === 'success';
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSendMessage = (event: FormEvent) => {
+        event.preventDefault();
+        const text = messageInput.trim();
+        if (!text || !isConversationActive) return;
+
+        const newMessage: ChatMessage = {
+            id: `msg-${Date.now()}`,
+            senderDid: currentUserDid,
+            text,
+            sentAt: new Date().toISOString(),
+        };
+
+        setMessages(current => [...current, newMessage]);
+        setMessageInput('');
+
+        // Simulate a response after a brief delay
+        setTimeout(() => {
+            if (intent) {
+                setMessages(current => [
+                    ...current,
+                    {
+                        id: `msg-${Date.now()}-reply`,
+                        senderDid: intent.recipientDid,
+                        text: 'Thanks for reaching out. I can help with that request.',
+                        sentAt: new Date().toISOString(),
+                    },
+                ]);
+            }
+        }, 1200);
+    };
+
     return (
         <section className='space-y-6'>
             <header className='border-b-2 border-mh-border pb-4'>
                 <h1 className='font-heading text-3xl font-black uppercase tracking-tight sm:text-4xl'>
-                    Chat handoff
+                    Chat
                 </h1>
                 <p className='mt-2 text-sm text-mh-textMuted'>
-                    Post-linked 1:1 initiation with permission checks and
-                    recipient-capability fallback handling.
+                    Coordinate directly with volunteers and requesters through
+                    secure 1:1 messaging.
                 </p>
             </header>
 
-            <Panel title='Launch controls'>
-                <div className='grid gap-3 sm:grid-cols-2'>
-                    <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
-                        <input
-                            type='checkbox'
-                            className='h-4 w-4'
-                            checked={hasPermission}
-                            onChange={event =>
-                                onTogglePermission(event.target.checked)
-                            }
-                        />
-                        Initiator has permission
-                    </label>
-                    <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
-                        <input
-                            type='checkbox'
-                            className='h-4 w-4'
-                            checked={forceFallback}
-                            onChange={event =>
-                                onToggleFallback(event.target.checked)
-                            }
-                        />
-                        Force capability fallback
-                    </label>
-                </div>
-
-                <p className='mt-3 break-all text-xs text-mh-textSoft'>
-                    Initiator DID: {currentUserDid}
-                </p>
-
-                {intent ?
-                    <div className='mt-4 rounded-none border-2 border-mh-borderSoft bg-mh-surfaceElev p-3'>
-                        <p className='text-sm font-bold text-mh-text'>
-                            Pending intent · {intent.aidPostTitle}
-                        </p>
-                        <p className='mt-1 break-all text-xs text-mh-textSoft'>
-                            Recipient: {intent.recipientDid} · Source:{' '}
-                            {intent.initiatedFrom}
-                        </p>
+            {!isConversationActive ?
+                <Panel title='Start a conversation'>
+                    <div className='grid gap-3 sm:grid-cols-2'>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={hasPermission}
+                                onChange={event =>
+                                    onTogglePermission(event.target.checked)
+                                }
+                            />
+                            Initiator has permission
+                        </label>
+                        <label className='inline-flex items-center gap-2 text-sm text-mh-textMuted'>
+                            <input
+                                type='checkbox'
+                                className='h-4 w-4'
+                                checked={forceFallback}
+                                onChange={event =>
+                                    onToggleFallback(event.target.checked)
+                                }
+                            />
+                            Force capability fallback
+                        </label>
                     </div>
-                :   <p className='mt-4 text-sm text-mh-textMuted'>
-                        No pending chat intent. Start from Map or Feed “Contact
-                        helper”.
-                    </p>
-                }
 
-                <div className='mt-4 flex flex-wrap gap-2'>
-                    <Button onClick={onLaunch} disabled={!intent}>
-                        Launch handoff chat
-                    </Button>
-                    <Button variant='neutral' onClick={onReset}>
-                        Reset state
-                    </Button>
-                </div>
-            </Panel>
+                    {intent ?
+                        <div className='mt-4 rounded-none border-2 border-mh-borderSoft bg-mh-surfaceElev p-3'>
+                            <p className='text-sm font-bold text-mh-text'>
+                                Ready to connect · {intent.aidPostTitle}
+                            </p>
+                            <p className='mt-1 break-all text-xs text-mh-textSoft'>
+                                Recipient: {intent.recipientDid}
+                            </p>
+                        </div>
+                    :   <p className='mt-4 text-sm text-mh-textMuted'>
+                            No pending chat intent. Navigate to Map or Feed and
+                            click &quot;Contact helper&quot; on a request to start
+                            a conversation.
+                        </p>
+                    }
 
-            <Card title='Launch status'>
-                <p className='text-sm text-mh-textMuted'>
-                    State: {state.status}
-                </p>
-
-                {notice ?
-                    <div className='mt-3'>
-                        <Badge tone={noticeTone}>{notice.message}</Badge>
+                    <div className='mt-4 flex flex-wrap gap-2'>
+                        <Button onClick={onLaunch} disabled={!intent}>
+                            Start conversation
+                        </Button>
+                        <Button variant='neutral' onClick={onReset}>
+                            Reset
+                        </Button>
                     </div>
-                :   null}
 
-                {requestPreview ?
-                    <pre className='mt-3 max-w-full overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-none border-2 border-mh-borderSoft bg-mh-surfaceElev p-3 text-xs text-mh-text'>
-                        {requestPreview}
-                    </pre>
-                :   null}
-            </Card>
+                    {notice ?
+                        <div className='mt-3'>
+                            <Badge tone={noticeTone}>{notice.message}</Badge>
+                        </div>
+                    :   null}
+                </Panel>
+            :   <>
+                    <div className='flex items-center justify-between'>
+                        <div>
+                            <p className='text-sm font-bold text-mh-text'>
+                                Conversation with{' '}
+                                {intent?.recipientDid ?? 'unknown'}
+                            </p>
+                            <p className='text-xs text-mh-textSoft'>
+                                Re: {intent?.aidPostTitle ?? 'Aid request'}
+                            </p>
+                        </div>
+                        <Button
+                            variant='neutral'
+                            className='px-3 py-1 text-xs'
+                            onClick={() => {
+                                onReset();
+                                setMessages([]);
+                            }}
+                        >
+                            End conversation
+                        </Button>
+                    </div>
+
+                    <Card title='Messages'>
+                        <div
+                            className='max-h-96 min-h-48 space-y-3 overflow-y-auto'
+                            role='log'
+                            aria-label='Chat messages'
+                            aria-live='polite'
+                        >
+                            {messages.length === 0 ?
+                                <p className='py-8 text-center text-sm text-mh-textMuted'>
+                                    Conversation started. Send a message to begin
+                                    coordinating.
+                                </p>
+                            :   messages.map(msg => {
+                                    const isOwnMessage =
+                                        msg.senderDid === currentUserDid;
+                                    return (
+                                        <div
+                                            key={msg.id}
+                                            className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                                        >
+                                            <div
+                                                className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
+                                                    isOwnMessage
+                                                        ? 'bg-mh-accent text-white'
+                                                        : 'border border-mh-borderSoft bg-mh-surfaceElev text-mh-text'
+                                                }`}
+                                            >
+                                                <p>{msg.text}</p>
+                                                <p
+                                                    className={`mt-1 text-xs ${isOwnMessage ? 'text-white/70' : 'text-mh-textSoft'}`}
+                                                >
+                                                    {new Date(
+                                                        msg.sentAt,
+                                                    ).toLocaleTimeString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            }
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        <form
+                            onSubmit={handleSendMessage}
+                            className='mt-4 flex gap-2'
+                        >
+                            <Input
+                                className='flex-1'
+                                placeholder='Type a message…'
+                                value={messageInput}
+                                onChange={event =>
+                                    setMessageInput(event.target.value)
+                                }
+                                aria-label='Message input'
+                            />
+                            <Button
+                                type='submit'
+                                disabled={messageInput.trim().length === 0}
+                            >
+                                Send
+                            </Button>
+                        </form>
+                    </Card>
+                </>
+            }
         </section>
     );
 };
@@ -3518,12 +3848,60 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
             />
         : currentRoute === '/settings' ?
             <SettingsRoute currentUserDid={currentUserDid} />
-        :   <DashboardRoute
+        : currentRoute === '/moderation' ?
+            <PlaceholderRoute
+                title='Moderation Console'
+                description='Review flagged content, manage reports, and enforce platform policies.'
+            />
+        : currentRoute === '/inbox' ?
+            <PlaceholderRoute
+                title='Inbox'
+                description='View your unified inbox with requests, messages, and assignment updates.'
+            />
+        : currentRoute === '/notifications' ?
+            <PlaceholderRoute
+                title='Notifications'
+                description='Manage notification preferences and view recent alerts.'
+            />
+        : currentRoute === '/scheduling' ?
+            <PlaceholderRoute
+                title='Scheduling'
+                description='Manage volunteer availability windows and shift assignments.'
+            />
+        : currentRoute === '/feedback' ?
+            <PlaceholderRoute
+                title='Feedback'
+                description='Submit and review post-handoff feedback for completed requests.'
+            />
+        : currentRoute === '/groups' ?
+            <PlaceholderRoute
+                title='Groups'
+                description='Create and manage public or private group coordination spaces.'
+            />
+        : currentRoute === '/legal/terms' ?
+            <LegalRoute
+                title='Terms of Service'
+                content={'By using Patchwork, you agree to these terms.\n\nPatchwork is a mutual aid coordination platform built on the AT Protocol. Use of this platform is subject to our Community Guidelines and applicable laws.\n\nUsers are responsible for the accuracy of their posted requests and volunteer profiles. Patchwork does not guarantee the availability, quality, or safety of aid services coordinated through the platform.\n\nWe reserve the right to suspend or terminate accounts that violate our Community Guidelines or Terms of Service.\n\nThis platform is provided as-is. Patchwork and its operators are not liable for any damages arising from the use of this service.'}
+            />
+        : currentRoute === '/legal/privacy' ?
+            <LegalRoute
+                title='Privacy Policy'
+                content={'Patchwork is committed to protecting your privacy.\n\nLocation data is privacy-protected with configurable precision levels. Your exact coordinates are never stored or shared — only approximate areas are used for matching.\n\nPersonal identifiers (DIDs, handles) are visible only to participants in your conversations and assigned volunteers. Moderation logs are redacted and retained for a limited period.\n\nWe do not sell or share your data with third parties. Analytics are aggregated and anonymized.\n\nYou can export or delete your data at any time through the Settings page.'}
+            />
+        : currentRoute === '/legal/community-guidelines' ?
+            <CommunityGuidelinesRoute />
+        : currentRoute === '/' ?
+            <DashboardRoute
                 appTitle={appTitle}
                 onNavigate={navigate}
                 discoveryState={discoveryState}
                 onPatchDiscovery={patchDiscoveryState}
-            />;
+            />
+        :   <NotFoundRoute onNavigate={navigate} />;
+
+    const visibleRoutes = appRoutes.filter(
+        route => !route.startsWith('/legal/'),
+    );
 
     return (
         <main className='mh-grain min-h-screen overflow-x-clip bg-mh-bg text-mh-text'>
@@ -3534,11 +3912,14 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
                 Skip to main content
             </a>
             <div className='mh-grid-pattern mx-auto min-h-screen max-w-6xl border-x border-mh-border px-3 pb-12 pt-6 sm:border-x-2 sm:px-6 lg:px-8'>
+                <div className='mb-3 flex items-center justify-end'>
+                    <ApiHealthIndicator />
+                </div>
                 <nav
                     aria-label='Primary flows'
                     className='mb-8 flex flex-wrap gap-2 border-b border-mh-border pb-4 sm:border-b-2 sm:pb-6'
                 >
-                    {appRoutes.map(route => (
+                    {visibleRoutes.map(route => (
                         <a
                             key={route}
                             href={route}
@@ -3554,7 +3935,7 @@ export const FrontendShell = ({ appTitle }: FrontendShellProps) => {
                 </nav>
 
                 <div id='main-content' ref={mainContentRef} tabIndex={-1} className='outline-none'>
-                    {content}
+                    <ErrorBoundary>{content}</ErrorBoundary>
                 </div>
             </div>
         </main>
