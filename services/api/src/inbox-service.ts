@@ -133,7 +133,8 @@ export class InboxService {
         const filter = (params.get('filter')?.trim() ?? 'all') as InboxFilter;
         const cursor = params.get('cursor')?.trim() || undefined;
         const limitStr = params.get('limit')?.trim();
-        const limit = limitStr ? parseInt(limitStr, 10) : 20;
+        const parsedLimit = limitStr ? parseInt(limitStr, 10) : 20;
+        const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 100);
 
         const result = this.getInbox(userDid, filter, cursor, limit);
         return { statusCode: 200, body: result };

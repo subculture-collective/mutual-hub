@@ -37,7 +37,14 @@ export const getCorsHeaders = (
 
     if (env === 'production') {
         // In production only the configured public origin is accepted.
+        // Requests without an Origin header (e.g. curl, server-to-server)
+        // are not granted CORS access.
         allowedOrigin = origin === publicOrigin ? publicOrigin : '';
+    } else if (env === 'staging') {
+        allowedOrigin =
+            origin === publicOrigin ? publicOrigin
+            : origin && LOCALHOST_PATTERN.test(origin) ? origin
+            : '';
     } else {
         // In development / test allow any localhost origin, or the configured
         // public origin, so Vite dev server works out of the box.

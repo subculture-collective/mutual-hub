@@ -89,7 +89,7 @@ export class OrgPortalService {
             };
         }
 
-        const orgDid = `did:org:${name.toLowerCase().replace(/\s+/g, '-')}`;
+        const orgDid = `did:org:${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
 
         if (this.orgs.has(orgDid)) {
             return {
