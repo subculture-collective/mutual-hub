@@ -1,4 +1,4 @@
-import { mapAidCategoryToDirectoryCategories } from '@patchwork/shared/category-policy';
+import { mapAidCategoryToDirectoryCategories } from '@patchwork/shared';
 import {
     type DiscoveryFilterState,
     type SharedAidDiscoveryQuery,

@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     errorMessage?: string;
@@ -11,7 +11,9 @@ export const Input = ({
     required,
     ...props
 }: InputProps) => {
-    const errorId = errorMessage && id ? `${id}-error` : undefined;
+    const generatedId = useId();
+    const resolvedId = id ?? generatedId;
+    const errorId = errorMessage ? `${resolvedId}-error` : undefined;
     const describedBy = [props['aria-describedby'], errorId]
         .filter((value): value is string => Boolean(value))
         .join(' ');
@@ -19,7 +21,7 @@ export const Input = ({
     return (
         <div className='space-y-1'>
             <input
-                id={id}
+                id={resolvedId}
                 aria-invalid={errorMessage ? true : props['aria-invalid']}
                 aria-required={required || props['aria-required'] || undefined}
                 aria-describedby={

@@ -204,6 +204,7 @@ export class ModerationMetrics {
 export class ModerationPerformanceHistogram {
     private readonly _samples: number[] = [];
     private readonly _maxSamples: number;
+    private _writeIndex = 0;
 
     constructor(maxSamples = 10_000) {
         this._maxSamples = maxSamples;
@@ -212,10 +213,11 @@ export class ModerationPerformanceHistogram {
     /** Record a latency sample in milliseconds. */
     record(latencyMs: number): void {
         if (this._samples.length >= this._maxSamples) {
-            this._samples[this._samples.length % this._maxSamples] = latencyMs;
+            this._samples[this._writeIndex % this._maxSamples] = latencyMs;
         } else {
             this._samples.push(latencyMs);
         }
+        this._writeIndex++;
     }
 
     /** Compute a percentile (0-100) from collected samples. */
@@ -234,5 +236,6 @@ export class ModerationPerformanceHistogram {
     /** Reset all samples. */
     reset(): void {
         this._samples.length = 0;
+        this._writeIndex = 0;
     }
 }

@@ -7,12 +7,6 @@ export default defineConfig({
     plugins: [react(), tailwindcss()],
     resolve: {
         alias: {
-            '@patchwork/shared/category-policy': fileURLToPath(
-                new URL(
-                    '../../packages/shared/src/category-policy.ts',
-                    import.meta.url,
-                ),
-            ),
             '@patchwork/at-lexicons': fileURLToPath(
                 new URL(
                     '../../packages/at-lexicons/src/validators.ts',

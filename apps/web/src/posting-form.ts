@@ -24,7 +24,7 @@ const aidPostSchema = z.object({
     location: z.object({
         latitude: z.number().min(-90).max(90),
         longitude: z.number().min(-180).max(180),
-        precisionKm: z.number().min(0.1).max(50),
+        precisionKm: z.number().min(0.3).max(50),
     }),
     createdAt: z.string().datetime({ offset: true }),
     updatedAt: z.string().datetime({ offset: true }).optional(),
